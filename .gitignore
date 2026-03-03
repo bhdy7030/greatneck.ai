@@ -1,0 +1,12 @@
+.venv/
+knowledge/chroma_db/
+knowledge/sources/
+node_modules/
+.next/
+out/
+__pycache__/
+*.pyc
+.env
+.DS_Store
+ios/
+android/
