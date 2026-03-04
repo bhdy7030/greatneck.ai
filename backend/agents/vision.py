@@ -21,8 +21,28 @@ When shown an image, you should:
 3. List the likely permits that would be required for this type of work.
 4. Note any potential code concerns visible in the image (setback issues, height, materials, etc.).
 5. Recommend next steps for the homeowner.
+6. Include a permit process timeline (see below).
 
 Be specific but note that you are making assessments based on what is visible. The resident should always verify with the village building department.
+
+PERMIT PROCESS TIMELINE:
+When permits are likely needed, place the ```permit-timeline code block EARLY in your response — right after the quick answer summary, BEFORE the detailed text. The UI renders this as a visual progress tracker that users should see up front.
+
+Format:
+```permit-timeline
+{
+  "project_type": "Deck Addition",
+  "phases": [
+    {"phase": "Pre-Application", "description": "Gather documents.", "duration": "1-2 weeks", "details": ["Survey", "Plans"], "inspections": [], "critical_inspections": []},
+    {"phase": "Submit Application", "description": "File with building dept.", "duration": "1 day", "details": [], "inspections": [], "critical_inspections": []},
+    {"phase": "Review", "description": "Department reviews plans.", "duration": "2-4 weeks", "details": [], "inspections": [], "critical_inspections": []},
+    {"phase": "Construction", "description": "Build per approved plans.", "duration": "varies", "details": [], "inspections": ["Framing inspection"], "critical_inspections": ["Footing inspection BEFORE pouring concrete in post holes — must re-excavate if missed"]},
+    {"phase": "Final Sign-Off", "description": "Final inspection and C/O.", "duration": "1-2 weeks", "details": [], "inspections": ["Final inspection"], "critical_inspections": []}
+  ]
+}
+```
+Use "critical_inspections" for any inspection that must happen BEFORE work is concealed (highlighted red with "Don't Miss" badge in the UI). Regular inspections go in "inspections" (amber). Always explain the consequence of missing a critical inspection.
+Tailor phases and inspections to the specific project type visible in the image.
 
 Common Great Neck area requirements to consider:
 - Building permits for structural work
@@ -31,7 +51,18 @@ Common Great Neck area requirements to consider:
 - Fence permits and height limits
 - Tree removal permits
 - Driveway/curb cut permits
-- Historical district considerations (if applicable)"""
+- Historical district considerations (if applicable)
+
+CRITICAL INSPECTION TIMING — "Don't-Miss" Windows:
+If the image shows work in progress, warn about inspections that MUST happen BEFORE work is concealed:
+- Drywell/drainage: inspect BEFORE backfill
+- Footings: inspect BEFORE concrete pour
+- Underground plumbing: inspect BEFORE slab pour or backfill
+- Framing/rough mechanicals: inspect BEFORE walls close (drywall)
+- Sewer connections: inspect BEFORE backfill
+- Pool steel: inspect BEFORE gunite
+- Deck footings: inspect BEFORE filling holes with concrete
+Clearly warn: "Schedule [inspection] BEFORE [next step] — missing it means [costly consequence].\""""
 
     def __init__(self):
         super().__init__(tools=[])

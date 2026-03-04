@@ -39,16 +39,17 @@ You MUST respond with ONLY a valid JSON object:
   "confidence": 0.85
 }
 
-Decision guide:
-- "accept": Response is relevant and adequately answers the question. Web search results count as valid sources — if the response is grounded in web results, that's acceptable even if local knowledge base had no data.
-- "retry": Response has issues that could be fixed with better searches or reasoning. Provide specific feedback on what to improve.
-- "insufficient": NO useful data was found from ANY source (local or web). The tools returned nothing actionable. Only use this when the agent truly has nothing to work with.
+Decision guide — LEAN TOWARD "accept":
+- "accept": Response provides a reasonable answer grounded in SOME evidence (local knowledge OR web search). Does not need to be perfect — partial answers, general guidance, and responses that point the user in the right direction all qualify. When in doubt, accept.
+- "retry": ONLY use for serious issues: (1) response is about the WRONG municipality/state, (2) response cites completely unrelated documents (e.g., garbage collection for a fence question), or (3) response fabricates specific code sections, fees, or legal requirements with no source backing. Minor imperfections, missing details, or general (non-specific) advice do NOT warrant a retry.
+- "insufficient": NO useful data was found from ANY source (local or web). The tools returned nothing actionable. This should be very rare.
 
-IMPORTANT distinctions:
-- If web_search returned relevant results and the response uses them appropriately → "accept"
-- If the response embellishes beyond what sources say but the core answer is grounded → "retry" with feedback to stick to verified facts
-- If the response cites completely UNRELATED documents (e.g., garbage collection for a fence question) → "retry" or "insufficient"
-- "insufficient" should be RARE — only when all searches (local AND web) returned nothing useful
+IMPORTANT — avoid unnecessary retries (they double token cost):
+- If web_search returned relevant results and the response uses them → "accept"
+- If the response is generally correct but could be more detailed → "accept" (not worth a retry)
+- If the response embellishes slightly but the core answer is grounded → "accept"
+- If the response gives general guidance when specific data isn't available → "accept"
+- Only "retry" for CLEAR factual errors or wrong-municipality responses
 Do NOT include any text outside the JSON object."""
 
 

@@ -22,7 +22,7 @@ export default function ChatPage() {
 
   // Load village from localStorage
   useEffect(() => {
-    const stored = localStorage.getItem("greatneck_village");
+    const stored = localStorage.getItem("askmura_village");
     if (!stored) {
       router.push("/");
       return;
@@ -111,7 +111,7 @@ export default function ChatPage() {
           </div>
           <button
             onClick={() => {
-              localStorage.removeItem("greatneck_village");
+              localStorage.removeItem("askmura_village");
               router.push("/");
             }}
             className="text-xs text-text-500 hover:text-text-800 transition-colors"

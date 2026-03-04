@@ -19,7 +19,7 @@ export default function VillageSelector({ onSelect }: VillageSelectorProps) {
   const [selected, setSelected] = useState<string | null>(null);
 
   useEffect(() => {
-    const stored = localStorage.getItem("greatneck_village");
+    const stored = localStorage.getItem("askmura_village");
     if (stored) {
       setSelected(stored);
     }
@@ -27,7 +27,7 @@ export default function VillageSelector({ onSelect }: VillageSelectorProps) {
 
   const handleSelect = (villageName: string) => {
     setSelected(villageName);
-    localStorage.setItem("greatneck_village", villageName);
+    localStorage.setItem("askmura_village", villageName);
     onSelect(villageName);
   };
 

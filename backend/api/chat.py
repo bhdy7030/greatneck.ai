@@ -19,6 +19,8 @@ from agents.vision import VisionAgent
 from agents.planner import PlannerAgent
 from agents.critic import CriticAgent
 from agents.base import AgentResponse
+from debug.memory import debug_memory
+from knowledge.registry import lookup_and_format as registry_lookup
 
 logger = logging.getLogger(__name__)
 
@@ -41,6 +43,7 @@ class ChatRequest(BaseModel):
     village: str = ""
     image_base64: str | None = None
     history: list[dict] = Field(default_factory=list)
+    debug: bool = False
 
 
 class ChatResponse(BaseModel):
@@ -58,7 +61,7 @@ async def chat(request: ChatRequest) -> ChatResponse:
     except Exception as e:
         logger.exception("Chat error")
         return ChatResponse(
-            response=f"Sorry, I encountered an error: {type(e).__name__}. Please try again in a moment.",
+            response=_friendly_error(e),
             sources=[],
             agent_used="error",
         )
@@ -82,6 +85,22 @@ def _sse_event(event_type: str, data: dict) -> str:
     return f"event: {event_type}\ndata: {_json.dumps(data)}\n\n"
 
 
+def _friendly_error(e: Exception) -> str:
+    """Convert raw exceptions into user-friendly messages."""
+    err = str(e).lower()
+    if "overloaded" in err or "529" in err:
+        return "Our AI service is temporarily overloaded. Please try again in a minute."
+    if "rate" in err and "limit" in err:
+        return "We're receiving too many requests right now. Please wait a moment and try again."
+    if "timeout" in err:
+        return "The request timed out. Please try again."
+    if "authentication" in err or "401" in err or "api key" in err:
+        return "There's a configuration issue on our end. Please try again later."
+    if "connection" in err or "network" in err:
+        return "Unable to reach our AI service. Please check your connection and try again."
+    return "Something went wrong. Please try again in a moment."
+
+
 async def _handle_chat_stream(request: ChatRequest) -> AsyncGenerator[str, None]:
     """Stream pipeline events as SSE."""
     context: dict[str, Any] = {
@@ -89,7 +108,24 @@ async def _handle_chat_stream(request: ChatRequest) -> AsyncGenerator[str, None]
         "history": request.history,
     }
 
+    is_debug = request.debug
+
     try:
+        # Inject debug memory instructions into context if available
+        debug_instructions = debug_memory.get_active_instructions()
+        if debug_instructions:
+            context["debug_instructions"] = debug_instructions
+
+        # Check internal registry for known answers (saves search costs)
+        registry_context = registry_lookup(request.message, request.village)
+        if registry_context:
+            context["registry_context"] = registry_context
+            if is_debug:
+                yield _sse_event("debug", {
+                    "stage": "registry",
+                    "data": {"matched": True, "context_length": len(registry_context)},
+                })
+
         # Step 1: Router
         yield _sse_event("step", {"stage": "router", "status": "running", "label": "Classifying query..."})
         routing = await _router_agent.run(request.message, context=context)
@@ -100,12 +136,35 @@ async def _handle_chat_stream(request: ChatRequest) -> AsyncGenerator[str, None]
             "label": f"Routed to {agent_name}",
             "detail": refined_query,
         })
+        if is_debug:
+            yield _sse_event("debug", {"stage": "router", "data": routing})
 
         if agent_name == "general" or agent_name not in _agents:
             agent = _agents["community"]
             agent_name = "community"
         else:
             agent = _agents[agent_name]
+
+        # Pre-inject RAG context for all agents so curated knowledge
+        # (permits, jurisdiction hierarchy, etc.) is always available
+        from rag.store import KnowledgeStore
+        _rag_store = KnowledgeStore()
+        rag_results = _rag_store.search(refined_query, village=request.village or None, n_results=3)
+        shared_results = _rag_store.search(refined_query, village=None, n_results=3)
+        all_rag = rag_results + shared_results
+        # Filter by relevance
+        all_rag = [r for r in all_rag if (r.get("distance") or 0) <= 1.2]
+        if all_rag:
+            rag_context_parts = []
+            for r in all_rag:
+                meta = r.get("metadata", {})
+                src = meta.get("source", "")
+                rag_context_parts.append(f"[{src}] {r['text'][:500]}")
+            context["rag_baseline"] = (
+                "## Pre-loaded Knowledge (from local knowledge base)\n"
+                "Use this as baseline context. You may still call search tools for more detail.\n\n"
+                + "\n\n---\n\n".join(rag_context_parts)
+            )
 
         # Step 2: Planner
         search_plan_text = None
@@ -128,6 +187,16 @@ async def _handle_chat_stream(request: ChatRequest) -> AsyncGenerator[str, None]
             })
         else:
             yield _sse_event("step", {"stage": "planner", "status": "skipped", "label": "Planning skipped (simple query)"})
+
+        if is_debug:
+            yield _sse_event("debug", {
+                "stage": "model_selection",
+                "data": {
+                    "specialist_model": specialist_model_role or "reasoning",
+                    "complexity": plan.complexity if plan else "n/a",
+                    "debug_instructions_injected": bool(debug_instructions),
+                },
+            })
 
         # Step 3: Specialist with tool call streaming
         model_label = "Sonnet" if specialist_model_role == "specialist" else "Opus"
@@ -190,6 +259,15 @@ async def _handle_chat_stream(request: ChatRequest) -> AsyncGenerator[str, None]
                 "label": f"Verdict: {verdict.decision} ({verdict.confidence:.0%})",
                 "detail": verdict.feedback[:200] if verdict.feedback else "",
             })
+            if is_debug:
+                yield _sse_event("debug", {
+                    "stage": "critic",
+                    "data": {
+                        "decision": verdict.decision,
+                        "confidence": verdict.confidence,
+                        "feedback": verdict.feedback,
+                    },
+                })
 
             if verdict.decision == "retry":
                 yield _sse_event("step", {"stage": "retry", "status": "running", "label": "Retrying with Opus + feedback..."})
@@ -256,7 +334,7 @@ async def _handle_chat_stream(request: ChatRequest) -> AsyncGenerator[str, None]
 
     except Exception as e:
         logger.exception("Stream error")
-        yield _sse_event("error", {"message": str(e)})
+        yield _sse_event("error", {"message": _friendly_error(e)})
 
 
 async def _handle_chat(request: ChatRequest) -> ChatResponse:
@@ -264,6 +342,11 @@ async def _handle_chat(request: ChatRequest) -> ChatResponse:
         "village": request.village,
         "history": request.history,
     }
+
+    # Check internal registry for known answers
+    reg_ctx = registry_lookup(request.message, request.village)
+    if reg_ctx:
+        context["registry_context"] = reg_ctx
 
     # If an image is provided, route through VisionAgent first
     if request.image_base64:

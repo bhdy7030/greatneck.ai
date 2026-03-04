@@ -19,7 +19,7 @@ interface ThemeContextValue {
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
-const STORAGE_KEY = "greatneck_theme";
+const STORAGE_KEY = "askmura_theme";
 const THEMES: Theme[] = ["light", "dark", "classic"];
 
 export function ThemeProvider({ children }: { children: ReactNode }) {

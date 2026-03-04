@@ -1,0 +1,601 @@
+GREAT NECK AREA VILLAGES — PERMIT AND INSPECTION PROCEDURES
+============================================================
+Knowledge Document for RAG Retrieval
+Last Updated: 2026-03-04
+Applies To: Village of Great Neck, Great Neck Estates, Great Neck Plaza, Kensington, Kings Point, Thomaston
+Jurisdiction: Nassau County, New York — Town of North Hempstead
+Governing Code: NYS Uniform Fire Prevention and Building Code (19 NYCRR Parts 1202–1203)
+
+
+SECTION 1: NEW YORK STATE MINIMUM INSPECTION REQUIREMENTS (19 NYCRR 1203.3)
+=============================================================================
+
+All six Great Neck area villages must comply with the NYS Uniform Fire Prevention and Building Code.
+The minimum standards are set in 19 NYCRR Part 1203, administered by the NYS Department of State
+Division of Building Standards and Codes.
+
+1.1 Required Construction Inspections Under NYS Code
+-----------------------------------------------------
+Per 19 NYCRR 1203.3(b), local jurisdictions MUST conduct inspections at the following stages:
+
+  - Worksite inspection prior to permit issuance
+  - Footing and foundation inspection
+  - Preparation for concrete slab
+  - Framing / structural inspection
+  - Rough installation of electrical systems
+  - Rough installation of plumbing systems
+  - Rough installation of mechanical systems (HVAC)
+  - Rough installation of fire protection systems (sprinklers, if applicable)
+  - Fire-resistant construction elements
+  - Energy Code compliance elements (insulation, air sealing)
+  - Final inspection upon project completion
+
+After each inspection, the authority must either:
+  (a) Approve the work as satisfactory, OR
+  (b) Notify the permit holder of non-compliance, citing the specific code provision violated.
+
+Non-compliant work must remain exposed and accessible until corrected and re-inspected.
+
+1.2 Building Permit Requirements Under NYS Code
+------------------------------------------------
+Per 19 NYCRR 1203.3(a), permits are required for all work conforming to the Uniform Code.
+
+Exemptions allowed (at local discretion):
+  - Detached accessory structures under 144 square feet
+  - Certain minor repair work
+
+Permit applications must include:
+  - Property identification
+  - Occupancy classification
+  - Construction documents drawn to scale
+  - Documentation prepared by licensed professionals showing code compliance
+
+Permits must:
+  - Have specific expiration dates
+  - Be visibly displayed at the worksite throughout the project
+
+1.3 Certificate of Occupancy (CO) Requirements Under NYS Code
+--------------------------------------------------------------
+Per 19 NYCRR 1203.3(d), a CO cannot be issued until:
+  - The structure has been inspected
+  - Determined to be in compliance with all applicable provisions of the Codes
+  - All special inspection reports have been reviewed
+  - Flood certifications obtained (if applicable)
+
+CO documents must contain:
+  - Permit number
+  - Issuance date
+  - Property identification
+  - Occupancy classification
+  - Construction type
+  - Special conditions imposed
+
+Temporary COs may be issued when:
+  - The structure or portions thereof may be occupied safely
+  - Fire safety systems are operational
+  - Means of egress are provided
+
+
+SECTION 2: COMMON PERMIT TYPES ACROSS GREAT NECK VILLAGES
+==========================================================
+
+All six villages require permits for the following categories of work:
+
+2.1 Building Permit (General Construction)
+------------------------------------------
+Required for: New construction, additions, alterations, renovations, structural modifications
+Triggers: Any excavation, construction, erection, alteration, or repair of a building or structure
+Documents required:
+  - Completed building permit application form
+  - Architectural drawings and site plans prepared by a NYS-licensed Architect or Engineer
+  - Property survey by a NYS-licensed Land Surveyor (if project affects footprint, lot coverage, or setbacks)
+  - Contractor license (Nassau County or Town of North Hempstead Home Improvement License)
+  - Contractor liability insurance certificate
+  - Workers' compensation insurance certificate
+  - Disability insurance certificate
+  - Village must be listed as certificate holder on insurance documents
+Inspections: Multiple (see Section 4)
+
+2.2 Plumbing Permit
+--------------------
+Required for: Any plumbing installation, modification, or repair
+Documents required:
+  - Plumbing permit application
+  - Description of proposed plumbing work
+  - Licensed plumber's name, license number, and insurance
+  - Plans showing scope of work
+Inspections: Rough-in + Final (see Section 4)
+
+2.3 Electrical Permit
+---------------------
+Required for: Any electrical installation, modification, or repair
+Documents required:
+  - Electrical permit application
+  - Licensed electrician's name, license number, and insurance
+  - Plans/description of electrical work
+Inspections: Rough-in + Final (see Section 4)
+
+2.4 Mechanical Permit (HVAC)
+-----------------------------
+Required for: Heating, ventilating, air conditioning installations or modifications
+Documents required:
+  - Mechanical permit application
+  - Equipment specifications
+  - Licensed contractor information and insurance
+Inspections: Rough-in + Final
+
+2.5 Demolition Permit
+----------------------
+Required for: Full or partial demolition of structures
+Documents required:
+  - Demolition permit application
+  - Asbestos survey (required by NYS for pre-1981 buildings)
+  - Site plan showing what is being demolished
+  - Insurance documentation
+Note: Kings Point charges $10,000 for demolition of substantially all non-residential structures.
+
+2.6 Swimming Pool Permit
+-------------------------
+Required for: In-ground and above-ground pools
+Requirements:
+  - Pool must be located entirely in the rear yard
+  - Cannot exceed 25% of unoccupied rear yard area (Great Neck Estates)
+  - Minimum 20 feet from any lot line (Great Neck Estates)
+  - Must be enclosed by security fence minimum 4 feet high with self-closing/self-latching gate
+  - Location survey required
+  - Kings Point pool permit fee: $1,500
+  - Great Neck Estates pool permit fee: $300
+Inspections: Excavation, electrical, plumbing, barrier/fence, final
+
+2.7 Fence Permit
+-----------------
+Required for: Installation of any fence
+Typical height restrictions (varies by village, verify locally):
+  - Front yard: Maximum 4 feet
+  - Side yard: Maximum 5 feet
+  - Rear yard: Maximum 6 feet
+Documents required:
+  - Permit application
+  - Site plan showing fence location, height, and materials
+  - Survey showing property lines
+  - Contractor insurance (if applicable)
+Inspections: Usually single final inspection
+
+2.8 Driveway / Paving Permit
+-----------------------------
+Required for: Construction, reconstruction, or modification of driveways and parking areas
+Additional requirements:
+  - If curb cut is needed: separate curb cut permit from the relevant highway authority
+    (Town of North Hempstead or Nassau County DPW for county roads)
+  - Site plan showing existing and proposed driveway dimensions
+  - Drainage plan (to prevent runoff onto neighboring properties or public right-of-way)
+Inspections: Subgrade preparation, final paving inspection
+
+2.9 Deck Permit
+----------------
+Required for: Attached or detached decks
+Documents required:
+  - Architectural plans showing dimensions, height, railing details
+  - Structural details (post footings, beam sizes, joist spacing)
+  - Survey showing setback compliance
+Inspections: Footing/foundation, framing, final
+
+2.10 Generator Permit
+---------------------
+Required for: Standby or permanent generator installation
+Requirements:
+  - Generator Permit Application
+  - Sketch plan showing proposed location on property
+  - Must comply with zoning setback regulations
+  - Must comply with NFPA and NEC standards
+  - Contractor names and insurance information
+  - Fee: $200 (Great Neck Estates)
+Inspections: Electrical, gas connection (if applicable), final
+
+2.11 Tree Removal Permit
+--------------------------
+Required in most villages for removal of trees above a certain diameter (e.g., 6+ inches in Great Neck Estates)
+Kings Point: Approved permits expire six months from date of issuance; no work under expired permit
+
+2.12 Roofing / Siding Permit
+------------------------------
+Required for: Re-roofing or residing a structure
+Documents: Permit application, contractor license and insurance, scope of work description
+Inspections: Usually single final inspection (may include mid-work inspection for structural sheathing)
+
+2.13 Temporary Storage Unit Permit
+------------------------------------
+Required for: Placement of dumpsters or temporary storage containers during construction
+Available at: Village of Great Neck and others
+
+
+SECTION 3: TYPICAL PERMIT PROCESS FLOW
+=======================================
+
+3.1 Standard Process (All Villages)
+------------------------------------
+
+Step 1 — Pre-Application (Optional but Recommended)
+  - Contact village building department to discuss project scope
+  - Determine which permits are needed
+  - Identify if variances or Planning Board / Architectural Review Board approval is required
+
+Step 2 — Prepare Application Package
+  - Hire NYS-licensed Architect or Engineer to prepare construction documents
+  - Obtain current property survey from NYS-licensed Land Surveyor
+  - Gather contractor licenses and insurance certificates
+  - Complete permit application form(s)
+  - Pay application/permit fees
+
+Step 3 — Submit Application
+  - Submit to village Building Inspector / Building Department
+  - Great Neck Estates: "in such form and number of copies as may be prescribed"
+  - Village of Great Neck: One original + three copies of drawings, plus PDF on DVD for Planning Board
+  - Ensure all documents are complete — incomplete applications will not be accepted (Kings Point explicitly states this)
+
+Step 4 — Plan Review
+  - Building Inspector reviews for code compliance
+  - Zoning compliance verified (setbacks, lot coverage, FAR, height)
+  - If variances needed: application goes to Zoning Board of Appeals (ZBA)
+  - If Architectural Review Board (ARB) review required: Kensington requires ARB review for all structures, alterations, and demolitions
+  - Kings Point: "Building Permits are issued conditionally pending compliance with Building Department comments noted on the drawings in red"
+
+Step 5 — Permit Issuance
+  - Permit issued after successful plan review
+  - Post permit at worksite in a place available for public inspection
+  - Kings Point: permits valid for 24 months; extension fees required after expiration
+
+Step 6 — Construction with Inspections
+  - Contractor schedules inspections with Building Department
+  - Inspection requests must be made 24 hours in advance
+  - Work must remain accessible and exposed until inspected and accepted
+  - Failed inspections: correct work, request re-inspection
+
+Step 7 — Final Inspection and CO/CC
+  - Request final inspection upon completion
+  - All work must match approved plans
+  - Great Neck Estates (structures >2,000 sq ft): Architect/engineer must file a final certificate certifying conformity with filed plans
+  - If building footprint changed: as-built survey required before CO issued
+  - Sewer district compliance certificate may be required
+  - Certificate of Occupancy (CO) or Certificate of Completion (CC) issued
+
+3.2 Typical Review and Approval Timelines
+------------------------------------------
+NOTE: Timelines vary significantly by village, project complexity, and season.
+These are general estimates based on common practice in Nassau County villages.
+
+  - Simple permits (fence, roofing, siding): 1–5 business days
+  - Standard building permits (interior renovation): 2–4 weeks
+  - Complex projects (additions, new construction): 4–8 weeks
+  - Projects requiring variances: Add 4–8 weeks (monthly ZBA meetings)
+  - Projects requiring Planning Board review: Monthly meeting cycle
+    (Great Neck Planning Board meets third Thursday of each month)
+  - Inspection scheduling: 24–48 hours advance notice required
+  - Permits expire: December 31 each year (Village of Great Neck) or 24 months from issuance (Kings Point)
+
+
+SECTION 4: INSPECTION STAGES BY PROJECT TYPE
+==============================================
+
+4.1 New Construction / Major Addition
+--------------------------------------
+Inspection sequence (multiple inspections required):
+  1. Pre-construction site inspection (verify survey stakes, site conditions)
+  2. Footing / Foundation inspection — before concrete pour
+  3. Foundation walls and damp-proofing — before backfill
+  4. Underground plumbing — before slab pour or backfill
+  5. Concrete slab preparation — before pour
+  6. Rough framing — after framing complete, before insulation
+     Includes: structural connections, fireblocking, draft-stopping
+  7. Rough plumbing — after rough-in, before walls closed
+     Includes: supply lines, drain/waste/vent (DWV), pressure test
+  8. Rough electrical — after rough-in, before walls closed
+     Includes: wiring, boxes, panel, grounding
+  9. Rough mechanical (HVAC) — after rough-in, before walls closed
+     Includes: ductwork, refrigerant lines, gas piping
+  10. Insulation / Energy Code inspection — before drywall
+      Includes: R-values, air sealing, vapor barriers per NYS Energy Code
+  11. Fire-resistant construction (if applicable) — firewall ratings, draft stops
+  12. Final plumbing — fixtures installed, water test
+  13. Final electrical — devices, fixtures, panel schedule, GFCI/AFCI testing
+  14. Final mechanical — equipment startup, ventilation verification
+  15. Final building inspection — overall completion, egress, safety
+  16. Certificate of Occupancy issued upon passing all finals
+
+4.2 Interior Renovation / Alteration
+-------------------------------------
+Inspections typically required:
+  1. Rough framing (if structural changes)
+  2. Rough plumbing (if plumbing work)
+  3. Rough electrical (if electrical work)
+  4. Rough mechanical (if HVAC work)
+  5. Insulation (if exterior walls opened or Energy Code triggered)
+  6. Final inspection
+  7. Certificate of Completion issued
+
+4.3 Plumbing-Only Project
+--------------------------
+Inspections:
+  1. Underground rough (if below slab or underground): before backfill/cover
+  2. Rough-in inspection: supply and DWV piping installed, pressure tested, before walls closed
+  3. Final inspection: fixtures connected, tested, operational
+
+4.4 Electrical-Only Project
+-----------------------------
+Inspections:
+  1. Rough-in inspection: wiring, boxes, panel connections — before walls closed
+  2. Final inspection: devices installed, circuits tested, GFCI/AFCI verified
+
+4.5 Structural / Framing
+--------------------------
+Inspections:
+  1. Footing inspection: before concrete pour, verify dimensions, rebar, soil bearing
+  2. Foundation inspection: foundation walls complete, before backfill
+  3. Rough framing: all structural members in place, connections verified, before closing walls
+     Checked items: beam sizes, joist spacing, header sizes, hold-downs, hurricane ties,
+     sheathing nailing patterns, fireblocking
+
+4.6 Foundation Work
+--------------------
+Inspections:
+  1. Footing excavation: soil conditions, dimensions, rebar placement
+  2. Footing pour: before concrete placement
+  3. Foundation walls: formwork, rebar, anchor bolts — before pour
+  4. Waterproofing/damp-proofing: before backfill
+  5. Backfill: final grade around foundation
+
+4.7 Driveway / Paving
+-----------------------
+Inspections:
+  1. Subgrade preparation: base material, compaction, drainage provisions
+  2. Final paving inspection: surface grade, drainage, compliance with approved plans
+
+4.8 Deck Construction
+----------------------
+Inspections:
+  1. Footing holes: depth, diameter, soil conditions — before concrete
+  2. Framing: posts, beams, joists, ledger attachment, hardware — before decking
+  3. Final: decking, railings (36" min for residential, 42" for commercial), stairs, handrails
+
+4.9 Fence Installation
+-----------------------
+Inspections:
+  Single final inspection: height, location relative to property lines, materials match approval
+
+4.10 Roofing
+--------------
+Inspections:
+  Single or two inspections depending on scope:
+  - Sheathing inspection (if structural sheathing replaced)
+  - Final inspection: materials, flashing, ventilation
+
+4.11 Generator Installation
+-----------------------------
+Inspections:
+  1. Electrical inspection: transfer switch, wiring, grounding
+  2. Gas connection inspection (if natural gas): gas piping, pressure test
+  3. Final: operational test, setback verification, noise compliance
+
+
+SECTION 5: VILLAGE-SPECIFIC DIFFERENCES
+=========================================
+
+5.1 Village of Great Neck
+--------------------------
+Website: https://www.greatneckvillage.org
+Building Dept: (516) 482-2000
+Key staff: Michael Sweeney (Superintendent), Christopher DeGiso (Code Enforcement), Raffaella Bertucci (Building Inspector)
+Permits available: Building, Plumbing, Mechanical, Temporary Storage Unit, Commercial Signs, Tree Removal, Landscaping
+Inspection hours: Monday–Friday, 8 AM–3 PM
+Permit expiration: December 31 each year (must renew annually)
+Planning Board: Meets third Thursday of each month
+Special requirements:
+  - Planning Board submissions: one original + three copies of drawings, plus PDFs on DVD
+  - Contractor license and insurance required before permit issuance
+
+5.2 Village of Great Neck Estates
+----------------------------------
+Website: https://www.greatneckestates-ny.gov
+Building Dept: (516) 482-0019
+Key staff: Michael Sweeney (Superintendent), Christopher DeGiso (Code Enforcement), Barbara Dziorney (Building Inspector), Michael Bogart (Safety Inspector)
+eCode360: https://ecode360.com/5075209
+Permits available: Building, Plumbing, Electrical, Mechanical, Generator ($200)
+Key provisions:
+  - ALL applications must include a tree plan showing location of trees and root systems within 50 feet of construction
+  - Permit needed for: construction, erection, alteration, repair of buildings, structures, driveways, parking areas, plumbing, HVAC, electrical
+  - For structures or alterations >2,000 sq ft total floor area: architect/engineer must file final certificate certifying conformity before CO issued
+  - If building footprint changed in any way: as-built survey required before CO
+  - Sewer district compliance certificate required before CO (Great Neck Sewer District or Belgrave Sewer District)
+  - Additions/alterations exceeding $3,000 or 2,000 cubic feet: subject to all code provisions
+  - Cash deposit of $25,000 required where proposed construction exceeds 40% of floor area ratio (site restoration guarantee)
+  - All construction performed by licensed Home Improvement Contractors, Plumbers, and Electricians with liability, workers' comp, and disability insurance
+  - Certificate of occupancy includes certificate of completion
+Survey requirements for CO:
+  - Current original architectural survey (signed and sealed by NYS-licensed surveyor)
+  - Must show: property dimensions, lot area calculation, topographic contour lines, dimensions of all structures, setback dimensions, species and size of trees >3" caliper, retaining walls, driveways, walkways, sidewalks, curb cuts, all hard surfaces
+
+5.3 Village of Great Neck Plaza
+---------------------------------
+Website: https://greatneckplaza.net
+Building Dept: (516) 482-4500
+Address: 2 Gussack Plaza, Great Neck, NY 11022
+Hours: Monday–Friday, 9:00 AM–4:45 PM
+eCode360: https://ecode360.com/11774925
+Permits available: Building, Electrical, Plumbing
+Key provisions:
+  - Contractors licensed by Town of North Hempstead or Nassau County do NOT need a separate village license
+  - Building Inspector keeps permanent official records of all transactions
+  - Building Inspector works with Nassau County Fire Marshal's Office and Code Enforcement Unit
+  - Building Inspector annually submits written report to Village Board
+Construction hours:
+  - Monday–Friday: 8:00 AM–6:00 PM
+  - Saturday: 9:00 AM–5:00 PM
+  - Sunday: No work permitted
+Inspections: Foundation, framing, electrical, plumbing, final
+
+5.4 Village of Kensington
+---------------------------
+Website: https://vok-ny.com
+Building Dept: (516) 482-4409
+Address: 2 Nassau Dr, Great Neck, NY 11021
+Hours: Monday–Friday, 9:00 AM–4:00 PM
+Key staff: Andrew Bloom (Commissioner of Buildings), Ronen Abergel (Tree Commissioner), Mark Vincent Kruse, AIA (Building Inspector)
+Permits available: Building, Plumbing, Rental Occupancy, Tree Removal, Road Opening, Tag/Garage Sale, Filming, CO/CC
+Key provisions:
+  - ALL applications reviewed by Architectural Review Board (ARB) — chairperson + four members
+  - ARB may recommend approval, disapproval, or modifications to Board of Trustees
+  - Requires Nassau County License for contractors (or applicable town license for plumbers/electricians)
+  - Insurance: Village of Kensington must be listed as certificate holder
+  - Cash deposit of $25,000 required where construction exceeds 40% of floor area ratio
+  - Permit copy must be posted on premises during all work
+  - Building Inspector may require certified copy of approved plans on-site at all times
+
+5.5 Village of Kings Point
+---------------------------
+Website: https://www.villageofkingspoint.org
+Building Dept: (516) 504-1000
+Address: 32 Steppingstone Lane, Kings Point, NY 11024
+Hours: Monday–Friday, 9:30 AM–4:30 PM
+eCode360: https://ecode360.com/11009169
+Permits available: Building, Demolition ($10,000 fee), Tree Removal, Drainage, Mechanical, Swimming Pool ($1,500), Permit Amendment
+Additional forms: Response to Omissions, Building Height Certification, Foundation Location Certification, Swimming Pool Location Survey
+Key provisions:
+  - ALL license and insurance documents must be valid and current; expired/invalid documents discarded without notification
+  - Contractor license name/address MUST match insurance document name/address
+  - Village of Kings Point MUST be listed as certificate holder on insurance
+  - Incomplete applications will NOT be accepted or temporarily held
+  - Permits issued conditionally pending compliance with Building Dept comments noted in red on drawings
+  - Building permits valid for 24 months
+  - Extension fees required for permits open past 24 months before CO/CC issuance
+  - All new construction must be shown on a final survey by a licensed land surveyor
+  - Work must remain accessible and exposed until inspected and accepted
+  - Owner grants Building Dept permission to enter premises at all reasonable times for inspection
+Inspections: Foundation, framing, electrical, plumbing, fire safety, final
+
+5.6 Village of Thomaston
+--------------------------
+Website: https://villageofthomastonny.gov (also https://www.villageofthomaston.org)
+Building Dept: (516) 482-3110
+Address: 100 East Shore Road, Great Neck, NY 11023
+Hours: Monday–Friday, 9:00 AM–4:00 PM
+Key staff: Mark Vincent Kruse, AIA (Building Official — also serves Kensington)
+Permits available: Building, Plumbing (downloadable from website)
+Key provisions:
+  - Landmark Preservation Commission review for designated properties
+  - Building Inspector transmits applications to Commission for review
+  - Separate permits required for electrical, plumbing, and HVAC work
+  - Property maintenance code applies to all one- and two-family homes
+Inspections: Temporary electric service, footing/pier, underground plumbing, rough framing, rough plumbing, rough electrical, rough heating/cooling, insulation, electrical service, final (CO/CC)
+
+
+SECTION 6: REQUIRED DOCUMENTS SUMMARY
+=======================================
+
+6.1 For All Building Permit Applications
+------------------------------------------
+  - Completed permit application form (village-specific)
+  - Architectural drawings/construction documents (prepared by NYS-licensed Architect or Engineer)
+    - Must be drawn to scale
+    - Include floor plans, elevations, sections, structural details
+  - Property survey (NYS-licensed Land Surveyor) — required when:
+    - New construction
+    - Additions that change building footprint
+    - Projects affecting lot coverage or setbacks
+    - As-built survey required for CO when footprint changed
+  - Contractor documentation:
+    - Nassau County or Town of North Hempstead Home Improvement Contractor License
+    - Licensed Master Plumber (for plumbing work)
+    - Licensed Master Electrician (for electrical work)
+    - General liability insurance certificate
+    - Workers' compensation insurance certificate
+    - Disability insurance certificate
+    - Village listed as certificate holder
+  - Permit fee payment
+
+6.2 Additional Documents by Project Type
+------------------------------------------
+  - Tree plan (Great Neck Estates: showing all trees within 50 feet)
+  - Drainage plan (Kings Point: for all construction projects)
+  - Asbestos survey (demolition of pre-1981 structures)
+  - Sewer district compliance certificate (Great Neck Estates: before CO)
+  - Flood zone documentation (if applicable)
+  - Energy Code compliance documentation
+  - Special inspection reports (from third-party inspectors, if required)
+  - Architect/engineer final conformity certificate (Great Neck Estates: for structures >2,000 sq ft)
+
+6.3 For Variance Applications
+-------------------------------
+  - All standard permit documents
+  - Radius map (typically 200 feet from property boundaries)
+  - Certified mailing labels for all property owners within radius
+  - Environmental assessment form
+  - Statement of hardship or practical difficulty
+
+
+SECTION 7: KEY CONTACTS AND RESOURCES
+=======================================
+
+Village Building Departments:
+  - Village of Great Neck: (516) 482-2000 — www.greatneckvillage.org
+  - Great Neck Estates: (516) 482-0019 — www.greatneckestates-ny.gov
+  - Great Neck Plaza: (516) 482-4500 — greatneckplaza.net
+  - Kensington: (516) 482-4409 — vok-ny.com
+  - Kings Point: (516) 504-1000 — www.villageofkingspoint.org
+  - Thomaston: (516) 482-3110 — villageofthomastonny.gov
+
+Other Relevant Agencies:
+  - Town of North Hempstead Building Dept: (516) 869-6311
+  - Nassau County DPW (road/curb cut permits on county roads): (516) 571-6900
+  - Nassau County Fire Marshal: (516) 572-1400
+  - NYS Department of State — Building Standards and Codes: dos.ny.gov/building-standards-and-codes
+
+Online Code Resources:
+  - Great Neck Estates eCode360: https://ecode360.com/GR0716
+  - Great Neck Plaza eCode360: https://ecode360.com/11774925
+  - Kings Point eCode360: https://ecode360.com/KI0771
+  - Kensington eCode360: https://ecode360.com/KE1161
+  - Thomaston eCode360: https://ecode360.com/TH0685
+  - Village of Great Neck eCode360: https://ecode360.com/GR0590
+  - NYS Building Code (UpCodes): https://up.codes/codes/new_york
+  - 19 NYCRR Part 1203 (Cornell LII): https://www.law.cornell.edu/regulations/new-york/19-NYCRR-1203.3
+
+
+SECTION 8: IMPORTANT NOTES FOR RAG AGENT
+==========================================
+
+8.1 Always Recommend Calling the Village
+------------------------------------------
+Permit requirements, fees, and procedures can change. Always advise users to
+contact their specific village building department to confirm current requirements
+before starting work.
+
+8.2 Village vs. Town vs. County Jurisdiction
+---------------------------------------------
+The Great Neck area has overlapping jurisdictions:
+  - VILLAGE building department: handles building permits, inspections, COs
+  - TOWN of North Hempstead: handles some licensing, solid waste, certain zoning matters
+  - NASSAU COUNTY: handles county road permits, fire marshal, some licensing
+  - NEW YORK STATE: sets minimum building code standards that all villages must meet
+Users should always start with their VILLAGE building department for construction permits.
+
+8.3 Shared Personnel
+----------------------
+Some building officials serve multiple villages:
+  - Mark Vincent Kruse, AIA serves both Kensington and Thomaston
+  - Michael Sweeney serves Village of Great Neck and Great Neck Estates
+This is common in small Nassau County villages. Office hours and response times may be affected.
+
+8.4 Insurance and Licensing Requirements Are Strict
+-----------------------------------------------------
+All villages require valid, current contractor licensing and insurance.
+Kings Point explicitly states that expired or invalid documents are discarded without notification.
+The village must typically be listed as certificate holder on insurance documents.
+Homeowners should verify their contractor's credentials before hiring.
+
+8.5 Permit Expiration
+-----------------------
+Permits have expiration dates:
+  - Village of Great Neck: ALL permits expire December 31 each year
+  - Kings Point: Permits valid for 24 months, extension fees apply after
+  - Other villages: Varies — check with village
+Expired permits may require reapplication and additional fees.

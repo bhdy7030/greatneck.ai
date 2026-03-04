@@ -242,7 +242,7 @@ async def scrape_community_resources(client: httpx.AsyncClient) -> int:
 
 
 async def main():
-    print("GreatNeck Community Assistant — Full Data Scraper")
+    print("AskMura — Full Data Scraper")
     print("=" * 60)
 
     # Clear existing data first
@@ -257,7 +257,7 @@ async def main():
                 pass
 
     async with httpx.AsyncClient(
-        headers={"User-Agent": "GreatNeckAssistant/0.1 (community tool)"},
+        headers={"User-Agent": "AskMura/0.1 (community tool)"},
         timeout=30.0,
     ) as client:
         t1 = await scrape_village_websites(client)

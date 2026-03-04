@@ -17,12 +17,21 @@ _FORMS_DIR = settings.knowledge_dir / "sources" / "forms"
 )
 async def search_permits(project_type: str, village: str = "") -> str:
     """Search knowledge store with category='permits' filter."""
+    # Search village-specific collection
     results = _store.search(
         project_type,
         village=village or None,
         n_results=5,
         where={"category": "permits"},
     )
+    # Always search shared collection too (permit procedures, NYS code, etc.)
+    shared_results = _store.search(
+        project_type,
+        village=None,
+        n_results=3,
+        where={"category": "permits"},
+    )
+    results = results + shared_results
     results = _filter_relevant(results)
 
     # If no permit-specific results, broaden search
@@ -32,6 +41,12 @@ async def search_permits(project_type: str, village: str = "") -> str:
             village=village or None,
             n_results=5,
         )
+        shared_broad = _store.search(
+            f"permit {project_type}",
+            village=None,
+            n_results=3,
+        )
+        results = results + shared_broad
         results = _filter_relevant(results)
 
     if not results:

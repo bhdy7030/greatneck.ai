@@ -38,7 +38,7 @@ async def scrape_village_site(url: str) -> dict:
     async with httpx.AsyncClient(
         timeout=30.0,
         follow_redirects=True,
-        headers={"User-Agent": "GreatNeckAssistant/0.1 (community research)"},
+        headers={"User-Agent": "AskMura/0.1 (community research)"},
     ) as client:
         try:
             response = await client.get(url)
@@ -89,7 +89,7 @@ async def scrape_permit_forms(url: str) -> list[dict]:
     async with httpx.AsyncClient(
         timeout=30.0,
         follow_redirects=True,
-        headers={"User-Agent": "GreatNeckAssistant/0.1 (community research)"},
+        headers={"User-Agent": "AskMura/0.1 (community research)"},
     ) as client:
         try:
             response = await client.get(url)

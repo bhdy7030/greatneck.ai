@@ -1,0 +1,158 @@
+# ──────────────────────────────────────────────────────────────
+# Great Neck Common Answers Registry
+# ──────────────────────────────────────────────────────────────
+#
+# This file is the SINGLE SOURCE OF TRUTH for frequently-asked
+# community questions.  Backend engineers maintain it directly.
+#
+# HOW IT WORKS:
+#   1. On startup the registry is loaded into memory (no RAG).
+#   2. When a user query arrives, keywords are matched.
+#   3. Matching entries are injected as HIGH-PRIORITY context
+#      into the agent's system prompt — no tool call needed.
+#   4. If `last_verified` is older than `stale_days`, the agent
+#      is told to VERIFY via web_search before trusting the answer.
+#
+# ADDING AN ENTRY:
+#   - `topic`:          Short human label (for engineer readability)
+#   - `keywords`:       List of lowercase trigger words/phrases.
+#                       A query must match ≥2 keywords to trigger.
+#   - `answer`:         The known answer. Keep it factual and concise.
+#   - `source_name`:    Canonical source (survives URL changes).
+#   - `source_url`:     Current URL (hint — may go stale).
+#   - `applies_to`:     "all" or a list of village names.
+#   - `last_verified`:  YYYY-MM-DD — when an engineer last checked.
+#   - `stale_days`:     After this many days, agent will re-verify.
+#   - `category`:       For filtering: community, permits, codes, etc.
+# ──────────────────────────────────────────────────────────────
+
+entries:
+
+  - topic: "Ice rink public sessions"
+    keywords: [ice, rink, skating, public session, ice rink]
+    answer: |
+      The Andrew Stergiopoulos Ice Rink is operated by the Great Neck
+      Park District. It offers public skating sessions, figure skating,
+      hockey leagues, and learn-to-skate programs. Public session
+      schedules vary by season — check the Park District website for
+      current hours and fees. The rink is located at 70 Arrandale Ave,
+      Great Neck, NY 11023.
+
+      NOTE TO AGENT: Schedules change frequently due to holidays, private
+      events, and maintenance. When answering schedule questions, always
+      check for cancellation or closure announcements on the source pages
+      and warn the user to verify before going.
+
+      Relevant links:
+      - Public sessions schedule: https://www.gnparksny.gov/720/Public-Sessions
+      - Ice rink main page: https://www.greatneckparkdistrict.com/ice-rink
+      - Great Neck Park District: https://www.gnparksny.gov
+    source_name: "Great Neck Park District — Ice Rink"
+    source_url: "https://www.gnparksny.gov/720/Public-Sessions"
+    applies_to: all
+    last_verified: "2026-03-03"
+    stale_days: 90
+    category: community
+
+  - topic: "Garbage / recycling pickup"
+    keywords: [garbage, trash, recycling, pickup, sanitation, collection]
+    answer: |
+      Garbage and recycling collection for most Great Neck area villages
+      is provided by the Town of North Hempstead Solid Waste Management
+      Authority. Pickup schedules vary by village and street.  Check the
+      Town of North Hempstead website or call 311 for your specific
+      schedule. Common rules: bins must be at the curb by 6 AM on
+      collection day and removed by midnight. Bulk item pickup requires
+      a separate appointment.
+    source_name: "Town of North Hempstead — Solid Waste"
+    source_url: "https://www.northhempsteadny.gov/solid-waste"
+    applies_to: all
+    last_verified: "2026-03-03"
+    stale_days: 60
+    category: community
+
+  - topic: "Great Neck Library"
+    keywords: [library, library hours, book, borrow, library card]
+    answer: |
+      The Great Neck Library has a main branch at 159 Bayview Ave and
+      branches in Lakeville and Station. It serves all Great Neck area
+      residents regardless of village. Library cards are free for
+      residents. Hours vary by branch — check the library website.
+      The library also offers meeting rooms, programs, and digital
+      resources.
+    source_name: "Great Neck Library"
+    source_url: "https://www.greatnecklibrary.org"
+    applies_to: all
+    last_verified: "2026-03-03"
+    stale_days: 90
+    category: community
+
+  - topic: "Great Neck School District"
+    keywords: [school, school district, enrollment, school zone, high school, elementary, middle school]
+    answer: |
+      The Great Neck Union Free School District covers most of the
+      Great Neck peninsula.  It includes: North & South High Schools,
+      North & South Middle Schools, and 7 elementary schools (Baker Hill,
+      E.M. Baker, Saddle Rock, Lakeville, Arrandale, Kennedy, Parkville).
+      The district office is at 345 Lakeville Rd.  Enrollment is based
+      on residential address.
+    source_name: "Great Neck Public Schools"
+    source_url: "https://www.greatneck.k12.ny.us"
+    applies_to: all
+    last_verified: "2026-03-03"
+    stale_days: 180
+    category: community
+
+  - topic: "Parks and recreation"
+    keywords: [park, parks, recreation, pool, tennis, playground, park district]
+    answer: |
+      The Great Neck Park District operates parks, pools, tennis courts,
+      playgrounds, and recreation programs across the peninsula. Key
+      facilities include Steppingstone Park, Kings Point Park, Parkwood
+      Pool, and the Ice Rink. Residents must obtain a Park District ID
+      (leisure pass) for access. Non-residents may have limited access
+      with higher fees.
+    source_name: "Great Neck Park District"
+    source_url: "https://www.gnparksny.gov"
+    applies_to: all
+    last_verified: "2026-03-03"
+    stale_days: 90
+    category: community
+
+  - topic: "Building permit general process"
+    keywords: [building permit, permit process, how to get permit, apply permit, permit application]
+    answer: |
+      To obtain a building permit in the Great Neck area:
+      1. Contact YOUR VILLAGE's building department (not the town)
+      2. Submit plans/drawings (architect-stamped for structural work)
+      3. Include a survey if the project affects lot coverage or setbacks
+      4. Pay the application fee
+      5. Wait for plan review and approval
+      6. Schedule inspections during construction
+      7. Obtain a Certificate of Occupancy (C/O) upon completion.
+      Requirements and fees vary by village. Always call your village
+      building department first.
+    source_name: "General permit guidance"
+    source_url: ""
+    applies_to: all
+    last_verified: "2026-03-03"
+    stale_days: 365
+    category: permits
+
+  - topic: "Drone flying regulations"
+    keywords: [drone, fly drone, uav, unmanned aircraft, drone rules]
+    answer: |
+      Drone flying is primarily regulated at the FEDERAL level by the
+      FAA.  Recreational drone pilots must: register with the FAA,
+      follow the TRUST test, fly below 400 feet, stay away from airports
+      and restricted airspace.  The Great Neck area is close to several
+      airports — always check the B4UFLY app for airspace restrictions.
+      Some villages may have additional local ordinances restricting
+      drone use in parks or over residential areas.  Check your specific
+      village code.
+    source_name: "FAA drone regulations + local"
+    source_url: "https://www.faa.gov/uas/recreational_flyers"
+    applies_to: all
+    last_verified: "2026-03-03"
+    stale_days: 180
+    category: codes

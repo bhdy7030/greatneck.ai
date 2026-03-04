@@ -1,0 +1,1224 @@
+CRITICAL INSPECTION TIMING — Don't-Miss Inspection Windows
+============================================================
+Knowledge Document for RAG Retrieval
+Last Updated: 2026-03-04
+Applies To: Village of Great Neck, Great Neck Estates, Great Neck Plaza, Kensington, Kings Point, Thomaston
+Jurisdiction: Nassau County, New York — Town of North Hempstead
+Governing Code: NYS Uniform Fire Prevention and Building Code (19 NYCRR Parts 1202-1203),
+  2020 Residential Code of New York State (RCNYS), IRC R109 Inspections,
+  2020 Energy Conservation Construction Code of New York State
+
+
+PURPOSE OF THIS DOCUMENT
+=========================
+
+Construction inspections exist to verify that work hidden behind walls, underground, or under
+concrete actually meets code. Once work is concealed, the ONLY way to verify compliance is to
+tear it back open — at enormous cost to the homeowner or contractor.
+
+This document identifies every critical "don't-miss" inspection window: the exact moment when
+work MUST be inspected BEFORE it gets covered, buried, or enclosed. Missing these windows
+triggers mandatory exposure of concealed work — re-excavation, demolition of drywall, removal
+of concrete — or results in stop-work orders, fines, and inability to obtain a Certificate of
+Occupancy.
+
+KEY LEGAL BASIS: Under 19 NYCRR 1203.3 and IRC R109, all concealed work — structural,
+mechanical, electrical, plumbing — must be inspected and approved BEFORE concealment.
+The building inspector must be given minimum 24-48 hours notice to schedule inspections.
+No work may continue past an inspection point until that inspection is completed and approved.
+
+
+=============================================================================
+SECTION 1: DRIVEWAY, CURB CUT, AND SITE DRAINAGE WORK
+=============================================================================
+
+1.1 Drywell Inspection — BEFORE Backfill
+------------------------------------------
+WHAT: Stormwater drainage drywells must be inspected before they are buried.
+
+WHEN EXACTLY: After the drywell structure is installed, the leaching collar (3-foot graded
+  leaching material around the drywell per Nassau County drainage standards) is in place,
+  and all connections are made — but BEFORE any backfill covers the drywell.
+
+WHAT MUST BE VISIBLE/ACCESSIBLE:
+  - Drywell structure (precast rings or block construction)
+  - 3-foot collar of graded leaching material
+  - All inlet pipe connections
+  - Overflow connections (if any)
+  - Proper depth (max 25 feet per Nassau County standards; if suitable leaching material
+    does not occur within 25 feet, excavation must extend 6 feet into suitable material)
+  - Distance from structures (minimum 20 feet per Nassau County standards; may be reduced
+    to 10 feet on lots of insufficient size with engineer certification per Town of North
+    Hempstead code)
+  - Temporary grate or weighted silt fence installed during construction per Town of
+    North Hempstead requirement
+
+CONSEQUENCES IF MISSED:
+  - Complete re-excavation of drywell to expose connections and structure
+  - Typical cost: $2,000-$5,000+ depending on depth and site conditions
+  - Possible damage to newly paved driveway if drywell is under or adjacent to it
+  - Cannot obtain CO without approved drainage inspection
+
+NASSAU COUNTY / GREAT NECK SPECIFICS:
+  - Nassau County DPW drainage standards govern drywell specifications
+  - Town of North Hempstead requires drywells installed BEFORE clearing other areas for
+    new construction
+  - Village of Kings Point requires a separate drainage permit and drainage plan for all
+    construction projects
+  - Great Neck Estates surveys must show storm-water drywell locations
+
+1.2 Subgrade Inspection — BEFORE Paving
+-----------------------------------------
+WHAT: The prepared base (subgrade) for driveway paving must be inspected before the
+  concrete or asphalt is placed.
+
+WHEN EXACTLY: After excavation is complete, base material (gravel/crushed stone) is spread
+  and compacted, and any reinforcement (wire mesh or rebar for concrete driveways) is placed —
+  but BEFORE concrete is poured or asphalt is laid.
+
+WHAT MUST BE VISIBLE/ACCESSIBLE:
+  - Subgrade compaction and grading
+  - Base material type and thickness
+  - Proper drainage pitch (water must flow away from structures and not onto neighboring
+    properties or public right-of-way)
+  - Reinforcement placement (if concrete driveway)
+  - Formwork for concrete
+  - Driveway thickness compliance (Village of Great Neck: driveways within the street line
+    must be at least 6 inches thick)
+
+CONSEQUENCES IF MISSED:
+  - Remove and replace all paving to expose subgrade
+  - Typical cost: $3,000-$10,000+ depending on driveway size and material
+  - If drainage is wrong, may need to tear up and regrade entire area
+
+NASSAU COUNTY / GREAT NECK SPECIFICS:
+  - Village of Great Neck: All concrete must have minimum compressive strength of 3,300 psi
+    at 28 days and must be air-entraining concrete
+  - Village of Great Neck: Driveway design must be approved by the Superintendent of
+    Public Works
+  - Great Neck Estates: Permit required for any new driveway, patio, walkway, or paved
+    area of 200 square feet or more (fee: $100 + $1/sq ft)
+
+1.3 Curb Cut Forms Inspection — BEFORE Pour
+---------------------------------------------
+WHAT: Curb cut formwork must be inspected before concrete is placed.
+
+WHEN EXACTLY: After forms are set for the curb cut, apron, and sidewalk replacement —
+  but BEFORE concrete is poured.
+
+WHAT MUST BE VISIBLE/ACCESSIBLE:
+  - Formwork alignment and dimensions
+  - Curb cut width (Village of Great Neck: maximum 18 feet for single-family dwelling)
+  - Grade and pitch (must match existing sidewalk and street grade)
+  - Base preparation under forms
+  - Reinforcement (if specified)
+  - ADA-compliant detectable warning surfaces at pedestrian crossings (if applicable)
+
+CONSEQUENCES IF MISSED:
+  - Demolish and repour curb cut, apron, and affected sidewalk sections
+  - Typical cost: $3,000-$8,000
+  - May require road opening permit from Nassau County DPW (for county roads) or
+    Town of North Hempstead (for town roads) — adding weeks of delay
+
+NASSAU COUNTY / GREAT NECK SPECIFICS:
+  - Village of Great Neck: No permit issued for curb cut until size and location are
+    approved by the Village Superintendent of Public Works
+  - Village of Great Neck: Not more than one curb cut permitted for single-family dwelling
+    on properties with less than 75 feet of street frontage (exceptions require Board of
+    Trustees approval after Superintendent consultation)
+  - Nassau County DPW: Construction must comply with 2009 County Standard Specification
+    and detail sheets for Civil Engineering and Site Development Construction
+  - Separate curb cut permit may be needed from Town of North Hempstead or Nassau County
+    DPW depending on road jurisdiction
+
+
+=============================================================================
+SECTION 2: FOUNDATION WORK
+=============================================================================
+
+2.1 Footing Inspection — BEFORE Concrete Pour
+-----------------------------------------------
+WHAT: Footing trenches and reinforcement must be inspected before any concrete is placed.
+  This is typically the FIRST major inspection on any project with new foundation work.
+
+WHEN EXACTLY: After footing trenches are fully excavated, all required reinforcing steel
+  (rebar) is in place, and any embedded items (anchor bolts, hold-downs) are positioned —
+  but BEFORE any concrete is poured.
+
+WHAT MUST BE VISIBLE/ACCESSIBLE:
+  - Trench dimensions (width and depth per approved plans)
+  - Soil conditions at bottom of trench (undisturbed bearing soil)
+  - Rebar size, spacing, placement, and cover (typically 3" minimum from earth)
+  - Rebar lap splices and ties
+  - Anchor bolt placement and projection
+  - Hold-down bracket embedments
+  - Keyway forms (for foundation wall connection)
+  - Setback verification from property lines
+  - Frost depth compliance (Nassau County: minimum 42 inches from finish grade to
+    bottom of footing for exterior footings; 12 inches minimum below undisturbed ground)
+  - Footing thickness (typically 12 inches of concrete)
+
+CONSEQUENCES IF MISSED:
+  - CANNOT pour concrete — if poured without inspection, building inspector can require
+    complete removal and repour of footings
+  - Typical cost: $10,000-$30,000+ for demolition and replacement
+  - If foundation walls are already on top, ENTIRE foundation may need to come down
+  - This is the single most expensive inspection to miss on any project
+
+NASSAU COUNTY / GREAT NECK SPECIFICS:
+  - All Great Neck villages require this inspection per NYS code
+  - Thomaston explicitly lists "footing/pier" as a required inspection stage
+  - Kings Point requires a Foundation Location Certification form
+  - Great Neck Estates: if building footprint changed, as-built survey required before CO
+
+REFERENCED CODE: IRC R109.1.1 (Foundation Inspection)
+  "Inspection of the foundation shall be made after poles or piers are set or after
+  trenches or basement areas are excavated and any required reinforcing steel is in place
+  and supported prior to the placing of concrete."
+
+2.2 Foundation Wall Inspection — BEFORE Backfill
+--------------------------------------------------
+WHAT: Foundation walls must be inspected after construction but before earth is backfilled
+  against them.
+
+WHEN EXACTLY: After foundation walls are poured or constructed (block, ICF, etc.),
+  waterproofing/damp-proofing is applied, drainage board or tile is installed, and any
+  required insulation is placed — but BEFORE backfill begins.
+
+WHAT MUST BE VISIBLE/ACCESSIBLE:
+  - Foundation wall height, thickness, and alignment
+  - Anchor bolt placement for sill plates
+  - Waterproofing or damp-proofing application (complete coverage, no gaps)
+  - Foundation drain tile and filter fabric
+  - Window well installation (if applicable)
+  - Foundation wall insulation (if exterior insulation strategy)
+  - Step-down transitions in foundation walls
+  - Penetrations sealed (pipe sleeves, utility entries)
+
+CONSEQUENCES IF MISSED:
+  - Re-excavation around entire foundation perimeter
+  - Typical cost: $5,000-$15,000+ depending on foundation size and depth
+  - May damage already-installed drainage tile, waterproofing, or landscaping
+  - If waterproofing was defective, water damage may already be occurring
+
+REFERENCED CODE: IRC R109.1.1 notes foundation inspection includes "sheeting and shoring,
+  waterproofing, insulation, and location of walls and columns with respect to footings,
+  crawl space or basement foundation walls."
+
+2.3 Rebar Inspection (Structural Concrete) — BEFORE Pour
+----------------------------------------------------------
+WHAT: Any structural concrete element requiring reinforcement must have the rebar inspected
+  before concrete placement. This applies to footings, foundation walls, retaining walls,
+  grade beams, piers, and structural slabs.
+
+WHEN EXACTLY: After all reinforcing steel is placed, tied, supported on chairs or bolsters,
+  with proper cover and lap lengths — but BEFORE concrete truck arrives.
+
+WHAT MUST BE VISIBLE/ACCESSIBLE:
+  - Rebar size (bar diameter matches plans)
+  - Rebar spacing (on-center dimensions match plans)
+  - Rebar cover (minimum distance from form face or earth)
+  - Lap splice lengths
+  - Hook configurations at terminations
+  - Support chairs/bolsters holding rebar at correct elevation
+  - Embedded items (anchor bolts, hold-downs, post bases)
+  - Conduit or sleeve penetrations
+
+CONSEQUENCES IF MISSED:
+  - If concrete is already poured: no way to inspect rebar without destructive testing
+  - Building official may require load testing or core sampling ($1,000-$5,000)
+  - In worst case: demolish and repour ($10,000-$50,000+ for large pours)
+
+2.4 Slab-on-Grade Inspection — BEFORE Pour
+--------------------------------------------
+WHAT: Under-slab preparations including vapor barrier, insulation, plumbing, and
+  reinforcement must be inspected before the slab is poured.
+
+WHEN EXACTLY: After the following are complete: sub-slab gravel compacted, vapor barrier
+  (typically 6-mil poly) installed, under-slab plumbing roughed in and tested, any
+  under-slab insulation placed, wire mesh or rebar positioned — but BEFORE concrete pour.
+
+WHAT MUST BE VISIBLE/ACCESSIBLE:
+  - Sub-slab gravel (type, thickness, compaction)
+  - Vapor barrier (coverage, seams sealed, no tears)
+  - Under-slab plumbing (supply lines, drains, tested for leaks)
+  - Radon mitigation piping (if required)
+  - Slab reinforcement (mesh or rebar on chairs)
+  - Slab insulation (if required by energy code)
+  - Expansion joint material at foundation walls
+
+CONSEQUENCES IF MISSED:
+  - Break out and repour slab: $8,000-$25,000+
+  - Under-slab plumbing leaks discovered later require saw-cutting slab
+  - Vapor barrier issues cause chronic moisture problems
+
+
+=============================================================================
+SECTION 3: FRAMING
+=============================================================================
+
+3.1 Rough Framing Inspection — BEFORE Insulation and Drywall
+--------------------------------------------------------------
+WHAT: All structural framing must be inspected after the rough-in of electrical, plumbing,
+  mechanical, and fire protection systems are approved, but before any insulation or wall
+  covering is installed. This is the LAST CHANCE to see the entire structural skeleton.
+
+WHEN EXACTLY: After all of the following are complete and approved:
+  - All structural framing (walls, floors, roof)
+  - Rough electrical approved
+  - Rough plumbing approved
+  - Rough mechanical (HVAC) approved
+  - Fireblocking in place
+  - Draft-stopping in place
+  - Sheathing nailed (exterior)
+  - Hold-downs and hurricane ties installed
+  But BEFORE:
+  - Insulation is installed
+  - Drywall or other wall coverings go up
+
+WHAT MUST BE VISIBLE/ACCESSIBLE:
+  - All framing members (studs, headers, beams, joists, rafters)
+  - Member sizes match approved plans
+  - Proper nailing patterns (especially at shear walls)
+  - Joist hangers and hardware (Simpson ties, hold-downs, post bases)
+  - Fireblocking at floor/ceiling levels, soffits, stairways
+  - Draft-stopping in attic spaces at dwelling unit separations
+  - Headers over all openings (proper sizing)
+  - Bearing points aligned from roof to foundation
+  - Bracing (let-in bracing, shear panels, metal strapping)
+  - Sheathing nailing at edges and field (especially shear walls)
+  - Notches and holes in framing members within allowable limits
+  - Stair framing (rise, run, headroom)
+
+CONSEQUENCES IF MISSED:
+  - Remove ALL drywall, insulation, and interior finishes to expose framing
+  - Typical cost: $5,000-$30,000+ depending on project size
+  - Effectively restarts the project from rough stage
+  - Most common and most expensive "covered-up" mistake
+
+REFERENCED CODE: IRC R109.1.4 — "Framing and masonry inspection shall be made after the
+  roof, masonry, framing, firestopping, draftstopping, and bracing are in place and after
+  the plumbing, mechanical, and electrical rough inspections are approved."
+
+3.2 Shear Wall Nailing — Special Inspection BEFORE Covering
+-------------------------------------------------------------
+WHAT: In areas where engineered shear walls are specified, the nailing pattern requires
+  either a special inspection or verification during the framing inspection.
+
+WHEN EXACTLY: After structural panel sheathing is nailed to framing, with all fasteners
+  installed — but BEFORE any exterior finish (siding, stucco) or interior finish (drywall)
+  covers the sheathing.
+
+WHAT MUST BE VISIBLE/ACCESSIBLE:
+  - Sheathing grade and thickness (matches structural plans)
+  - Nail or staple size (diameter and length)
+  - Nail spacing at panel edges (critical — often 3", 4", or 6" o.c.)
+  - Nail spacing in field of panel (typically 12" o.c.)
+  - Edge distance (minimum 3/8" from panel edge)
+  - Framing member width at adjoining panel edges (minimum 3" for two panels)
+  - Hold-down anchors properly installed and connected
+  - Blocking between panels where required
+  - Number of fastener lines matches plans
+
+CONSEQUENCES IF MISSED:
+  - Remove siding and/or drywall to expose sheathing and nailing
+  - If nailing is deficient: add nails or replace sheathing panels
+  - Typical cost: $2,000-$10,000+ per wall
+
+REFERENCED CODE: 2020 Building Code of New York State, Chapter 17 (Special Inspections)
+  - Periodic special inspection required for nailing, bolting, anchoring of seismic
+    force-resisting systems including wood shear walls
+  - EXCEPTION: Not required where fastener spacing exceeds 4 inches on center
+
+NASSAU COUNTY / GREAT NECK SPECIFICS:
+  - Nassau County is in Seismic Design Category A or B (low seismic hazard)
+  - Most residential projects will NOT require special structural inspections unless
+    the engineer specifically calls for them
+  - However, the building inspector will verify shear wall nailing during the standard
+    framing inspection
+
+
+=============================================================================
+SECTION 4: PLUMBING
+=============================================================================
+
+4.1 Underground Plumbing Inspection — BEFORE Backfill or Slab Pour
+--------------------------------------------------------------------
+WHAT: All underground drain, waste, and vent (DWV) piping and water supply lines must
+  be inspected before they are buried under a slab or backfilled with earth.
+
+WHEN EXACTLY: After all underground piping is installed, connected, and supported in
+  properly bedded trenches — but BEFORE any backfill or concrete slab is placed over them.
+
+WHAT MUST BE VISIBLE/ACCESSIBLE:
+  - All underground piping (DWV and supply)
+  - Pipe material, size, and slope (minimum 1/4" per foot for 3" and smaller drains;
+    1/8" per foot for 4" and larger)
+  - Proper bedding material under pipes
+  - Joint connections
+  - Cleanout locations
+  - Test results: water test (10-foot head of water held for 15 minutes) or air test
+
+CONSEQUENCES IF MISSED:
+  - Saw-cut concrete slab to expose piping: $2,000-$5,000+ per section
+  - Re-excavate trenches if in earth: $1,000-$3,000
+  - If leak discovered after concealment: extensive water damage, mold risk
+
+REFERENCED CODE: NYS Residential Code Section P2503 — "Underground inspection and testing
+  shall be made after trenches or ditches are excavated and bedded, piping installed, and
+  before any backfill is put in place."
+
+  CRITICAL: "Any trench backfilled without completed inspection shall be re-excavated to
+  the degree necessary as determined by the Inspector."
+
+4.2 Rough Plumbing Inspection — BEFORE Walls Close
+-----------------------------------------------------
+WHAT: All above-ground supply, DWV, and gas piping must be inspected while still exposed
+  in framed walls and ceilings.
+
+WHEN EXACTLY: After all rough plumbing is installed (supply lines, DWV piping through walls
+  and ceilings, venting through roof), and pressure testing is complete — but BEFORE any
+  insulation, drywall, or other wall covering is installed.
+
+WHAT MUST BE VISIBLE/ACCESSIBLE:
+  - All supply piping (material, size, support, no contact with incompatible metals)
+  - All DWV piping (material, size, slope, proper venting)
+  - Vent terminations through roof
+  - Proper support (hangers, strapping at required intervals)
+  - Pipe protection (nail plates where piping passes through framing within 1.25" of edge)
+  - Water hammer arrestors
+  - Shut-off valve locations
+  - Test results: water supply test (working pressure for minimum 15 minutes)
+  - DWV test (water test: 10-foot head above highest fitting for 15 minutes, must be
+    visually leak-free)
+
+CONSEQUENCES IF MISSED:
+  - Remove drywall to expose piping: $2,000-$10,000+ depending on extent
+  - If leak discovered after walls close: water damage to drywall, insulation, flooring
+  - Mold remediation costs if water intrusion occurs undetected
+
+4.3 Sewer Connection Inspection — BEFORE Backfill
+---------------------------------------------------
+WHAT: The building sewer (pipe from house to public sewer main) must be inspected before
+  the trench is backfilled.
+
+WHEN EXACTLY: After the sewer lateral is connected from the building to the public sewer
+  main, properly bedded, and tested — but BEFORE the trench is filled.
+
+WHAT MUST BE VISIBLE/ACCESSIBLE:
+  - Pipe material, size, and slope
+  - Connection to public sewer (proper fitting, no offset)
+  - Bedding material
+  - Test plug at point of connection with public sewer
+  - Water test: fill building sewer with water, not less than 10-foot head, maintain
+    pressure for 15 minutes, must be watertight
+  - Backwater valve (if required)
+  - Cleanout at property line
+
+CONSEQUENCES IF MISSED:
+  - Re-excavate trench (may be under driveway, landscaping, or street)
+  - If under public road: road opening permit required, traffic control, road restoration
+  - Typical cost: $3,000-$15,000+ depending on depth and location
+  - May need photographic/video verification as alternative to re-excavation
+
+NASSAU COUNTY / GREAT NECK SPECIFICS:
+  - Great Neck Estates requires sewer district compliance certificate (Great Neck Sewer
+    District or Belgrave Sewer District) before CO issuance
+  - Nassau County DPW inspects connections to county sewer infrastructure
+  - All sewer connections must be inspected by Department Inspector unless photographic
+    or video verification is accepted
+
+
+=============================================================================
+SECTION 5: ELECTRICAL
+=============================================================================
+
+5.1 Rough Electrical Inspection — BEFORE Walls Close
+------------------------------------------------------
+WHAT: All electrical wiring, boxes, conduit, and panel connections must be inspected while
+  still exposed in framed walls, ceilings, and floors.
+
+WHEN EXACTLY: After all rough wiring is installed — branch circuits, switch legs, home runs
+  to panel, boxes mounted, grounding conductors run, AFCI/GFCI requirements identified —
+  but BEFORE any insulation, drywall, or wall covering is installed.
+
+WHAT MUST BE VISIBLE/ACCESSIBLE:
+  - All branch circuit wiring (proper gauge for circuit amperage)
+  - Box fill calculations (not overfilled)
+  - Box mounting (proper height, securely fastened)
+  - Grounding system (equipment grounding conductors in all circuits)
+  - Service entrance conductors
+  - Panel location and mounting
+  - Proper wire protection (nail plates where wire passes through framing within 1.25"
+    of edge; conduit where exposed or required)
+  - Proper support (staples/straps within 12" of boxes and at required intervals)
+  - Separation of low-voltage and high-voltage wiring
+  - Smoke/CO detector locations and wiring (interconnected, battery backup)
+  - Arc-fault circuit interrupter (AFCI) protection for bedrooms and other required areas
+  - Ground-fault circuit interrupter (GFCI) protection identification for kitchens,
+    bathrooms, garages, outdoors, basements, laundry
+
+CONSEQUENCES IF MISSED:
+  - Remove drywall to expose wiring: $2,000-$10,000+
+  - If wiring deficiencies found after walls close: extensive demolition required
+  - Fire hazard risk if defective wiring concealed without inspection
+  - Insurance may not cover fire loss if unpermitted/uninspected electrical work
+
+NASSAU COUNTY / GREAT NECK SPECIFICS:
+  - All electrical work must be performed by a licensed electrician
+  - Thomaston explicitly lists "rough electrical" and "electrical service" as separate
+    required inspections
+  - Kings Point lists "electrical" as a required inspection stage
+  - Great Neck Plaza requires electrical permits separate from building permits
+
+5.2 Electrical Panel Inspection
+---------------------------------
+WHAT: The main electrical panel (and any sub-panels) must be inspected for proper
+  installation, circuit identification, and code compliance.
+
+WHEN EXACTLY: Can occur during rough inspection (panel box and feed wiring) and during
+  final inspection (completed panel with all breakers, labeling, and covers).
+
+WHAT MUST BE VISIBLE/ACCESSIBLE:
+  - Panel rating matches service size
+  - Proper working clearance (30" wide, 36" deep, 78" high in front of panel)
+  - Circuit directory complete and accurate
+  - All breakers properly rated for wire gauge
+  - AFCI breakers installed where required
+  - GFCI breakers installed where required
+  - Neutral/ground bus bars separated in main panel
+  - Proper bonding
+  - Service disconnect accessible
+
+CONSEQUENCES IF MISSED:
+  - Panel itself is usually accessible (not concealed behind drywall)
+  - However, if feeders running through walls are wrong, drywall removal may be needed
+  - Fire marshal may issue violation if panel does not meet current code
+
+
+=============================================================================
+SECTION 6: ROOFING
+=============================================================================
+
+6.1 Roof Sheathing Inspection — BEFORE Underlayment/Shingles
+--------------------------------------------------------------
+WHAT: When roof sheathing (plywood or OSB) is replaced or installed new, it should be
+  inspected before being covered with underlayment and shingles.
+
+WHEN EXACTLY: After all roof sheathing is installed and nailed to rafters/trusses — but
+  BEFORE underlayment (felt paper or synthetic) and roofing material (shingles, etc.)
+  are applied.
+
+WHAT MUST BE VISIBLE/ACCESSIBLE:
+  - Sheathing grade and thickness (matches plans; typically 7/16" or 15/32" OSB or
+    plywood for residential)
+  - Nailing pattern (typically 6" o.c. at edges, 12" o.c. in field, per Table R602.3(1))
+  - H-clips between panels (if required for span)
+  - Panel edge spacing (1/8" gap for expansion)
+  - No damage, delamination, or water staining
+  - Proper bearing on rafters at all edges
+  - Roof ventilation openings (ridge vent, soffit vents) properly framed
+
+CONSEQUENCES IF MISSED:
+  - May not require full tear-off if building inspector accepts visual/photographic
+    documentation
+  - If sheathing is deficient: tear off all roofing materials to replace sheathing
+  - Typical cost: $5,000-$20,000+ for re-roofing
+
+NOTE: Many jurisdictions, including Great Neck area villages, handle re-roofing with a
+  single final inspection rather than requiring a sheathing inspection — UNLESS structural
+  sheathing is being replaced. Always confirm with your village building department whether
+  a mid-work sheathing inspection is required for your specific project.
+
+6.2 Underlayment and Ice/Water Shield — BEFORE Shingles
+---------------------------------------------------------
+WHAT: Underlayment installation (especially ice and water shield in cold climate areas)
+  should be verified before final roofing material covers it.
+
+WHEN EXACTLY: After underlayment (and ice barrier, if required) is installed over sheathing —
+  but BEFORE shingles or other finish roofing is applied.
+
+WHAT MUST BE VISIBLE/ACCESSIBLE:
+  - Underlayment type and coverage
+  - Ice barrier extending minimum 24 inches past exterior wall line (NYS Residential Code
+    R905.1.2 — required in areas with history of ice damming, which includes all of
+    Nassau County / Long Island)
+  - Proper overlap of underlayment courses
+  - Drip edge installed: under underlayment at eaves, over underlayment at rakes
+  - Valley treatment (ice barrier in valleys)
+  - Flashing at roof-to-wall intersections
+
+CONSEQUENCES IF MISSED:
+  - If ice barrier is missing or insufficient: ice dam water intrusion causing interior
+    water damage, mold, and structural deterioration
+  - Fix requires removing shingles in affected areas
+  - Typical cost: $2,000-$8,000 per affected area
+
+NASSAU COUNTY / GREAT NECK SPECIFICS:
+  - Nassau County / Long Island IS in a cold climate zone with ice dam risk
+  - Ice barrier is REQUIRED per NYS Residential Code R905.1.2
+  - Great Neck area villages typically require a roofing/siding permit
+  - Inspection approach varies: some villages do a single final inspection, others may
+    require mid-work inspection for structural changes
+
+
+=============================================================================
+SECTION 7: HVAC / MECHANICAL
+=============================================================================
+
+7.1 Rough Mechanical (HVAC) Inspection — BEFORE Walls Close
+--------------------------------------------------------------
+WHAT: All heating, ventilation, air conditioning ductwork, refrigerant lines, gas piping,
+  and exhaust systems must be inspected while still exposed in framed walls and ceilings.
+
+WHEN EXACTLY: After all ductwork, refrigerant lines, gas piping, exhaust ducts, and
+  combustion air provisions are installed — but BEFORE insulation or drywall covers them.
+
+WHAT MUST BE VISIBLE/ACCESSIBLE:
+  - All ductwork (material, size, connections, sealing)
+  - Duct support and fastening
+  - Duct insulation (where required — typically supply ducts in unconditioned spaces)
+  - Refrigerant line routing and insulation
+  - Gas piping (material, size, support, shut-off valves, drip legs)
+  - Exhaust duct routing (bathroom fans to exterior, not into attic)
+  - Kitchen exhaust duct routing (to exterior)
+  - Dryer vent routing (to exterior, maximum duct length with deductions for elbows)
+  - Combustion air openings for fuel-burning appliances
+  - Clearances from combustibles for flue pipes and chimneys
+  - Return air pathways
+
+CONSEQUENCES IF MISSED:
+  - Remove drywall/ceiling to expose ductwork: $2,000-$10,000+
+  - Improperly vented exhaust (especially into attic) causes mold and structural damage
+  - Gas piping leaks are a safety hazard — reinspection is mandatory
+  - Improperly routed dryer vents are a fire hazard
+
+REFERENCED CODE: IRC R109.1.2 — "Inspection of the plumbing, mechanical, gas and
+  electrical systems shall be made after rough installation of such systems and prior
+  to covering or concealment."
+
+7.2 Gas Piping Pressure Test — BEFORE Concealment
+---------------------------------------------------
+WHAT: Gas piping must be pressure tested before it is enclosed in walls or underground.
+
+WHEN EXACTLY: After gas piping is completely installed but before concealment. Testing
+  typically occurs as part of the rough mechanical inspection.
+
+WHAT MUST BE VISIBLE/ACCESSIBLE:
+  - All gas piping joints and connections
+  - Test gauge showing proper pressure (typically 3 psi for 10 minutes for low-pressure
+    residential systems)
+  - Shut-off valve at each appliance
+  - Drip legs (sediment traps) at each appliance connection
+  - Proper pipe support
+
+CONSEQUENCES IF MISSED:
+  - Gas leaks behind walls are extremely dangerous (explosion/asphyxiation risk)
+  - Must open walls to access and test piping
+  - Gas company may refuse to turn on service without approved inspection
+
+
+=============================================================================
+SECTION 8: DECK AND PATIO CONSTRUCTION
+=============================================================================
+
+8.1 Deck Footing/Post Hole Inspection — BEFORE Concrete Pour
+---------------------------------------------------------------
+WHAT: Deck footing holes must be inspected before concrete is poured into them.
+
+WHEN EXACTLY: After post holes are dug to required depth, any rebar is placed, and
+  post brackets/anchors are ready — but BEFORE concrete is poured.
+
+WHAT MUST BE VISIBLE/ACCESSIBLE:
+  - Hole depth: minimum 42 inches from finish grade (NYS frost line requirement);
+    some areas 48 inches — verify with local building department
+  - Hole diameter matches plans (typically 12"-24" depending on load)
+  - Soil conditions at bottom (undisturbed native soil capable of bearing load)
+  - Rebar placement (if specified in plans)
+  - Post anchor/bracket positioning
+  - Setback from property lines verified
+  - Number and location of footings matches approved plans
+
+CONSEQUENCES IF MISSED:
+  - Dig out concrete-filled post holes and repour: $500-$2,000+ per footing
+  - If deck framing is already up: may need to shore up or disassemble deck
+  - If frost depth is inadequate: footing will heave in winter, causing deck
+    structural failure
+
+REFERENCED CODE: NYS Residential Code R507.3 — Exterior footings shall be placed
+  minimum 12 inches below undisturbed ground surface, and below frost line (42" in
+  Nassau County area).
+
+NASSAU COUNTY / GREAT NECK SPECIFICS:
+  - Great Neck area frost line: 42 inches minimum
+  - All Great Neck villages require deck permits with structural details
+  - Thomaston lists "footing/pier" as explicit inspection stage
+
+8.2 Ledger Board Attachment Inspection — BEFORE Concealment
+-------------------------------------------------------------
+WHAT: The ledger board (where deck attaches to house) must be inspected for proper
+  attachment and flashing.
+
+WHEN EXACTLY: After the ledger board is bolted/lagged to the house framing and flashing
+  is installed — but BEFORE any decking or fascia conceals the connection.
+
+WHAT MUST BE VISIBLE/ACCESSIBLE:
+  - Ledger board attachment method (lag screws or through-bolts — NOT nails)
+  - Bolt/lag size, spacing, and stagger pattern (per IRC Table R507.5)
+  - Flashing installed per R703.4 to prevent water from contacting house band joist
+  - Spacer or standoff (if required for drainage behind ledger)
+  - Ledger fastened to house band joist or rim joist (NOT just to siding or sheathing)
+  - No siding trapped behind ledger
+
+CONSEQUENCES IF MISSED:
+  - If connection is inadequate: deck can separate from house (catastrophic collapse risk —
+    this is the #1 cause of deck failures)
+  - Removal of decking to expose ledger connection: $1,000-$3,000+
+  - If water infiltration occurs behind improperly flashed ledger: rot damage to house
+    structure requiring extensive repair
+
+CRITICAL SAFETY NOTE: Per NYS Residential Code, "Where positive connection to the primary
+  building structure cannot be verified during inspection, decks shall be self-supporting."
+  This means freestanding posts at the house end — a much more expensive solution.
+
+8.3 Deck Framing Inspection — BEFORE Decking Installed
+--------------------------------------------------------
+WHAT: All deck structural framing must be inspected before the deck boards cover them.
+
+WHEN EXACTLY: After all posts, beams, joists, and hardware are installed — but BEFORE
+  decking boards, railing posts, and stair stringers are covered.
+
+WHAT MUST BE VISIBLE/ACCESSIBLE:
+  - Post-to-beam connections (proper hardware)
+  - Beam size and span (matches plans)
+  - Joist size, spacing, and span (matches plans)
+  - Joist hangers at all joist-to-beam and joist-to-ledger connections
+  - Blocking/bridging (if required)
+  - Lateral bracing
+  - Hardware (galvanized or stainless for treated lumber)
+
+CONSEQUENCES IF MISSED:
+  - Remove decking to expose framing: $1,000-$5,000+
+  - Structural deficiencies may require partial rebuild
+
+
+=============================================================================
+SECTION 9: FENCING
+=============================================================================
+
+9.1 Fence Post Hole Depth Inspection — BEFORE Concrete Fill
+--------------------------------------------------------------
+WHAT: Post hole depth should be verified before concrete is poured to set fence posts.
+
+WHEN EXACTLY: After post holes are dug — but BEFORE concrete or gravel is placed and
+  posts are set.
+
+WHAT MUST BE VISIBLE/ACCESSIBLE:
+  - Post hole depth (typically 1/3 of total post length underground, or per engineering;
+    common residential: 24"-36" deep for 6-foot fence)
+  - Post hole diameter (typically 3x post width; 10"-12" for 4x4 posts)
+  - Post spacing (typically 6-8 feet on center)
+  - Location relative to property lines (fence typically must be entirely on owner's
+    property; verify exact setback requirement with village)
+  - Soil conditions
+
+CONSEQUENCES IF MISSED:
+  - Dig out post footings and reset: $100-$300 per post
+  - For a typical fence: $1,000-$5,000+ to redo all posts
+  - If fence is in wrong location (over property line): must be moved entirely
+
+NASSAU COUNTY / GREAT NECK SPECIFICS:
+  - Most Great Neck villages require fence permits
+  - Typical height limits vary by village and yard location:
+    Front yard: max 4 feet; Side yard: max 5 feet; Rear yard: max 6 feet
+  - Some villages require a survey showing fence location relative to property lines
+  - Village of Great Neck and Great Neck Estates have specific fence codes
+  - NOTE: Some Great Neck villages handle fence post inspections with a single final
+    inspection rather than a separate post-hole inspection. Confirm with your village
+    building department whether they want to see post holes before concrete.
+
+IMPORTANT: Many villages in the Great Neck area do NOT require a separate post-hole
+  inspection for residential fences — they do a single final inspection. However, if your
+  fence is on or near a property line, getting a survey and documenting post hole depths
+  with photos (even if not formally inspected) is strongly recommended to avoid disputes.
+
+
+=============================================================================
+SECTION 10: SWIMMING POOLS
+=============================================================================
+
+10.1 Steel/Rebar Inspection — BEFORE Gunite/Shotcrete
+-------------------------------------------------------
+WHAT: The steel reinforcement cage for an in-ground concrete (gunite/shotcrete) pool must
+  be inspected before the concrete shell is sprayed.
+
+WHEN EXACTLY: After the pool is excavated, steel rebar cage is fully tied, all embedded
+  items (returns, skimmer, main drain, light niches) are positioned, bonding wire is
+  attached to rebar, and plumbing is pressure-tested — but BEFORE gunite or shotcrete
+  is applied.
+
+WHAT MUST BE VISIBLE/ACCESSIBLE:
+  - Rebar size and spacing (typically #3 or #4 rebar at 12" on center both ways for
+    residential pools, per engineer's design)
+  - Rebar cover (minimum distance from earth face and from finished pool surface)
+  - Bond attachments (rebar must be bonded per NEC 680.26(B)(1)(b) — the entire
+    concrete pool shell is considered conductive)
+  - Bonding wire (solid 8 AWG bare copper conductor or structural rebar can serve
+    as bonding grid per NEC)
+  - Bond wire spacing and connections
+  - All embedded plumbing fittings (returns, skimmer, main drain, suction lines)
+  - Light niche placement
+  - Plumbing pressure test results (piping must pass pressure test before being
+    encased in concrete)
+  - Plumbing routing: pipes should be in trenches around the pool perimeter, NOT
+    embedded in the wall (perpendicular penetrations only — pipe in the wall creates
+    a thin structural section prone to cracking)
+
+CONSEQUENCES IF MISSED:
+  - CANNOT inspect rebar once gunite/shotcrete is applied
+  - If rebar is deficient: entire pool shell may need to be demolished and rebuilt
+  - Typical cost: $20,000-$50,000+ for pool demolition and rebuild
+  - Bonding deficiency: electrocution risk — mandatory correction
+  - This is THE most critical and expensive pool inspection to miss
+
+NASSAU COUNTY / GREAT NECK SPECIFICS:
+  - Village of Great Neck: Swimming pools permitted on noncommercial basis when
+    approved by Board of Trustees after public hearing
+  - Great Neck Estates: pool cannot exceed 25% of unoccupied rear yard area;
+    minimum 20 feet from any lot line
+  - Kings Point: swimming pool permit fee $1,500; requires pool location survey
+  - All villages require compliance with NYS Residential Code R326 (Swimming Pools,
+    Spas and Hot Tubs)
+  - Electrical inspection by certified electrical inspection agency approved by village
+
+10.2 Pool Plumbing Inspection — BEFORE Backfill
+--------------------------------------------------
+WHAT: All pool plumbing (supply and return lines, main drain, skimmer connections, filter
+  connections) must be inspected before trenches are backfilled.
+
+WHEN EXACTLY: After all pool plumbing is installed in trenches around the pool perimeter
+  and connected to the equipment pad — but BEFORE trenches are backfilled with earth.
+
+WHAT MUST BE VISIBLE/ACCESSIBLE:
+  - All piping (material, typically Schedule 40 PVC for residential pools)
+  - Pipe size (suction lines, return lines, skimmer lines per design)
+  - Pipe routing (in trenches around perimeter, not embedded in pool wall)
+  - Glued joints (properly cemented, no dry fits)
+  - Pressure test (all lines must hold pressure — typically 20 psi for 24 hours)
+  - Backflow prevention / vacuum breakers
+  - Main drain compliance (dual main drains per Virginia Graeme Baker Act)
+  - Equipment connections
+
+CONSEQUENCES IF MISSED:
+  - Re-excavate trenches around pool: $2,000-$5,000
+  - If plumbing leaks after backfill: undermining of pool shell, deck settlement,
+    sinkholes in yard
+  - Leak detection after concealment: $500-$2,000 for electronic leak detection
+  - Repair of concealed leak: $1,000-$5,000 per leak location
+
+10.3 Pool Electrical Inspection — BEFORE Concrete Deck
+---------------------------------------------------------
+WHAT: All pool electrical systems (bonding, lighting, equipment wiring) must be inspected.
+
+WHEN EXACTLY: After all electrical conduit, bonding devices for the reinforcement, niche
+  and lighting fixtures are installed — but BEFORE any concrete cover or deck is placed.
+  There is typically also a final electrical inspection after equipment is connected.
+
+WHAT MUST BE VISIBLE/ACCESSIBLE:
+  - Equipotential bonding grid (all metallic parts within 5 feet horizontally of pool
+    edge and 12 feet vertically of water level must be bonded)
+  - Bonding connections to pool steel, metal fence, ladder, handrails, diving board
+    hardware, light niches, equipment
+  - GFCI protection for all pool equipment circuits
+  - Wiring method and burial depth for underground feeders
+  - Light fixture installation (proper niche, watertight, wet-niche fixtures rated
+    for submersion)
+  - Disconnect switch within sight of equipment
+  - Equipment grounding
+
+CONSEQUENCES IF MISSED:
+  - Bonding deficiencies = electrocution risk — this is a life-safety inspection
+  - Break out concrete deck to access bonding connections: $3,000-$10,000+
+  - Electrical permit revocation if work concealed without inspection
+
+REFERENCED CODE: NEC Article 680 (Swimming Pools, Fountains, and Similar Installations)
+
+10.4 Pool Barrier/Fence Inspection — BEFORE Use
+--------------------------------------------------
+WHAT: The safety barrier (fence) around the pool must be inspected before the pool is
+  filled and used.
+
+WHEN EXACTLY: After permanent barrier (fence) is installed — but BEFORE pool is filled
+  for use. Note: NYS code requires a temporary barrier (minimum 48 inches high) during
+  construction, replaced with permanent barrier within 90 days.
+
+WHAT MUST BE VISIBLE/ACCESSIBLE:
+  - Fence height: minimum 48 inches (4 feet), maximum 6 feet (per local code)
+  - Self-closing gate with self-latching mechanism
+  - Latch at least 54 inches above grade (or on pool side if lower)
+  - No openings allowing passage of a 4-inch sphere
+  - No climbable features (horizontal rails on outside)
+  - Gate opens outward (away from pool)
+  - Covers complete pool area
+
+CONSEQUENCES IF MISSED:
+  - Cannot fill or use pool until barrier passes inspection
+  - Non-compliant barrier: liability exposure for drowning/injury
+  - Village can issue stop-use order
+  - Insurance may not cover incidents without compliant barrier
+
+
+=============================================================================
+SECTION 11: ADDITIONS AND EXTENSIONS
+=============================================================================
+
+An addition or extension to an existing home requires the FULL sequence of inspections
+for each construction phase. Each phase must be inspected before the next phase conceals it.
+
+11.1 Complete Inspection Sequence for Home Additions
+-----------------------------------------------------
+
+PHASE 1 — FOUNDATION (must be inspected before Phase 2 begins)
+  1a. Footing excavation: soil conditions, dimensions, rebar — BEFORE concrete pour
+  1b. Footing pour: reinforcement in place — BEFORE concrete placement
+  1c. Foundation walls: formwork, rebar, anchor bolts — BEFORE wall pour
+  1d. Waterproofing: damp-proofing/waterproofing applied — BEFORE backfill
+  1e. Under-slab: plumbing, vapor barrier, gravel — BEFORE slab pour (if slab-on-grade)
+
+PHASE 2 — FRAMING (must be inspected before Phase 3 begins)
+  2a. Structural framing complete: walls, floors, roof structure
+  2b. Sheathing and nailing verified
+  2c. Connection to existing structure verified (proper tie-in, no structural compromise)
+  2d. Fireblocking and draft-stopping in place
+  2e. Weather barrier (house wrap) installed
+
+PHASE 3 — ROUGH MECHANICAL/ELECTRICAL/PLUMBING (must be inspected before Phase 4)
+  3a. Rough plumbing: supply and DWV piping — BEFORE walls close
+  3b. Rough electrical: all wiring and boxes — BEFORE walls close
+  3c. Rough HVAC: ductwork, refrigerant lines, gas piping — BEFORE walls close
+  3d. Rough fire protection (if sprinklers required) — BEFORE walls close
+
+PHASE 4 — INSULATION AND ENERGY CODE (must be inspected before Phase 5)
+  4a. Insulation inspection: R-values, coverage, continuity — BEFORE drywall
+  4b. Air sealing verification: penetrations sealed, gaps filled — BEFORE drywall
+  4c. Vapor barrier placement (if required) — BEFORE drywall
+  4d. Energy code documentation: insulation certificates from installer with R-value,
+      type, manufacturer, coverage area, and (for blown/sprayed) installed thickness,
+      settled thickness, density, and number of bags
+
+PHASE 5 — WALL COVERINGS AND FINISHES
+  5a. Drywall/lath inspection (if fire-rated assembly): fastener spacing, joint treatment
+  5b. Interior finishes proceed
+
+PHASE 6 — FINAL INSPECTIONS
+  6a. Final plumbing: fixtures, testing
+  6b. Final electrical: devices, panels, testing (GFCI/AFCI)
+  6c. Final mechanical: equipment, ventilation
+  6d. Final building: overall completion, egress, safety, accessibility
+  6e. Certificate of Occupancy / Certificate of Completion issued
+
+CONSEQUENCES OF SKIPPING ANY PHASE:
+  - Every subsequent phase covers the previous phase's work
+  - Missing Phase 1 (foundation) before Phase 2 (framing): must remove framing to
+    inspect foundation ($10,000-$50,000+)
+  - Missing Phase 3 (rough-ins) before Phase 4 (insulation): must remove insulation
+    ($1,000-$3,000) — least expensive recovery
+  - Missing Phase 4 (insulation) before Phase 5 (drywall): must remove drywall
+    ($2,000-$10,000+)
+  - Missing any phase: CO WILL NOT be issued. Period.
+
+NASSAU COUNTY / GREAT NECK SPECIFICS:
+  - Great Neck Estates: additions/alterations exceeding $3,000 or 2,000 cubic feet are
+    subject to ALL code provisions
+  - Great Neck Estates: for structures >2,000 sq ft total floor area, architect/engineer
+    must file final certificate certifying conformity with filed plans
+  - Great Neck Estates: cash deposit of $25,000 required where construction exceeds 40%
+    of floor area ratio (site restoration guarantee)
+  - Kensington: ALL applications reviewed by Architectural Review Board (ARB)
+  - Kings Point: permits valid for 24 months; extension fees after expiration
+  - Kings Point: Foundation Location Certification and Building Height Certification
+    forms required
+  - Thomaston: Landmark Preservation Commission review for designated properties
+
+
+=============================================================================
+SECTION 12: INSULATION AND ENERGY CODE INSPECTION
+=============================================================================
+
+12.1 Thermal Envelope Inspection — BEFORE Drywall
+---------------------------------------------------
+WHAT: All insulation, air sealing, and vapor barrier components of the building thermal
+  envelope must be inspected before any wall or ceiling covering is installed.
+
+WHEN EXACTLY: After insulation is installed in all exterior walls, ceilings, floors over
+  unconditioned spaces, and any other thermal envelope components — but BEFORE drywall,
+  paneling, or any other covering is installed over them.
+
+WHAT MUST BE VISIBLE/ACCESSIBLE:
+  - Insulation type and R-value (manufacturer's R-value mark must be readable)
+  - R-value compliance with NYS Energy Code:
+    - Nassau County is Climate Zone 4A
+    - Minimum R-values (2020 ECCCNYS prescriptive path):
+      Ceiling: R-49; Wood frame wall: R-20 or R-13+5ci; Floor: R-19;
+      Basement wall: R-15ci or R-19; Crawl space wall: R-15ci or R-19
+  - Insulation installed continuously without gaps, voids, compressions, or misalignment
+  - Proper contact with air barrier on all six sides of each cavity
+  - Air sealing at all penetrations (wiring, plumbing, duct, recessed lights)
+  - Vapor barrier location and type (if required)
+  - Installer certification listing type, manufacturer, R-value, coverage area, and
+    (for blown-in or sprayed): initial installed thickness, settled thickness, settled
+    R-value, installed density, number of bags
+
+CONSEQUENCES IF MISSED:
+  - Remove drywall to expose insulation: $2,000-$10,000+
+  - Energy code non-compliance: CO will not be issued
+  - If insulation is wrong R-value or has gaps: energy performance suffers,
+    comfort complaints, potential condensation/mold issues
+
+REFERENCED CODE: NYS Energy Conservation Construction Code; IRC R109.1.5 —
+  "Inspection of insulation envelope requirements shall be made after the installation
+  of the building thermal envelope insulation and before covering same with any other
+  materials."
+
+NASSAU COUNTY / GREAT NECK SPECIFICS:
+  - Effective December 31, 2025: new 2025 NYS Energy Code applies to building permit
+    applications submitted after this date (may have stricter R-value requirements)
+  - All Great Neck area villages enforce NYS Energy Code
+  - Energy code compliance documentation is required for CO issuance
+
+
+=============================================================================
+SECTION 13: FIRE-RESISTANCE-RATED CONSTRUCTION
+=============================================================================
+
+13.1 Fire-Rated Assembly Inspection — BEFORE Final Covering
+-------------------------------------------------------------
+WHAT: Fire-resistance-rated walls, floors, and ceilings (e.g., dwelling unit separation
+  walls in two-family homes, walls at property-line adjacencies) must be inspected during
+  installation.
+
+WHEN EXACTLY: After the fire-rated assembly covering material (typically Type X drywall)
+  is installed with proper fastener spacing — but BEFORE joint treatment (taping/mudding)
+  and finish coats are applied. The intent is to verify that the correct material is used
+  and properly fastened.
+
+WHAT MUST BE VISIBLE/ACCESSIBLE:
+  - Drywall type (5/8" Type X for most fire-rated assemblies)
+  - Number of layers (1-hour walls typically require one layer each side; 2-hour may
+    require two layers)
+  - Fastener type, size, and spacing (per assembly listing)
+  - Fireblocking at all required locations
+  - Fire-stopping at penetrations (pipes, wires, ducts through fire-rated assemblies)
+  - No gaps at edges or joints
+  - Proper edge support at all drywall edges
+
+CONSEQUENCES IF MISSED:
+  - If wrong drywall type or insufficient layers: strip and replace
+  - Fire-stopping deficiencies at penetrations: must open wall to access and correct
+  - Life-safety issue: fire-rated separation is critical for occupant protection
+  - Fire marshal may issue violation
+
+REFERENCED CODE: IRC R109.1.5.1 — Fire-resistance-rated construction inspection applies
+  to "fire-resistance-rated construction required at dwelling unit separations and at
+  exterior walls adjacent to a property line."
+
+
+=============================================================================
+SECTION 14: GENERAL CONSEQUENCES OF MISSING INSPECTIONS
+=============================================================================
+
+14.1 Stop Work Orders
+-----------------------
+The building inspector can issue a stop work order at any time if work is proceeding
+without required inspections. ALL work must halt until the violation is corrected.
+Continuing work after a stop work order can result in additional fines and permit
+revocation.
+
+14.2 Mandatory Exposure of Concealed Work
+-------------------------------------------
+Per NYS code and all Great Neck village codes, if work is covered without inspection,
+the building official can require that the work be uncovered for inspection. The cost of
+uncovering and restoring is borne entirely by the property owner or contractor — NOT the
+village.
+
+Quote from NYS Plumbing Code: "Any trench backfilled without completed inspection shall
+be re-excavated to the degree necessary as determined by the Inspector."
+
+14.3 Denial of Certificate of Occupancy
+-----------------------------------------
+A Certificate of Occupancy (CO) or Certificate of Completion (CC) CANNOT be issued until
+ALL required inspections have been completed and approved. Without a CO:
+  - The structure cannot be legally occupied
+  - Insurance coverage may be void or limited
+  - Property cannot be sold or refinanced (title search reveals open permits)
+  - Village can issue violations for occupying without CO
+
+14.4 Fines and Penalties
+--------------------------
+Under NYS law, performing construction work without required permits or failing to obtain
+required inspections can result in:
+  - Civil penalties (fines per day of violation)
+  - Criminal penalties for willful violations
+  - Insurance invalidation (if accident occurs on uninspected work)
+  - Personal liability for property owners and contractors
+
+14.5 Property Title Issues
+----------------------------
+Open building permits and uninspected work show up on property title searches. This can:
+  - Block property sales
+  - Block refinancing
+  - Reduce property value
+  - Require retroactive compliance (opening walls, excavating) years later
+
+14.6 Cost Summary: What It Costs to "Undo" Covered Work
+----------------------------------------------------------
+These are approximate ranges for Great Neck area (Nassau County pricing):
+
+  Inspection Missed               | Cost to Expose and Re-inspect
+  --------------------------------|-------------------------------
+  Footing/rebar before pour       | $10,000 - $50,000+
+  Foundation before backfill      | $5,000 - $15,000
+  Under-slab plumbing             | $2,000 - $5,000 per section
+  Slab-on-grade before pour       | $8,000 - $25,000
+  Sewer connection before backfill| $3,000 - $15,000
+  Rough plumbing in walls         | $2,000 - $10,000
+  Rough electrical in walls       | $2,000 - $10,000
+  Rough HVAC in walls/ceilings    | $2,000 - $10,000
+  Framing before drywall          | $5,000 - $30,000
+  Shear wall nailing              | $2,000 - $10,000 per wall
+  Insulation before drywall       | $2,000 - $10,000
+  Roof sheathing before roofing   | $5,000 - $20,000
+  Pool rebar before gunite        | $20,000 - $50,000+
+  Pool plumbing before backfill   | $2,000 - $5,000
+  Pool bonding before deck        | $3,000 - $10,000
+  Deck footings before concrete   | $500 - $2,000 per footing
+  Drywell before backfill         | $2,000 - $5,000
+  Driveway subgrade before paving | $3,000 - $10,000
+
+
+=============================================================================
+SECTION 15: SCHEDULING BEST PRACTICES FOR GREAT NECK AREA
+=============================================================================
+
+15.1 Notification Requirements
+-------------------------------
+  - All Great Neck area villages require minimum 24-hour advance notice for inspections
+  - Some villages specify 48-hour notice
+  - Inspections are subject to scheduling availability
+  - Village of Great Neck inspection hours: Monday-Friday, 8 AM - 3 PM
+  - Kings Point hours: Monday-Friday, 9:30 AM - 4:30 PM
+  - Other villages generally operate 9 AM - 4 PM weekdays
+
+15.2 Sequencing Tips
+----------------------
+  - Schedule rough plumbing, rough electrical, and rough HVAC inspections BEFORE calling
+    for the framing inspection (framing inspection requires all rough-ins to be approved)
+  - Schedule the insulation inspection immediately after framing approval — do not start
+    drywall until insulation is approved
+  - For pool projects, schedule steel/rebar inspection BEFORE the gunite crew arrives —
+    gunite crews typically schedule weeks in advance and delays are costly
+  - For foundation work, have the inspector verify footings the same day as the pour if
+    possible — concrete trucks run on tight schedules
+  - Keep the building inspector's direct phone number handy for same-day scheduling needs
+
+15.3 Shared Building Inspectors
+---------------------------------
+Several Great Neck area villages share building inspectors:
+  - Michael Sweeney serves Great Neck and Great Neck Estates
+  - Mark Vincent Kruse serves Kensington and Thomaston
+This means inspection scheduling may be affected by the inspector's schedule across
+multiple villages. Plan ahead and request inspections early.
+
+15.4 Documentation
+--------------------
+Even if not required by the village, take dated photographs at every inspection stage:
+  - Footing trenches with rebar (include tape measure for scale)
+  - Foundation walls before backfill
+  - All rough-in work (plumbing, electrical, HVAC) before walls close
+  - Insulation before drywall
+  - Pool steel before gunite
+  - Underground work before backfill
+This creates a permanent record that can resolve disputes, support insurance claims,
+and demonstrate due diligence.
+
+
+=============================================================================
+SECTION 16: QUICK REFERENCE — INSPECTION TRIGGER CHART
+=============================================================================
+
+Use this chart to quickly determine what inspection is needed at each construction stage.
+The "STOP" column indicates work that CANNOT proceed until the inspection passes.
+
+  STAGE                          | INSPECTION NEEDED           | STOP: Do Not Proceed With...
+  -------------------------------|-----------------------------|---------------------------------
+  Footing trench dug, rebar set  | Footing inspection          | Pouring concrete
+  Foundation walls formed/poured | Foundation inspection       | Backfilling against walls
+  Under-slab work complete       | Under-slab/underground insp | Pouring concrete slab
+  Sewer lateral connected        | Sewer connection inspection | Backfilling trench
+  Drywell installed              | Drywell/drainage inspection | Backfilling around drywell
+  Subgrade prepared for driveway | Subgrade inspection         | Pouring concrete/laying asphalt
+  Curb cut forms set             | Curb cut form inspection    | Pouring concrete
+  Framing complete, roof on      | Rough framing inspection    | Installing insulation
+  Plumbing roughed in walls      | Rough plumbing inspection   | Closing walls (insulation/drywall)
+  Wiring roughed in walls        | Rough electrical inspection | Closing walls (insulation/drywall)
+  HVAC roughed in walls/ceiling  | Rough mechanical inspection | Closing walls (insulation/drywall)
+  Insulation installed           | Insulation/energy inspect   | Installing drywall
+  Fire-rated drywall installed   | Fire-resistance inspection  | Taping and finishing joints
+  Roof sheathing installed       | Sheathing inspection*       | Installing underlayment/shingles
+  Pool rebar cage tied           | Steel/rebar inspection      | Shooting gunite/shotcrete
+  Pool plumbing in trenches      | Pool plumbing inspection    | Backfilling trenches
+  Pool electrical/bonding done   | Pool electrical inspection  | Pouring concrete deck
+  Pool barrier/fence installed   | Barrier inspection          | Filling pool for use
+  Deck post holes dug            | Footing inspection          | Pouring concrete in holes
+  Deck framing complete          | Framing inspection          | Installing decking
+  Fence post holes dug           | Post hole inspection**      | Pouring concrete/setting posts
+  All work complete              | Final inspection            | Occupying structure
+
+  * Sheathing inspection may not be required if only re-roofing; confirm with village
+  ** Many villages handle fences with final inspection only; confirm with village
+
+
+=============================================================================
+SECTION 17: SOURCES AND REFERENCES
+=============================================================================
+
+Legal and Code References:
+  - 19 NYCRR Part 1203 (NYS Uniform Code Administration and Enforcement):
+    https://dos.ny.gov/system/files/documents/2024/11/19-nycrr-part-1203.pdf
+  - 2020 Residential Code of New York State (RCNYS), Section R109 (Inspections):
+    https://codes.iccsafe.org/content/NYSRC2020P1/
+  - 2020 Building Code of New York State, Chapter 17 (Special Inspections):
+    https://codes.iccsafe.org/content/NYSBC2020P1/chapter-17-special-inspections-and-tests
+  - NYS Energy Conservation Construction Code of New York State (2020):
+    https://up.codes/viewer/new_york/irc-2018/chapter/11/re-energy-efficiency
+  - NYS Plumbing Code (2020), Underground Inspection:
+    https://up.codes/viewer/new_york/ny-plumbing-code-2020/chapter/7/sanitary-drainage
+  - NYS DOS Technical Bulletin TB-1014-UC (Swimming Pool Summary):
+    https://dos.ny.gov/tb-1014-uc-pool-summary
+  - National Electrical Code Article 680 (Swimming Pools)
+  - IRC R109 Inspections Overview (InterNACHI):
+    https://www.nachi.org/understanding-types-code-inspections.htm
+
+Village Code References:
+  - Village of Great Neck Construction Codes: https://ecode360.com/6304534
+  - Village of Great Neck Construction Specifications: https://ecode360.com/6306835
+  - Village of Great Neck Estates Building Permits: https://ecode360.com/5075209
+  - Village of Great Neck Estates Driveways: https://ecode360.com/5075338
+  - Village of Great Neck Plaza Building Construction: https://ecode360.com/11774925
+  - Village of Kings Point: https://ecode360.com/11009169
+  - Town of North Hempstead Building Construction: https://ecode360.com/9293608
+  - Town of North Hempstead Plumbing and Drainage: https://ecode360.com/9293799
+
+Agency Contacts:
+  - NYS Department of State, Building Standards and Codes: https://dos.ny.gov/building-standards-and-codes
+  - Nassau County DPW: (516) 571-6900
+  - Nassau County Stormwater Management: https://www.nassaucountyny.gov/1876/Stormwater-Management-Program
+  - Town of North Hempstead Building Dept: (516) 869-6311
+
+Note to RAG System:
+  This document should be retrieved for queries about: inspection timing, when to schedule
+  inspections, what happens if inspection is missed, covering work before inspection,
+  concealment of work, re-excavation, tearing out drywall, stop work orders, inspection
+  consequences, inspection sequence, inspection order, critical inspections, don't cover up,
+  before concrete, before backfill, before drywall, before walls close, before shingles,
+  before gunite, before paving, rough inspection, underground inspection.

@@ -113,7 +113,7 @@ async def scrape_village(village_name: str, village_code: str) -> int:
 
 async def main():
     """Scrape village codes from ecode360 and ingest into knowledge store."""
-    print("GreatNeck Village Code Scraper")
+    print("AskMura Village Code Scraper")
     print("=" * 60)
 
     # Allow filtering to specific village via CLI arg

@@ -7,7 +7,7 @@ import ThemeToggle from "@/components/ThemeToggle";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "GreatNeck Assistant",
+  title: "AskMura",
   description:
     "AI-powered community assistant for Great Neck village codes, permits, and local info",
 };
@@ -22,7 +22,7 @@ export default function RootLayout({
       <head>
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var t=localStorage.getItem("greatneck_theme");if(t&&["light","dark","classic"].includes(t)){document.documentElement.setAttribute("data-theme",t)}else{document.documentElement.setAttribute("data-theme","light")}}catch(e){document.documentElement.setAttribute("data-theme","light")}})()`,
+            __html: `(function(){try{var t=localStorage.getItem("askmura_theme");if(t&&["light","dark","classic"].includes(t)){document.documentElement.setAttribute("data-theme",t)}else{document.documentElement.setAttribute("data-theme","light")}}catch(e){document.documentElement.setAttribute("data-theme","light")}})()`,
           }}
         />
       </head>
@@ -47,7 +47,7 @@ export default function RootLayout({
                   />
                 </svg>
                 <span className="text-lg font-bold text-text-900">
-                  GreatNeck Assistant
+                  AskMura
                 </span>
               </a>
               <nav className="flex items-center gap-4">
@@ -62,6 +62,12 @@ export default function RootLayout({
                   className="text-sm text-text-500 hover:text-text-800 transition-colors"
                 >
                   Admin
+                </a>
+                <a
+                  href="/debug/"
+                  className="text-sm text-gold hover:text-gold-dark transition-colors"
+                >
+                  Debug
                 </a>
                 <ThemeToggle />
               </nav>

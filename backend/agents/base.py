@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass, field
+from datetime import datetime
 from typing import Any, Callable, Awaitable, Optional
 
 from llm.provider import llm_call_with_tools
@@ -98,13 +99,59 @@ class BaseAgent:
         critic_feedback: str | None = None,
     ) -> list[dict]:
         system = self.system_prompt
+        now = datetime.now()
+        # Provide weekday context so LLM can resolve "this Friday", "tomorrow", etc.
+        weekday = now.strftime('%A')  # e.g. "Tuesday"
+        days_of_week = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+        day_idx = days_of_week.index(weekday)
+        upcoming = ", ".join(
+            f"{days_of_week[(day_idx + i) % 7]} {(now + __import__('datetime').timedelta(days=i)).strftime('%B %-d')}"
+            for i in range(7)
+        )
+        system += (
+            f"\n\nCurrent date/time: {now.strftime('%A, %B %-d, %Y at %I:%M %p')} (Eastern Time)"
+            f"\nUpcoming days: {upcoming}"
+        )
+
+        # Response formatting guidelines (applies to all user-facing agents)
+        system += """
+
+## Response Format
+- **Lead with a concise answer.** Put the key fact or summary in the first 1-2 sentences so the user gets their answer at a glance.
+- **Follow with balanced detail.** Add helpful context, key details, and actionable info (phone numbers, addresses, next steps) — but don't overwhelm.
+- **Always cite sources.** When your answer comes from search results or web pages, include the source names and URLs at the end under a "Sources" section. Never omit sources when you have them."""
+
         if context:
             village = context.get("village", "")
             if village:
-                system += f"\n\nThe user is a resident of {village}. Focus on codes and rules for this village."
+                system += (
+                    f"\n\nThe user is a resident of {village}. Focus on codes and rules for this village."
+                    f"\n\n## Geographic Jurisdiction Awareness"
+                    f"\nThe Great Neck area sits within this hierarchy: "
+                    f"New York State → Nassau County → Town of North Hempstead → individual villages. "
+                    f"NYS building/fire codes set the MINIMUM standard and always apply. "
+                    f"Village-specific codes (zoning, setbacks, FAR, lot coverage) may impose STRICTER requirements. "
+                    f"Each village has its own codes — rules in one village do NOT apply to another. "
+                    f"When answering, consider which jurisdiction level the regulation comes from."
+                )
             history = context.get("history", [])
         else:
             history = []
+
+        # Inject pre-loaded RAG context (always available for permit/code agents)
+        rag_baseline = (context or {}).get("rag_baseline", "")
+        if rag_baseline:
+            system += f"\n\n{rag_baseline}"
+
+        # Inject known answers from internal registry (high-priority context)
+        registry_context = (context or {}).get("registry_context", "")
+        if registry_context:
+            system += f"\n\n{registry_context}"
+
+        # Inject debug instructions from god mode memory
+        debug_instructions = (context or {}).get("debug_instructions", "")
+        if debug_instructions:
+            system += f"\n\n{debug_instructions}"
 
         if search_plan:
             system += f"\n\n## Search Plan\nA planner has analyzed the user's query and recommends the following search strategy:\n{search_plan}"

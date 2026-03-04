@@ -74,7 +74,12 @@ Rules:
 - Use search_permits for permit requirement queries, search_codes for code/regulation queries
 - Priority 1 = most important, 2 = supplementary
 - Include 2-5 search steps covering different aspects of the question
-- Web fallback queries should include the village name and be specific
+- Web fallback queries should include the village name AND "NY" to avoid wrong-state results
+- Consider the jurisdictional hierarchy when planning searches:
+  - NYS building/fire/energy codes apply to ALL villages (state-level baseline)
+  - Village-specific zoning codes (setbacks, FAR, lot coverage, height limits) differ per village
+  - Town of North Hempstead rules apply to unincorporated areas
+  - Include a search step for state-level requirements when the question involves construction, fire safety, or building standards
 - Assess complexity:
   - "low": straightforward single-domain lookup (e.g., "what's the noise ordinance?")
   - "medium": multi-domain but well-defined (e.g., "do I need a permit for a fence?")

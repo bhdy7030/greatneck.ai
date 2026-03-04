@@ -2,6 +2,7 @@
 
 import type { ChatMessage as ChatMessageType } from "@/lib/api";
 import SourceCitation from "./SourceCitation";
+import PermitTimeline, { type PermitPhase } from "./PermitTimeline";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
@@ -86,6 +87,18 @@ export default function ChatMessage({ message }: ChatMessageProps) {
                   </a>
                 ),
                 code: ({ className, children, ...props }) => {
+                  // Render permit-timeline blocks as visual stepper
+                  if (className === "language-permit-timeline") {
+                    try {
+                      const raw = String(children).trim();
+                      const data = JSON.parse(raw);
+                      const phases: PermitPhase[] = data.phases || data;
+                      const projectType: string | undefined = data.project_type;
+                      return <PermitTimeline phases={phases} projectType={projectType} />;
+                    } catch {
+                      // Fall through to normal code rendering if parse fails
+                    }
+                  }
                   const isInline = !className;
                   return isInline ? (
                     <code className="bg-surface-200 text-text-700 px-1 py-0.5 rounded text-xs" {...props}>

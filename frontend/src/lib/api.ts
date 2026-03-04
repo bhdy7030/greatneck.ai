@@ -71,7 +71,7 @@ export async function sendMessage(
 
 /** Pipeline event emitted by the streaming endpoint */
 export interface PipelineEvent {
-  type: string; // "step" | "tool" | "response" | "error"
+  type: string; // "step" | "tool" | "response" | "error" | "debug"
   stage?: string;
   status?: string;
   label?: string;
@@ -91,6 +91,27 @@ export interface PipelineEvent {
   sources?: SourceRef[];
   agent_used?: string;
   message?: string; // error
+  // debug event fields
+  data?: Record<string, unknown>;
+}
+
+export interface ConversationItem {
+  role: "user" | "assistant" | "pipeline";
+  content: string;
+  sources?: SourceRef[];
+  agent?: string;
+  events?: PipelineEvent[];
+}
+
+export interface DebugMemoryEntry {
+  id: string;
+  timestamp: string;
+  type: "rag_quality" | "agent_workflow" | "query_pattern" | "instruction";
+  content: string;
+  related_query: string;
+  tags: string[];
+  status: "active" | "resolved";
+  conversation?: ConversationItem[];
 }
 
 /**
@@ -101,7 +122,8 @@ export async function sendMessageStream(
   village: string,
   onEvent: (event: PipelineEvent) => void,
   imageBase64?: string,
-  history?: { role: string; content: string }[]
+  history?: { role: string; content: string }[],
+  debug?: boolean
 ): Promise<ChatResponse> {
   const res = await fetch(`${BASE_URL}/api/chat/stream`, {
     method: "POST",
@@ -111,6 +133,7 @@ export async function sendMessageStream(
       village,
       image_base64: imageBase64 || null,
       history: history || [],
+      debug: debug || false,
     }),
   });
 
@@ -153,7 +176,8 @@ export async function sendMessageStream(
             throw new Error(data.message || "Pipeline error");
           }
         } catch (e) {
-          if (e instanceof Error && e.message !== "Pipeline error") {
+          // Re-throw pipeline/API errors; only swallow JSON parse failures
+          if (e instanceof SyntaxError) {
             console.warn("Failed to parse SSE data:", line, e);
           } else {
             throw e;
@@ -238,4 +262,55 @@ export async function getKnowledgeStats(): Promise<KnowledgeStats> {
     throw new Error(`Failed to fetch stats: ${res.status}`);
   }
   return res.json();
+}
+
+// ── Debug Memory API ──
+
+export async function getDebugMemory(
+  type?: string,
+  status?: string
+): Promise<DebugMemoryEntry[]> {
+  const params = new URLSearchParams();
+  if (type) params.set("type", type);
+  if (status) params.set("status", status);
+  const qs = params.toString();
+  const res = await fetch(`${BASE_URL}/api/debug/memory${qs ? `?${qs}` : ""}`);
+  if (!res.ok) throw new Error(`Failed to fetch debug memory: ${res.status}`);
+  return res.json();
+}
+
+export async function addDebugMemory(entry: {
+  type: string;
+  content: string;
+  related_query?: string;
+  tags?: string[];
+  conversation?: ConversationItem[];
+}): Promise<DebugMemoryEntry> {
+  const res = await fetch(`${BASE_URL}/api/debug/memory`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(entry),
+  });
+  if (!res.ok) throw new Error(`Failed to add debug entry: ${res.status}`);
+  return res.json();
+}
+
+export async function updateDebugMemory(
+  id: string,
+  update: { content?: string; status?: string; tags?: string[] }
+): Promise<DebugMemoryEntry> {
+  const res = await fetch(`${BASE_URL}/api/debug/memory/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(update),
+  });
+  if (!res.ok) throw new Error(`Failed to update debug entry: ${res.status}`);
+  return res.json();
+}
+
+export async function deleteDebugMemory(id: string): Promise<void> {
+  const res = await fetch(`${BASE_URL}/api/debug/memory/${id}`, {
+    method: "DELETE",
+  });
+  if (!res.ok) throw new Error(`Failed to delete debug entry: ${res.status}`);
 }

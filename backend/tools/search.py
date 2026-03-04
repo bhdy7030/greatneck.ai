@@ -49,6 +49,9 @@ def _source_and_url(meta: dict) -> tuple[str, str]:
 async def search_codes(query: str, village: str = "") -> str:
     """Search the knowledge store for village code chunks matching the query."""
     results = _store.search(query, village=village or None, n_results=5)
+    # Also search the shared collection (geographic hierarchy, state-level rules)
+    shared_results = _store.search(query, village=None, n_results=2)
+    results = results + shared_results
     results = _filter_relevant(results)
     if not results:
         return (

@@ -19,7 +19,7 @@ export default function Home() {
           Long Island, New York
         </p>
         <h1 className="text-3xl md:text-4xl font-bold text-text-800 mb-3">
-          Welcome to GreatNeck Assistant
+          Welcome to AskMura
         </h1>
         <p className="text-text-500 text-lg max-w-md mx-auto">
           Your neighborhood guide to village codes, permits, and local

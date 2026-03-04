@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 # Suppress LiteLLM's verbose logging
 litellm.suppress_debug_info = True
 
-MAX_RETRIES = 3
+MAX_RETRIES = 5
 RETRY_DELAY = 2  # seconds
 
 
@@ -22,7 +22,7 @@ async def _retry(coro_fn, retries=MAX_RETRIES):
             return await coro_fn()
         except Exception as e:
             err_str = str(e).lower()
-            is_transient = "overloaded" in err_str or "529" in err_str or "rate" in err_str
+            is_transient = ("overloaded" in err_str or "529" in err_str or "rate" in err_str) and "not found" not in err_str and "404" not in err_str
             if is_transient and attempt < retries - 1:
                 wait = RETRY_DELAY * (attempt + 1)
                 logger.warning(f"LLM transient error (attempt {attempt+1}), retrying in {wait}s: {e}")

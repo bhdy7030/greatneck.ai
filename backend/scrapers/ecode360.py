@@ -37,7 +37,7 @@ async def scrape_village_codes(village_code: str) -> list[dict]:
     async with httpx.AsyncClient(
         timeout=30.0,
         follow_redirects=True,
-        headers={"User-Agent": "GreatNeckAssistant/0.1 (community research)"},
+        headers={"User-Agent": "AskMura/0.1 (community research)"},
     ) as client:
         # Step 1: Get the table of contents
         chapters = await _fetch_chapter_list(client, toc_url)
