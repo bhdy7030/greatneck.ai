@@ -1,8 +1,8 @@
 import type { CapacitorConfig } from "@capacitor/cli";
 
 const config: CapacitorConfig = {
-  appId: "com.askmura.app",
-  appName: "AskMura",
+  appId: "ai.greatneck.app",
+  appName: "greatneck.ai",
   webDir: "out",
   server: {
     androidScheme: "https",

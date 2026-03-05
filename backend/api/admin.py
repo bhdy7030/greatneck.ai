@@ -2,18 +2,67 @@
 from __future__ import annotations
 
 import logging
-from typing import Annotated
+from typing import Annotated, Optional
 
-from fastapi import APIRouter, File, Form, UploadFile, HTTPException
+from fastapi import APIRouter, Depends, File, Form, UploadFile, HTTPException
 from pydantic import BaseModel
 
 from rag.ingest import ingest_document, ingest_pdf
 from rag.store import KnowledgeStore
+from api.deps import require_admin
+from llm.presets import PROVIDERS, ROLE_PRESETS, load_config, save_config
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
 _store = KnowledgeStore()
+
+
+class ModelConfigUpdate(BaseModel):
+    provider: Optional[str] = None
+
+
+def _resolve_models(provider: str) -> dict[str, str]:
+    """Return {role: model_id} for current settings (full tier, not fast)."""
+    return {role: preset[provider] for role, preset in ROLE_PRESETS.items()}
+
+
+# --- Model configuration ---
+
+
+@router.get("/models")
+async def get_model_config(user: dict = Depends(require_admin)) -> dict:
+    """Return current provider and resolved model map."""
+    cfg = load_config()
+    provider = cfg.get("provider", "claude")
+    return {
+        "provider": provider,
+        "models": _resolve_models(provider),
+    }
+
+
+@router.put("/models")
+async def update_model_config(
+    body: ModelConfigUpdate, user: dict = Depends(require_admin)
+) -> dict:
+    """Update provider. Returns updated config."""
+    cfg = load_config()
+
+    if body.provider is not None:
+        if body.provider not in PROVIDERS:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid provider '{body.provider}'. Must be one of {PROVIDERS}",
+            )
+        cfg["provider"] = body.provider
+
+    save_config(cfg)
+
+    provider = cfg["provider"]
+    return {
+        "provider": provider,
+        "models": _resolve_models(provider),
+    }
 
 
 class IngestRequest(BaseModel):
@@ -44,6 +93,7 @@ async def upload_document(
     source: str | None = Form(None),
     village: str = Form(""),
     category: str = Form("general"),
+    user: dict = Depends(require_admin),
 ) -> IngestResponse:
     """Upload a text or PDF document for ingestion into the knowledge store.
 
@@ -109,7 +159,7 @@ async def _ingest_file(file: UploadFile, village: str, category: str) -> IngestR
 
 
 @router.post("/documents/json", response_model=IngestResponse)
-async def upload_document_json(request: IngestRequest) -> IngestResponse:
+async def upload_document_json(request: IngestRequest, user: dict = Depends(require_admin)) -> IngestResponse:
     """Upload document content as JSON (alternative to form/file upload)."""
     result = await ingest_document(
         content=request.content,
@@ -124,7 +174,7 @@ async def upload_document_json(request: IngestRequest) -> IngestResponse:
 
 
 @router.get("/sources")
-async def list_sources() -> list[dict]:
+async def list_sources(user: dict = Depends(require_admin)) -> list[dict]:
     """List all knowledge store collections with document counts."""
     collections = _store.list_collections()
     result = []
@@ -143,7 +193,7 @@ async def list_sources() -> list[dict]:
 
 
 @router.get("/stats")
-async def knowledge_stats() -> dict:
+async def knowledge_stats(user: dict = Depends(require_admin)) -> dict:
     """Get overall knowledge base statistics."""
     collections = _store.list_collections()
     per_collection = {}
@@ -161,7 +211,7 @@ async def knowledge_stats() -> dict:
 
 
 @router.delete("/sources/{village}")
-async def delete_source(village: str) -> dict:
+async def delete_source(village: str, user: dict = Depends(require_admin)) -> dict:
     """Delete a village's collection from the knowledge store."""
     try:
         collection_name = _store._collection_name(village if village != "shared" else None)

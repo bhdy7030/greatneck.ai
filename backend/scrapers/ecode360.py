@@ -37,7 +37,7 @@ async def scrape_village_codes(village_code: str) -> list[dict]:
     async with httpx.AsyncClient(
         timeout=30.0,
         follow_redirects=True,
-        headers={"User-Agent": "AskMura/0.1 (community research)"},
+        headers={"User-Agent": "GreatNeck.ai/0.1 (community research)"},
     ) as client:
         # Step 1: Get the table of contents
         chapters = await _fetch_chapter_list(client, toc_url)
@@ -151,3 +151,23 @@ async def _fetch_chapter_content(
             ))
 
     return sections
+
+
+def format_section_for_ingestion(section: dict, village_code: str) -> str:
+    """Format an ecode360 section dict for consistent chunking.
+
+    Prepends chapter and section headers to the text body so the chunker
+    has full context even after splitting.
+    """
+    chapter = section.get("chapter", "")
+    sec_header = section.get("section", "")
+    text = section.get("text", "")
+
+    parts = [f"Village Code: {village_code}"]
+    if chapter:
+        parts.append(f"Chapter: {chapter}")
+    if sec_header and sec_header != chapter:
+        parts.append(f"Section: {sec_header}")
+    parts.append("")
+    parts.append(text)
+    return "\n".join(parts)

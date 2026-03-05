@@ -12,15 +12,16 @@ class RouterAgent(BaseAgent):
 
     name = "router"
     model_role = "router"
-    system_prompt = """You are a query router for AskMura, the Great Neck community assistant.
+    system_prompt = """You are a query router for GreatNeck.ai, the Great Neck community assistant.
 Your ONLY job is to classify the user's query and return a JSON routing decision.
 
 Classify into one of these categories:
 - "village_code" — questions about zoning laws, building codes, ordinances, setback requirements, noise rules, property regulations, code enforcement
 - "permit" — questions about permits, applications, forms, fees, inspections, building department submissions, construction projects, renovations, driveway work, fences, decks, roofing, plumbing, electrical work, or any home improvement that may require a permit
-- "community" — questions about schools, libraries, parks, community events, local services, recreation
+- "community" — questions about schools, libraries, parks, community events, local services, recreation, restaurants, neighborhood life, real estate
 - "vision" — when the user provides an image and wants analysis of construction/renovation work, code compliance from photos
-- "general" — greetings, off-topic, or unclear queries that don't fit the above
+- "general" — greetings or simple conversational messages (hi, hello, thanks)
+- "off_topic" — queries completely unrelated to Great Neck or local community topics. Examples: coding help, homework, math problems, recipes, general AI chat, medical advice, stock picks, writing essays. Be strict: if it has nothing to do with Great Neck / Long Island / local life / housing / community, it's off_topic.
 
 You MUST respond with ONLY a JSON object in this exact format:
 {"agent": "village_code", "refined_query": "the refined search query"}
@@ -55,7 +56,7 @@ Do NOT include any other text, explanation, or markdown. Only the JSON object.""
             decision = {"agent": "general", "refined_query": query}
 
         # Validate the agent name
-        valid_agents = {"village_code", "permit", "community", "vision", "general"}
+        valid_agents = {"village_code", "permit", "community", "vision", "general", "off_topic"}
         if decision.get("agent") not in valid_agents:
             decision["agent"] = "general"
         if not decision.get("refined_query"):

@@ -1,5 +1,44 @@
+import { getToken, type AuthUser } from "@/lib/auth";
+
 const BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:8001";
+  process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8001";
+
+function authHeaders(): Record<string, string> {
+  const token = getToken();
+  if (token) {
+    return { Authorization: `Bearer ${token}` };
+  }
+  return {};
+}
+
+// ── Conversation types ──
+
+export interface Conversation {
+  id: string;
+  title: string;
+  village: string;
+  updated_at: string;
+  message_count: number;
+  preview: string;
+}
+
+export interface ConversationDetail {
+  id: string;
+  user_id: number;
+  title: string;
+  village: string;
+  created_at: string;
+  updated_at: string;
+  messages: {
+    id: number;
+    role: "user" | "assistant";
+    content: string;
+    image_base64?: string;
+    sources?: SourceRef[];
+    agent_used?: string;
+    created_at: string;
+  }[];
+}
 
 export interface ChatMessage {
   role: "user" | "assistant";
@@ -7,6 +46,7 @@ export interface ChatMessage {
   image?: string; // base64 encoded
   sources?: SourceRef[];
   agent?: string;
+  pipelineEvents?: PipelineEvent[];
 }
 
 export interface SourceRef {
@@ -21,6 +61,7 @@ export interface ChatResponse {
   response: string;
   sources: SourceRef[];
   agent_used: string;
+  conversation_id?: string | null;
 }
 
 export interface Village {
@@ -44,20 +85,30 @@ export interface KnowledgeStats {
 /**
  * Send a chat message to the backend.
  */
+export type WebSearchMode = "off" | "limited" | "unlimited";
+
 export async function sendMessage(
   message: string,
   village: string,
   imageBase64?: string,
-  history?: { role: string; content: string }[]
+  history?: { role: string; content: string }[],
+  conversationId?: string,
+  webSearchMode?: WebSearchMode,
+  language?: string,
+  fastMode?: boolean
 ): Promise<ChatResponse> {
   const res = await fetch(`${BASE_URL}/api/chat`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...authHeaders() },
     body: JSON.stringify({
       message,
       village,
       image_base64: imageBase64 || null,
       history: history || [],
+      conversation_id: conversationId || null,
+      web_search_mode: webSearchMode || "limited",
+      fast_mode: fastMode || false,
+      language: language || "en",
     }),
   });
 
@@ -123,17 +174,25 @@ export async function sendMessageStream(
   onEvent: (event: PipelineEvent) => void,
   imageBase64?: string,
   history?: { role: string; content: string }[],
-  debug?: boolean
+  debug?: boolean,
+  conversationId?: string,
+  webSearchMode?: WebSearchMode,
+  language?: string,
+  fastMode?: boolean
 ): Promise<ChatResponse> {
   const res = await fetch(`${BASE_URL}/api/chat/stream`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...authHeaders() },
     body: JSON.stringify({
       message,
       village,
       image_base64: imageBase64 || null,
       history: history || [],
       debug: debug || false,
+      conversation_id: conversationId || null,
+      web_search_mode: webSearchMode || "limited",
+      fast_mode: fastMode || false,
+      language: language || "en",
     }),
   });
 
@@ -170,6 +229,7 @@ export async function sendMessageStream(
               response: data.response || "",
               sources: data.sources || [],
               agent_used: data.agent_used || "",
+              conversation_id: data.conversation_id || null,
             };
           }
           if (currentEventType === "error") {
@@ -215,7 +275,7 @@ export async function uploadDocument(
 ): Promise<{ status: string; chunks: number }> {
   const res = await fetch(`${BASE_URL}/api/admin/documents/json`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...authHeaders() },
     body: JSON.stringify({ content, source, village, category }),
   });
 
@@ -231,7 +291,9 @@ export async function uploadDocument(
  * Get all sources in the knowledge base.
  */
 export async function getSources(): Promise<SourceDoc[]> {
-  const res = await fetch(`${BASE_URL}/api/admin/sources`);
+  const res = await fetch(`${BASE_URL}/api/admin/sources`, {
+    headers: authHeaders(),
+  });
   if (!res.ok) {
     throw new Error(`Failed to fetch sources: ${res.status}`);
   }
@@ -244,7 +306,7 @@ export async function getSources(): Promise<SourceDoc[]> {
 export async function deleteSource(village: string): Promise<{ status: string }> {
   const res = await fetch(
     `${BASE_URL}/api/admin/sources/${encodeURIComponent(village)}`,
-    { method: "DELETE" }
+    { method: "DELETE", headers: authHeaders() }
   );
   if (!res.ok) {
     const err = await res.text();
@@ -257,10 +319,39 @@ export async function deleteSource(village: string): Promise<{ status: string }>
  * Get knowledge base stats.
  */
 export async function getKnowledgeStats(): Promise<KnowledgeStats> {
-  const res = await fetch(`${BASE_URL}/api/admin/stats`);
+  const res = await fetch(`${BASE_URL}/api/admin/stats`, {
+    headers: authHeaders(),
+  });
   if (!res.ok) {
     throw new Error(`Failed to fetch stats: ${res.status}`);
   }
+  return res.json();
+}
+
+// ── Model Config API ──
+
+export interface ModelConfig {
+  provider: "claude" | "gemini";
+  models: Record<string, string>;
+}
+
+export async function getModelConfig(): Promise<ModelConfig> {
+  const res = await fetch(`${BASE_URL}/api/admin/models`, {
+    headers: authHeaders(),
+  });
+  if (!res.ok) throw new Error(`Failed to fetch model config: ${res.status}`);
+  return res.json();
+}
+
+export async function updateModelConfig(
+  update: { provider?: string; fast_mode?: boolean }
+): Promise<ModelConfig> {
+  const res = await fetch(`${BASE_URL}/api/admin/models`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json", ...authHeaders() },
+    body: JSON.stringify(update),
+  });
+  if (!res.ok) throw new Error(`Failed to update model config: ${res.status}`);
   return res.json();
 }
 
@@ -274,7 +365,9 @@ export async function getDebugMemory(
   if (type) params.set("type", type);
   if (status) params.set("status", status);
   const qs = params.toString();
-  const res = await fetch(`${BASE_URL}/api/debug/memory${qs ? `?${qs}` : ""}`);
+  const res = await fetch(`${BASE_URL}/api/debug/memory${qs ? `?${qs}` : ""}`, {
+    headers: authHeaders(),
+  });
   if (!res.ok) throw new Error(`Failed to fetch debug memory: ${res.status}`);
   return res.json();
 }
@@ -288,7 +381,7 @@ export async function addDebugMemory(entry: {
 }): Promise<DebugMemoryEntry> {
   const res = await fetch(`${BASE_URL}/api/debug/memory`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...authHeaders() },
     body: JSON.stringify(entry),
   });
   if (!res.ok) throw new Error(`Failed to add debug entry: ${res.status}`);
@@ -301,7 +394,7 @@ export async function updateDebugMemory(
 ): Promise<DebugMemoryEntry> {
   const res = await fetch(`${BASE_URL}/api/debug/memory/${id}`, {
     method: "PUT",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...authHeaders() },
     body: JSON.stringify(update),
   });
   if (!res.ok) throw new Error(`Failed to update debug entry: ${res.status}`);
@@ -311,6 +404,102 @@ export async function updateDebugMemory(
 export async function deleteDebugMemory(id: string): Promise<void> {
   const res = await fetch(`${BASE_URL}/api/debug/memory/${id}`, {
     method: "DELETE",
+    headers: authHeaders(),
   });
   if (!res.ok) throw new Error(`Failed to delete debug entry: ${res.status}`);
+}
+
+// ── Auth API ──
+
+export async function fetchCurrentUser(): Promise<AuthUser> {
+  const res = await fetch(`${BASE_URL}/api/auth/me`, {
+    headers: authHeaders(),
+  });
+  if (!res.ok) throw new Error(`Not authenticated: ${res.status}`);
+  return res.json();
+}
+
+// ── Conversations API ──
+
+export async function listConversations(): Promise<Conversation[]> {
+  const res = await fetch(`${BASE_URL}/api/conversations`, {
+    headers: authHeaders(),
+  });
+  if (!res.ok) throw new Error(`Failed to list conversations: ${res.status}`);
+  return res.json();
+}
+
+export async function createConversation(
+  village: string
+): Promise<ConversationDetail> {
+  const res = await fetch(`${BASE_URL}/api/conversations`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...authHeaders() },
+    body: JSON.stringify({ village }),
+  });
+  if (!res.ok) throw new Error(`Failed to create conversation: ${res.status}`);
+  return res.json();
+}
+
+export async function getConversation(
+  id: string
+): Promise<ConversationDetail> {
+  const res = await fetch(`${BASE_URL}/api/conversations/${id}`, {
+    headers: authHeaders(),
+  });
+  if (!res.ok) throw new Error(`Failed to get conversation: ${res.status}`);
+  return res.json();
+}
+
+export async function renameConversation(
+  id: string,
+  title: string
+): Promise<void> {
+  const res = await fetch(`${BASE_URL}/api/conversations/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json", ...authHeaders() },
+    body: JSON.stringify({ title }),
+  });
+  if (!res.ok) throw new Error(`Failed to rename conversation: ${res.status}`);
+}
+
+export async function deleteConversation(id: string): Promise<void> {
+  const res = await fetch(`${BASE_URL}/api/conversations/${id}`, {
+    method: "DELETE",
+    headers: authHeaders(),
+  });
+  if (!res.ok)
+    throw new Error(`Failed to delete conversation: ${res.status}`);
+}
+
+// ── User Management API (admin only) ──
+
+export interface UserInfo {
+  id: number;
+  email: string;
+  name: string;
+  is_admin: boolean;
+  can_debug: boolean;
+  last_login_at: string;
+}
+
+export async function listUsers(): Promise<UserInfo[]> {
+  const res = await fetch(`${BASE_URL}/api/auth/users`, {
+    headers: authHeaders(),
+  });
+  if (!res.ok) throw new Error(`Failed to list users: ${res.status}`);
+  return res.json();
+}
+
+export async function updateUserPermissions(
+  userId: number,
+  permissions: { is_admin?: number; can_debug?: number }
+): Promise<UserInfo> {
+  const res = await fetch(`${BASE_URL}/api/auth/users/${userId}/permissions`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json", ...authHeaders() },
+    body: JSON.stringify(permissions),
+  });
+  if (!res.ok) throw new Error(`Failed to update permissions: ${res.status}`);
+  return res.json();
 }

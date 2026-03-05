@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# AskMura — Rebuild & redeploy after code changes
+# GreatNeck.ai — Rebuild & redeploy after code changes
 set -euo pipefail
 
 REGION="${AWS_REGION:-us-east-1}"

@@ -14,7 +14,7 @@ async def scrape_url(url: str) -> str:
         async with httpx.AsyncClient(
             timeout=30.0,
             follow_redirects=True,
-            headers={"User-Agent": "AskMura/0.1"},
+            headers={"User-Agent": "GreatNeck.ai/0.1"},
         ) as client:
             response = await client.get(url)
             response.raise_for_status()

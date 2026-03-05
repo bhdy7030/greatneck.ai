@@ -7,7 +7,7 @@ import logging
 import re
 from typing import Any, AsyncGenerator
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
@@ -21,6 +21,14 @@ from agents.critic import CriticAgent
 from agents.base import AgentResponse
 from debug.memory import debug_memory
 from knowledge.registry import lookup_and_format as registry_lookup
+from api.deps import get_optional_user
+from db import (
+    add_message,
+    get_messages,
+    get_conversation,
+    update_conversation_title,
+    create_conversation,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -44,6 +52,10 @@ class ChatRequest(BaseModel):
     image_base64: str | None = None
     history: list[dict] = Field(default_factory=list)
     debug: bool = False
+    conversation_id: str | None = None
+    web_search_mode: str = "limited"  # "off", "limited", "unlimited"
+    fast_mode: bool = False
+    language: str = "en"  # "en" or "zh"
 
 
 class ChatResponse(BaseModel):
@@ -51,27 +63,81 @@ class ChatResponse(BaseModel):
     sources: list[dict] = Field(default_factory=list)
     agent_used: str = ""
     pipeline_debug: dict = Field(default_factory=dict)  # Pipeline visibility
+    conversation_id: str | None = None
+
+
+def _load_db_history(conversation_id: str) -> list[dict]:
+    """Load chat history from DB for a conversation."""
+    msgs = get_messages(conversation_id)
+    return [{"role": m["role"], "content": m["content"]} for m in msgs]
+
+
+def _auto_title(conversation_id: str, message: str):
+    """Set conversation title from first user message."""
+    convo = get_conversation(conversation_id)
+    if convo and convo["title"] == "New conversation":
+        title = message[:50].strip()
+        if len(message) > 50:
+            title += "..."
+        update_conversation_title(conversation_id, title)
 
 
 @router.post("/chat", response_model=ChatResponse)
-async def chat(request: ChatRequest) -> ChatResponse:
+async def chat(request: ChatRequest, user: dict | None = Depends(get_optional_user)) -> ChatResponse:
     """Main chat endpoint. Routes through RouterAgent then to a specialist."""
     try:
-        return await _handle_chat(request)
+        # If authenticated with conversation_id, load history from DB
+        if user and request.conversation_id:
+            convo = get_conversation(request.conversation_id)
+            if convo and convo["user_id"] == user["id"]:
+                request.history = _load_db_history(request.conversation_id)
+                add_message(request.conversation_id, "user", request.message, request.image_base64)
+                _auto_title(request.conversation_id, request.message)
+        elif user and not request.conversation_id:
+            # Auto-create conversation
+            convo = create_conversation(user["id"], request.village, request.message[:50] or "New conversation")
+            request.conversation_id = convo["id"]
+            add_message(request.conversation_id, "user", request.message, request.image_base64)
+
+        result = await _handle_chat(request)
+        result.conversation_id = request.conversation_id
+
+        # Save assistant response
+        if user and request.conversation_id:
+            add_message(
+                request.conversation_id, "assistant", result.response,
+                sources=result.sources if result.sources else None,
+                agent_used=result.agent_used,
+            )
+
+        return result
     except Exception as e:
         logger.exception("Chat error")
         return ChatResponse(
             response=_friendly_error(e),
             sources=[],
             agent_used="error",
+            conversation_id=request.conversation_id,
         )
 
 
 @router.post("/chat/stream")
-async def chat_stream(request: ChatRequest):
+async def chat_stream(request: ChatRequest, user: dict | None = Depends(get_optional_user)):
     """Streaming chat endpoint. Emits SSE events for each pipeline step."""
+    # If authenticated with conversation_id, load history from DB and save user message
+    if user and request.conversation_id:
+        convo = get_conversation(request.conversation_id)
+        if convo and convo["user_id"] == user["id"]:
+            request.history = _load_db_history(request.conversation_id)
+            add_message(request.conversation_id, "user", request.message, request.image_base64)
+            _auto_title(request.conversation_id, request.message)
+    elif user and not request.conversation_id:
+        convo = create_conversation(user["id"], request.village, request.message[:50] or "New conversation")
+        request.conversation_id = convo["id"]
+        add_message(request.conversation_id, "user", request.message, request.image_base64)
+
     return StreamingResponse(
-        _handle_chat_stream(request),
+        _handle_chat_stream(request, user=user),
         media_type="text/event-stream",
         headers={
             "Cache-Control": "no-cache",
@@ -101,14 +167,22 @@ def _friendly_error(e: Exception) -> str:
     return "Something went wrong. Please try again in a moment."
 
 
-async def _handle_chat_stream(request: ChatRequest) -> AsyncGenerator[str, None]:
+async def _handle_chat_stream(request: ChatRequest, user: dict | None = None) -> AsyncGenerator[str, None]:
     """Stream pipeline events as SSE."""
+    from tools.budget import set_budget
+    from llm.presets import set_fast_mode
+    set_budget(mode=request.web_search_mode, limit=5)
+    set_fast_mode(request.fast_mode)
+
     context: dict[str, Any] = {
         "village": request.village,
         "history": request.history,
+        "language": request.language,
     }
 
-    is_debug = request.debug
+    # Only allow debug events for users with debug permission
+    has_debug_perm = bool(user and (user.get("is_admin") or user.get("can_debug")))
+    is_debug = request.debug and has_debug_perm
 
     try:
         # Inject debug memory instructions into context if available
@@ -138,6 +212,18 @@ async def _handle_chat_stream(request: ChatRequest) -> AsyncGenerator[str, None]
         })
         if is_debug:
             yield _sse_event("debug", {"stage": "router", "data": routing})
+
+        if agent_name == "off_topic":
+            off_topic_resp = _build_off_topic_response()
+            if user and request.conversation_id:
+                add_message(request.conversation_id, "assistant", off_topic_resp, agent_used="router")
+            yield _sse_event("response", {
+                "response": off_topic_resp,
+                "sources": [],
+                "agent_used": "router",
+                "conversation_id": request.conversation_id,
+            })
+            return
 
         if agent_name == "general" or agent_name not in _agents:
             agent = _agents["community"]
@@ -245,8 +331,9 @@ async def _handle_chat_stream(request: ChatRequest) -> AsyncGenerator[str, None]
             "label": f"Completed ({tool_count} tool calls)",
         })
 
-        # Step 4: Critic
-        if agent_name != "community":
+        # Step 4: Critic (skip for simple community queries without a plan)
+        skip_critic = agent_name == "community" and not plan
+        if not skip_critic:
             yield _sse_event("step", {"stage": "critic", "status": "running", "label": "Validating response..."})
             verdict = await _critic_agent.run(
                 original_query=request.message,
@@ -318,18 +405,33 @@ async def _handle_chat_stream(request: ChatRequest) -> AsyncGenerator[str, None]
                 })
 
             if verdict.decision == "insufficient":
+                insufficient_resp = _build_insufficient_response(request.message, request.village)
+                if user and request.conversation_id:
+                    add_message(request.conversation_id, "assistant", insufficient_resp, agent_used=agent_name)
                 yield _sse_event("response", {
-                    "response": _build_insufficient_response(request.message, request.village),
+                    "response": insufficient_resp,
                     "sources": [],
                     "agent_used": agent_name,
+                    "conversation_id": request.conversation_id,
                 })
                 return
 
         # Final response
+        sources = _extract_sources(agent_response)
+
+        # Save assistant response to DB
+        if user and request.conversation_id:
+            add_message(
+                request.conversation_id, "assistant", agent_response.content,
+                sources=sources if sources else None,
+                agent_used=agent_name,
+            )
+
         yield _sse_event("response", {
             "response": agent_response.content,
-            "sources": _extract_sources(agent_response),
+            "sources": sources,
             "agent_used": agent_name,
+            "conversation_id": request.conversation_id,
         })
 
     except Exception as e:
@@ -338,9 +440,15 @@ async def _handle_chat_stream(request: ChatRequest) -> AsyncGenerator[str, None]
 
 
 async def _handle_chat(request: ChatRequest) -> ChatResponse:
+    from tools.budget import set_budget
+    from llm.presets import set_fast_mode
+    set_budget(mode=request.web_search_mode, limit=5)
+    set_fast_mode(request.fast_mode)
+
     context: dict[str, Any] = {
         "village": request.village,
         "history": request.history,
+        "language": request.language,
     }
 
     # Check internal registry for known answers
@@ -399,6 +507,14 @@ async def _handle_chat(request: ChatRequest) -> ChatResponse:
 
     logger.info(f"Routed to '{agent_name}' with query: {refined_query[:100]}")
 
+    if agent_name == "off_topic":
+        return ChatResponse(
+            response=_build_off_topic_response(),
+            sources=[],
+            agent_used="router",
+            pipeline_debug=debug,
+        )
+
     if agent_name == "general" or agent_name not in _agents:
         agent = _agents["community"]
         agent_name = "community"
@@ -450,8 +566,9 @@ async def _handle_chat(request: ChatRequest) -> ChatResponse:
         "model_role": specialist_model_role or "reasoning",
     }
 
-    # Step 3: Critic validation (skip for community agent — simple lookups)
-    if agent_name != "community":
+    # Step 3: Critic validation (skip for simple community queries without a plan)
+    skip_critic = agent_name == "community" and not plan
+    if not skip_critic:
         verdict = await _critic_agent.run(
             original_query=request.message,
             draft_response=agent_response.content,
@@ -513,6 +630,19 @@ async def _handle_chat(request: ChatRequest) -> ChatResponse:
     )
 
 
+def _build_off_topic_response() -> str:
+    """Polite redirect for queries unrelated to Great Neck / local community."""
+    return (
+        "I'm **GreatNeck.ai**, a community assistant specifically for the Great Neck area. "
+        "I can help with:\n\n"
+        "- **Village codes & zoning** — setbacks, FAR, noise ordinances\n"
+        "- **Permits** — building permits, applications, inspections\n"
+        "- **Community info** — schools, parks, libraries, local events, restaurants\n\n"
+        "Your question seems outside that scope. "
+        "How can I help with something local?"
+    )
+
+
 def _build_insufficient_response(query: str, village: str) -> str:
     """Generate an honest 'I don't have this data' response with contact info."""
     village_name = village or "your village"
@@ -561,7 +691,7 @@ def _extract_sources(response: AgentResponse) -> list[dict]:
 
         if tool_name == "web_search":
             _extract_web_sources(preview, sources, seen)
-        elif tool_name in ("search_codes", "search_permits", "get_code_section"):
+        elif tool_name in ("search_codes", "search_permits", "get_code_section", "search_community", "search_social"):
             _extract_local_sources(preview, sources, seen)
 
     return sources

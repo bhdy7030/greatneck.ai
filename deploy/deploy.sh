@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# AskMura — Full AWS ECS Fargate Deployment
+# GreatNeck.ai — Full AWS ECS Fargate Deployment
 # Idempotent: safe to re-run. Creates resources only if they don't exist.
 set -euo pipefail
 
@@ -277,7 +277,7 @@ EOF
 )
 
     aws secretsmanager create-secret --name "$SECRET_NAME" \
-        --description "AskMura API keys" \
+        --description "GreatNeck.ai API keys" \
         --secret-string "$SECRET_JSON" \
         --region "$REGION" >/dev/null
     log "  Created secret '$SECRET_NAME'"
@@ -756,7 +756,7 @@ wait_and_summarize() {
 
     echo ""
     echo "=============================================="
-    echo -e "${GREEN}  AskMura — Deployed!${NC}"
+    echo -e "${GREEN}  GreatNeck.ai — Deployed!${NC}"
     echo "=============================================="
     echo ""
     echo "  URL:     http://$ALB_DNS/"
@@ -777,7 +777,7 @@ wait_and_summarize() {
 main() {
     echo ""
     echo "=========================================="
-    echo "  AskMura — AWS ECS Fargate Deployment"
+    echo "  GreatNeck.ai — AWS ECS Fargate Deployment"
     echo "=========================================="
     echo ""
 

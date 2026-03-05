@@ -10,6 +10,7 @@ import {
   type ChatMessage as ChatMessageType,
   type PipelineEvent,
 } from "@/lib/api";
+import { useAuth } from "@/components/AuthProvider";
 
 const VILLAGES = [
   "Great Neck",
@@ -21,6 +22,32 @@ const VILLAGES = [
 ];
 
 export default function DebugPage() {
+  const { user, isLoading: authLoading } = useAuth();
+  const canDebug = user?.is_admin || user?.can_debug;
+
+  if (authLoading) {
+    return (
+      <div className="flex-1 flex items-center justify-center">
+        <p className="text-sm text-text-500">Loading...</p>
+      </div>
+    );
+  }
+
+  if (!canDebug) {
+    return (
+      <div className="flex-1 flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-lg font-semibold text-text-700 mb-2">Access Denied</h2>
+          <p className="text-sm text-text-500">You need debug permissions to view this page.</p>
+        </div>
+      </div>
+    );
+  }
+
+  return <DebugContent />;
+}
+
+function DebugContent() {
   const [village, setVillage] = useState("Great Neck");
   const [messages, setMessages] = useState<ChatMessageType[]>([]);
   const [isLoading, setIsLoading] = useState(false);

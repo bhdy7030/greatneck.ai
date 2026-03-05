@@ -3,6 +3,7 @@
 import type { ChatMessage as ChatMessageType } from "@/lib/api";
 import SourceCitation from "./SourceCitation";
 import PermitTimeline, { type PermitPhase } from "./PermitTimeline";
+import PipelineSteps from "./PipelineSteps";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
@@ -16,12 +17,17 @@ export default function ChatMessage({ message }: ChatMessageProps) {
   return (
     <div className={`flex ${isUser ? "justify-end" : "justify-start"} mb-4`}>
       <div
-        className={`max-w-[85%] md:max-w-[70%] ${
+        className={`max-w-[92%] md:max-w-[70%] ${
           isUser
             ? "bg-sage text-white rounded-2xl rounded-br-md"
             : "bg-surface-50 border border-surface-300 shadow-sm text-text-800 rounded-2xl rounded-bl-md"
         } px-4 py-3`}
       >
+        {/* Pipeline steps (collapsed) */}
+        {!isUser && message.pipelineEvents && message.pipelineEvents.length > 0 && (
+          <PipelineSteps events={message.pipelineEvents} isComplete={true} />
+        )}
+
         {/* Agent badge */}
         {!isUser && message.agent && (
           <div className="mb-1">

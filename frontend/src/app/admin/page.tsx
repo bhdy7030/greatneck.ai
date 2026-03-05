@@ -6,9 +6,16 @@ import {
   getSources,
   deleteSource,
   getKnowledgeStats,
+  listUsers,
+  updateUserPermissions,
+  getModelConfig,
+  updateModelConfig,
   type SourceDoc,
   type KnowledgeStats,
+  type UserInfo,
+  type ModelConfig,
 } from "@/lib/api";
+import { useAuth } from "@/components/AuthProvider";
 
 const VILLAGES = [
   "Great Neck",
@@ -29,6 +36,31 @@ const CATEGORIES = [
 ];
 
 export default function AdminPage() {
+  const { user, isLoading: authLoading } = useAuth();
+
+  if (authLoading) {
+    return (
+      <div className="flex-1 flex items-center justify-center">
+        <p className="text-sm text-text-500">Loading...</p>
+      </div>
+    );
+  }
+
+  if (!user?.is_admin) {
+    return (
+      <div className="flex-1 flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-lg font-semibold text-text-700 mb-2">Access Denied</h2>
+          <p className="text-sm text-text-500">You need admin permissions to view this page.</p>
+        </div>
+      </div>
+    );
+  }
+
+  return <AdminContent />;
+}
+
+function AdminContent() {
   // Upload form state
   const [uploadVillage, setUploadVillage] = useState(VILLAGES[0]);
   const [uploadCategory, setUploadCategory] = useState(CATEGORIES[0]);
@@ -42,6 +74,58 @@ export default function AdminPage() {
   const [stats, setStats] = useState<KnowledgeStats | null>(null);
   const [isLoadingSources, setIsLoadingSources] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
+
+  // Model config state
+  const [modelConfig, setModelConfig] = useState<ModelConfig | null>(null);
+  const [isUpdatingModel, setIsUpdatingModel] = useState(false);
+
+  // User management state
+  const [users, setUsers] = useState<UserInfo[]>([]);
+  const [isLoadingUsers, setIsLoadingUsers] = useState(false);
+  const [userError, setUserError] = useState<string | null>(null);
+
+  const loadModelConfig = useCallback(async () => {
+    try {
+      const cfg = await getModelConfig();
+      setModelConfig(cfg);
+    } catch (err) {
+      console.error("Failed to load model config", err);
+    }
+  }, []);
+
+  const handleModelUpdate = async (update: { provider?: string; fast_mode?: boolean }) => {
+    setIsUpdatingModel(true);
+    try {
+      const cfg = await updateModelConfig(update);
+      setModelConfig(cfg);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to update model config");
+    } finally {
+      setIsUpdatingModel(false);
+    }
+  };
+
+  const loadUsers = useCallback(async () => {
+    setIsLoadingUsers(true);
+    setUserError(null);
+    try {
+      const data = await listUsers();
+      setUsers(data);
+    } catch (err) {
+      setUserError(err instanceof Error ? err.message : "Failed to load users");
+    } finally {
+      setIsLoadingUsers(false);
+    }
+  }, []);
+
+  const handleTogglePermission = async (userId: number, field: "is_admin" | "can_debug", currentValue: boolean) => {
+    try {
+      await updateUserPermissions(userId, { [field]: currentValue ? 0 : 1 });
+      loadUsers();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to update permissions");
+    }
+  };
 
   const loadData = useCallback(async () => {
     setIsLoadingSources(true);
@@ -63,7 +147,9 @@ export default function AdminPage() {
 
   useEffect(() => {
     loadData();
-  }, [loadData]);
+    loadUsers();
+    loadModelConfig();
+  }, [loadData, loadUsers, loadModelConfig]);
 
   const handleUpload = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -136,6 +222,60 @@ export default function AdminPage() {
           <p className="text-sm text-text-600">
             Upload documents, manage sources, and monitor the knowledge store.
           </p>
+        </div>
+
+        {/* Model Settings */}
+        <div className="bg-surface-200 border border-surface-300 rounded-xl p-6">
+          <h2 className="text-lg font-semibold text-text-900 mb-4">
+            Model Settings
+          </h2>
+
+          {/* Provider selector */}
+          <div className="mb-4">
+            <label className="block text-xs text-text-600 mb-2">Provider</label>
+            <div className="flex gap-2">
+              {(["claude", "gemini"] as const).map((p) => (
+                <button
+                  key={p}
+                  onClick={() => handleModelUpdate({ provider: p })}
+                  disabled={isUpdatingModel}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    modelConfig?.provider === p
+                      ? "bg-sage text-white"
+                      : "bg-surface-100 border border-surface-300 text-text-700 hover:bg-surface-300"
+                  } disabled:opacity-50`}
+                >
+                  {p.charAt(0).toUpperCase() + p.slice(1)}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Models table */}
+          {modelConfig && (
+            <div className="border border-surface-300 rounded-lg overflow-hidden">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="bg-surface-300">
+                    <th className="text-left px-4 py-2 text-xs text-text-600 font-medium uppercase tracking-wide">
+                      Role
+                    </th>
+                    <th className="text-left px-4 py-2 text-xs text-text-600 font-medium uppercase tracking-wide">
+                      Model
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {Object.entries(modelConfig.models).map(([role, model]) => (
+                    <tr key={role} className="border-t border-surface-300">
+                      <td className="px-4 py-2 text-text-800 font-medium">{role}</td>
+                      <td className="px-4 py-2 text-text-600 font-mono text-xs">{model}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
 
         {/* Stats Cards */}
@@ -282,6 +422,66 @@ export default function AdminPage() {
               )}
             </div>
           </form>
+        </div>
+
+        {/* User Management */}
+        <div className="bg-surface-200 border border-surface-300 rounded-xl p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-text-900">
+              User Management
+            </h2>
+            <button
+              onClick={loadUsers}
+              disabled={isLoadingUsers}
+              className="text-xs text-sage hover:text-sage-dark transition-colors disabled:opacity-50"
+            >
+              {isLoadingUsers ? "Loading..." : "Refresh"}
+            </button>
+          </div>
+
+          {userError && (
+            <div className="text-sm text-red-400 bg-red-900/20 rounded-lg px-4 py-2 mb-4">
+              {userError}
+            </div>
+          )}
+
+          {users.length === 0 && !isLoadingUsers && !userError && (
+            <p className="text-sm text-text-500 text-center py-4">No users yet.</p>
+          )}
+
+          <div className="space-y-2">
+            {users.map((u) => (
+              <div
+                key={u.id}
+                className="flex items-center justify-between bg-surface-100 rounded-lg px-4 py-3 border border-surface-300"
+              >
+                <div className="flex-1 min-w-0">
+                  <span className="text-sm font-medium text-text-900">{u.name || u.email}</span>
+                  <span className="text-xs text-text-500 ml-2">{u.email}</span>
+                </div>
+                <div className="flex items-center gap-3 flex-shrink-0">
+                  <label className="flex items-center gap-1.5 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={u.is_admin}
+                      onChange={() => handleTogglePermission(u.id, "is_admin", u.is_admin)}
+                      className="w-3.5 h-3.5 rounded accent-sage"
+                    />
+                    <span className="text-xs text-text-600">Admin</span>
+                  </label>
+                  <label className="flex items-center gap-1.5 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={u.can_debug}
+                      onChange={() => handleTogglePermission(u.id, "can_debug", u.can_debug)}
+                      className="w-3.5 h-3.5 rounded accent-gold"
+                    />
+                    <span className="text-xs text-text-600">Debug</span>
+                  </label>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* Sources List */}

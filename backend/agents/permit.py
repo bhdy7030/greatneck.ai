@@ -7,6 +7,7 @@ from tools.registry import get_tools_for_agent
 import tools.search  # noqa: F401
 import tools.forms  # noqa: F401
 import tools.web  # noqa: F401
+import tools.community  # noqa: F401
 
 
 class PermitAgent(BaseAgent):
@@ -33,9 +34,11 @@ Guidelines:
 - Help determine ALL permits that might be needed for a project (building, plumbing, electrical, etc.).
 - If a form is available, offer to help fill it out using fill_form.
 - Mention common requirements like surveys, architect drawings, contractor licenses.
+- You can supplement official requirements with resident permit experiences from search_community — this helps give practical tips on timelines, inspectors, and common pitfalls.
 - When in doubt, recommend calling the village building department for confirmation.
 - Always note estimated timelines when available.
 - Always end with a disclaimer that requirements may have changed and to verify with the village.
+- Fees, contacts, and processing times may be outdated in the knowledge base. For current fees or personnel, verify with web_search including the current year in the query.
 
 PERMIT PROCESS TIMELINE (IMPORTANT — always include this for permit questions):
 Place the ```permit-timeline code block EARLY in your response — right after the quick answer summary, BEFORE the detailed text. The UI renders this as a visual progress tracker that users should see up front.
@@ -92,6 +95,7 @@ When describing inspections in the timeline, add a warning note for any inspecti
 You have access to:
 - search_codes: Search village code documents for regulations
 - search_permits: Search specifically for permit requirements
+- search_community: Search community knowledge base for resident permit experiences
 - get_form: Retrieve a permit form template
 - fill_form: Help fill out a permit form with user data
 - web_search: Search the web for current information when local data is insufficient"""
@@ -100,6 +104,7 @@ You have access to:
         tools = get_tools_for_agent([
             "search_codes",
             "search_permits",
+            "search_community",
             "get_form",
             "fill_form",
             "web_search",

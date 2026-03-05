@@ -108,10 +108,23 @@ class BaseAgent:
             f"{days_of_week[(day_idx + i) % 7]} {(now + __import__('datetime').timedelta(days=i)).strftime('%B %-d')}"
             for i in range(7)
         )
+        current_year = now.strftime('%Y')
         system += (
             f"\n\nCurrent date/time: {now.strftime('%A, %B %-d, %Y at %I:%M %p')} (Eastern Time)"
             f"\nUpcoming days: {upcoming}"
         )
+
+        # Data freshness awareness (applies to all agents)
+        system += f"""
+
+## Data Freshness (IMPORTANT)
+The local knowledge base may contain outdated information — businesses close, fees change, schedules shift, regulations get amended. You MUST account for this:
+- **When searching for time-sensitive topics** (restaurants, businesses, events, schedules, hours, pricing, reviews, contact info, officials, personnel), **always verify with a live search** (search_social or web_search) — do NOT rely solely on the knowledge base.
+- **Include "{current_year}" in web/social search queries** for time-sensitive topics to get current results (e.g., "best ramen Great Neck NY {current_year}").
+- **If KB results mention businesses, restaurants, or services**, note they may have changed and cross-check with live search when possible.
+- **Prefer recent sources over old ones.** If you have both KB data and live search results, prioritize the live data for anything time-sensitive.
+- For stable topics (zoning codes, setback rules, building code sections), KB data is reliable — no need for live verification unless the user asks about recent changes.
+- **If web search is disabled or budget is exhausted**, still answer from KB but add a brief note that the information may be outdated and suggest the user enable web search for the most current results."""
 
         # Response formatting guidelines (applies to all user-facing agents)
         system += """
@@ -161,6 +174,14 @@ class BaseAgent:
                 f"\n\n## Critic Feedback (IMPORTANT)\n"
                 f"A previous attempt to answer this query was rejected by a quality reviewer. "
                 f"Address the following feedback:\n{critic_feedback}"
+            )
+
+        # Language instruction — tell LLM to respond in Chinese when requested
+        if context and context.get("language") == "zh":
+            system += (
+                "\n\n## Language Instruction (IMPORTANT)\n"
+                "Respond in Simplified Chinese (简体中文). "
+                "Keep section numbers, law/code references, village names, and proper nouns in English."
             )
 
         messages: list[dict] = [{"role": "system", "content": system}]

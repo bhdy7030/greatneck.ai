@@ -1,0 +1,54 @@
+steps:
+  # Build backend & frontend in parallel
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'us-east1-docker.pkg.dev/askmura/askmura/backend', 'backend/']
+    id: build-backend
+
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'us-east1-docker.pkg.dev/askmura/askmura/frontend', 'frontend/']
+    id: build-frontend
+    waitFor: ['-']
+
+  # Push images
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'us-east1-docker.pkg.dev/askmura/askmura/backend']
+    id: push-backend
+    waitFor: ['build-backend']
+
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'us-east1-docker.pkg.dev/askmura/askmura/frontend']
+    id: push-frontend
+    waitFor: ['build-frontend']
+
+  # Deploy to Cloud Run
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'deploy'
+      - 'askmura-backend'
+      - '--image'
+      - 'us-east1-docker.pkg.dev/askmura/askmura/backend'
+      - '--region'
+      - 'us-east1'
+      - '--quiet'
+    id: deploy-backend
+    waitFor: ['push-backend']
+
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'deploy'
+      - 'askmura-frontend'
+      - '--image'
+      - 'us-east1-docker.pkg.dev/askmura/askmura/frontend'
+      - '--region'
+      - 'us-east1'
+      - '--quiet'
+    id: deploy-frontend
+    waitFor: ['push-frontend']
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+timeout: '1200s'

@@ -38,7 +38,17 @@ class KnowledgeStore:
         village: str | None = None,
     ):
         collection = self.get_or_create_collection(village)
-        collection.add(documents=texts, metadatas=metadatas, ids=ids)
+        # Deduplicate IDs within this batch (chunker can produce collisions)
+        seen: dict[str, int] = {}
+        dedup_texts, dedup_metas, dedup_ids = [], [], []
+        for t, m, i in zip(texts, metadatas, ids):
+            if i in seen:
+                continue
+            seen[i] = 1
+            dedup_texts.append(t)
+            dedup_metas.append(m)
+            dedup_ids.append(i)
+        collection.upsert(documents=dedup_texts, metadatas=dedup_metas, ids=dedup_ids)
 
     def search(
         self,

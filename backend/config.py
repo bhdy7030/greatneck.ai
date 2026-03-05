@@ -33,6 +33,22 @@ class Settings(BaseSettings):
     # Embedding model (used by ChromaDB)
     embedding_model: str = "default"  # ChromaDB's built-in
 
+    # Google OAuth
+    google_client_id: str = ""
+    google_client_secret: str = ""
+    google_redirect_uri: str = "http://localhost:8001/api/auth/google/callback"
+
+    # JWT
+    jwt_secret: str = "change-me-in-production"
+    jwt_algorithm: str = "HS256"
+    jwt_expire_hours: int = 72
+
+    # Frontend URL (for OAuth redirect)
+    frontend_url: str = "http://localhost:3000"
+
+    # Admin emails (comma-separated) — auto-grant is_admin on login
+    admin_emails: str = ""
+
     model_config = {"env_file": ["../.env", ".env"], "env_file_encoding": "utf-8"}
 
 

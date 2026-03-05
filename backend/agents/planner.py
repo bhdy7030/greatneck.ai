@@ -49,13 +49,13 @@ class SearchPlan:
 
 
 # Agents that benefit from query planning
-PLANNABLE_AGENTS = {"permit", "village_code"}
+PLANNABLE_AGENTS = {"permit", "village_code", "community"}
 
-PLANNER_SYSTEM_PROMPT = """You are a query planning assistant. Your job is to decompose a user's question about village codes, permits, or regulations into a structured search plan.
+PLANNER_SYSTEM_PROMPT = """You are a query planning assistant. Your job is to decompose a user's question about village codes, permits, regulations, or community information into a structured search plan.
 
 Analyze the user's question and determine:
 1. What type of project or topic they're asking about
-2. What regulatory domains are relevant (zoning, building codes, permits, setbacks, etc.)
+2. What regulatory domains are relevant (zoning, building codes, permits, setbacks, community info, etc.)
 3. What specific searches should be performed, in what order
 4. What web search queries would be good fallbacks if local data is insufficient
 
@@ -65,21 +65,35 @@ You MUST respond with ONLY a valid JSON object in this exact format:
   "applicable_domains": ["domain1", "domain2"],
   "complexity": "low|medium|high",
   "steps": [
-    {"tool": "search_permits|search_codes", "query": "specific search query", "domain_hint": "what this search targets", "priority": 1}
+    {"tool": "search_permits|search_codes|search_community|search_social", "query": "specific search query", "domain_hint": "what this search targets", "priority": 1}
   ],
   "web_fallback_queries": ["web search query 1", "web search query 2"]
 }
 
 Rules:
 - Use search_permits for permit requirement queries, search_codes for code/regulation queries
+- Use search_community to find resident discussions, school reviews, neighborhood experiences in the knowledge base
+- Use search_social for live community discussions, reviews, and local news when KB data may be stale or insufficient
 - Priority 1 = most important, 2 = supplementary
 - Include 2-5 search steps covering different aspects of the question
-- Web fallback queries should include the village name AND "NY" to avoid wrong-state results
+- Web fallback queries should include the village name AND "NY" AND the current year to get fresh results
 - Consider the jurisdictional hierarchy when planning searches:
   - NYS building/fire/energy codes apply to ALL villages (state-level baseline)
   - Village-specific zoning codes (setbacks, FAR, lot coverage, height limits) differ per village
   - Town of North Hempstead rules apply to unincorporated areas
   - Include a search step for state-level requirements when the question involves construction, fire safety, or building standards
+
+DATA FRESHNESS — critical:
+- The knowledge base may contain stale data. Businesses close, prices change, schedules shift, personnel rotate.
+- For ANY query about things that change over time (restaurants, businesses, services, events, schedules, reviews, fees, contact info, officials), you MUST include a search_social or web_search step at priority 1, not just as fallback.
+- For these time-sensitive queries, include the current year in both search_social queries and web_fallback_queries (e.g., "best restaurants Great Neck NY 2026").
+- Stable topics like zoning codes, setback rules, and building code sections are fine to answer from KB alone.
+
+- For community queries (schools, neighborhoods, local life):
+  - Start with search_community (fast, KB cached) — good for background context
+  - ALWAYS include search_social at priority 1 for anything involving reviews, recommendations, or current status (live — Reddit, Yelp, RedNote, local news)
+  - Use search_codes if the question also touches regulations
+  - Include web_search for official/current info
 - Assess complexity:
   - "low": straightforward single-domain lookup (e.g., "what's the noise ordinance?")
   - "medium": multi-domain but well-defined (e.g., "do I need a permit for a fence?")
@@ -98,9 +112,13 @@ class PlannerAgent:
         if agent_type not in PLANNABLE_AGENTS:
             return None
 
+        from datetime import datetime
+        current_year = datetime.now().strftime('%Y')
+
         system = PLANNER_SYSTEM_PROMPT
+        system += f"\n\nCurrent year: {current_year}. Use this in search queries for time-sensitive topics."
         if village:
-            system += f"\n\nThe user is asking about: {village}"
+            system += f"\nThe user is asking about: {village}"
 
         messages = [
             {"role": "system", "content": system},

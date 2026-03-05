@@ -26,6 +26,21 @@ class FormLink:
     file_type: str
 
 
+COMMON_SUBPAGES = [
+    "/permits",
+    "/forms",
+    "/building-department",
+    "/zoning",
+    "/code-enforcement",
+]
+
+
+def village_subpage_urls(base_url: str) -> list[str]:
+    """Return common village website subpage URLs to scrape."""
+    base = base_url.rstrip("/")
+    return [f"{base}{path}" for path in COMMON_SUBPAGES]
+
+
 async def scrape_village_site(url: str) -> dict:
     """Scrape a village website page and return structured content.
 
@@ -38,7 +53,7 @@ async def scrape_village_site(url: str) -> dict:
     async with httpx.AsyncClient(
         timeout=30.0,
         follow_redirects=True,
-        headers={"User-Agent": "AskMura/0.1 (community research)"},
+        headers={"User-Agent": "GreatNeck.ai/0.1 (community research)"},
     ) as client:
         try:
             response = await client.get(url)
@@ -89,7 +104,7 @@ async def scrape_permit_forms(url: str) -> list[dict]:
     async with httpx.AsyncClient(
         timeout=30.0,
         follow_redirects=True,
-        headers={"User-Agent": "AskMura/0.1 (community research)"},
+        headers={"User-Agent": "GreatNeck.ai/0.1 (community research)"},
     ) as client:
         try:
             response = await client.get(url)

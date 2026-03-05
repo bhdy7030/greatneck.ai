@@ -10,17 +10,23 @@ from tools.registry import tool
 )
 async def web_search(query: str) -> str:
     """Perform a web search. Uses Tavily if configured, otherwise returns a placeholder."""
+    from tools.budget import check_budget
+
     tavily_key = os.environ.get("TAVILY_API_KEY", "")
 
-    if tavily_key:
-        return await _tavily_search(query, tavily_key)
+    if not tavily_key:
+        return (
+            f"Web search for '{query}' is not available. "
+            "To enable web search, set the TAVILY_API_KEY environment variable. "
+            "In the meantime, I can only search the local knowledge base. "
+            "Try using the search_codes or search_permits tools instead."
+        )
 
-    return (
-        f"Web search for '{query}' is not available. "
-        "To enable web search, set the TAVILY_API_KEY environment variable. "
-        "In the meantime, I can only search the local knowledge base. "
-        "Try using the search_codes or search_permits tools instead."
-    )
+    blocked = check_budget()
+    if blocked:
+        return blocked
+
+    return await _tavily_search(query, tavily_key)
 
 
 async def _tavily_search(query: str, api_key: str) -> str:

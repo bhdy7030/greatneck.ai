@@ -250,7 +250,7 @@ Contact: (516) 482-4500
 
 async def main():
     """Seed the knowledge base with manually curated documents."""
-    print("AskMura Knowledge Base Seeder")
+    print("GreatNeck.ai Knowledge Base Seeder")
     print("=" * 60)
 
     total_chunks = 0

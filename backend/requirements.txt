@@ -11,3 +11,7 @@ python-multipart>=0.0.9
 python-dotenv>=1.0.0
 eval-type-backport>=0.2.0
 pyyaml>=6.0
+python-jose[cryptography]>=3.3.0
+google-auth>=2.29.0
+google-auth-oauthlib>=1.2.0
+crawl4ai>=0.8.0

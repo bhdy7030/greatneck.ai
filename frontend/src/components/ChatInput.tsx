@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useCallback, type KeyboardEvent } from "react";
+import { useLanguage } from "./LanguageProvider";
 
 interface ChatInputProps {
   onSend: (message: string, imageBase64?: string) => void;
@@ -8,6 +9,7 @@ interface ChatInputProps {
 }
 
 export default function ChatInput({ onSend, disabled }: ChatInputProps) {
+  const { t } = useLanguage();
   const [text, setText] = useState("");
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [imageBase64, setImageBase64] = useState<string | null>(null);
@@ -70,7 +72,7 @@ export default function ChatInput({ onSend, disabled }: ChatInputProps) {
   };
 
   return (
-    <div className="border-t border-surface-300 bg-surface-200 p-3">
+    <div className="border-t border-surface-300 bg-surface-200 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
       {imagePreview && (
         <div className="mb-2 flex items-center gap-2">
           <div className="relative">
@@ -86,7 +88,7 @@ export default function ChatInput({ onSend, disabled }: ChatInputProps) {
               x
             </button>
           </div>
-          <span className="text-xs text-text-500">Image attached</span>
+          <span className="text-xs text-text-500">{t("input.imageAttached")}</span>
         </div>
       )}
 
@@ -94,7 +96,7 @@ export default function ChatInput({ onSend, disabled }: ChatInputProps) {
         <button
           onClick={() => fileInputRef.current?.click()}
           disabled={disabled}
-          className="flex-shrink-0 p-2 text-text-500 hover:text-sage transition-colors disabled:opacity-50"
+          className="flex-shrink-0 p-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-text-500 hover:text-sage transition-colors disabled:opacity-50"
           title="Attach image"
         >
           <svg
@@ -130,7 +132,7 @@ export default function ChatInput({ onSend, disabled }: ChatInputProps) {
           value={text}
           onChange={handleTextChange}
           onKeyDown={handleKeyDown}
-          placeholder="Ask about village codes, permits, garbage schedule..."
+          placeholder={t("input.placeholder")}
           disabled={disabled}
           rows={1}
           className="flex-1 bg-surface-50 text-text-800 rounded-xl px-4 py-2.5 resize-none focus:outline-none focus:ring-2 focus:ring-sage placeholder-text-500 text-sm disabled:opacity-50 border border-surface-300"
@@ -140,7 +142,7 @@ export default function ChatInput({ onSend, disabled }: ChatInputProps) {
         <button
           onClick={handleSend}
           disabled={disabled || (!text.trim() && !imageBase64)}
-          className="flex-shrink-0 p-2 bg-sage text-white rounded-xl hover:bg-sage-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="flex-shrink-0 p-2 min-w-[44px] min-h-[44px] flex items-center justify-center bg-sage text-white rounded-xl hover:bg-sage-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           title="Send message"
         >
           <svg

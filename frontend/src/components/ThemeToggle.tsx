@@ -1,6 +1,7 @@
 "use client";
 
 import { useTheme } from "./ThemeProvider";
+import { useLanguage } from "./LanguageProvider";
 
 const icons: Record<string, JSX.Element> = {
   light: (
@@ -29,24 +30,26 @@ const icons: Record<string, JSX.Element> = {
   ),
 };
 
-const labels: Record<string, string> = {
-  light: "Light",
-  dark: "Dark",
-  classic: "Classic",
+const labelKeys: Record<string, string> = {
+  light: "theme.light",
+  dark: "theme.dark",
+  classic: "theme.classic",
 };
 
 export default function ThemeToggle() {
   const { theme, cycleTheme } = useTheme();
+  const { t } = useLanguage();
+  const label = t(labelKeys[theme]);
 
   return (
     <button
       onClick={cycleTheme}
       className="flex items-center gap-1.5 text-sm text-text-500 hover:text-text-800 transition-colors"
-      title={`Theme: ${labels[theme]}`}
-      aria-label={`Switch theme (current: ${labels[theme]})`}
+      title={`Theme: ${label}`}
+      aria-label={`Switch theme (current: ${label})`}
     >
       {icons[theme]}
-      <span className="hidden sm:inline text-xs">{labels[theme]}</span>
+      <span className="hidden sm:inline text-xs">{label}</span>
     </button>
   );
 }
