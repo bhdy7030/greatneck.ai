@@ -111,7 +111,7 @@ export default function UpcomingEvents({ village }: Props) {
 
   if (loading) {
     return (
-      <div className="w-full max-w-2xl mt-3 animate-fadeSlideUp">
+      <div className="w-full max-w-2xl mx-auto mt-3 animate-fadeSlideUp">
         <h3 className="text-xs font-semibold text-text-500 uppercase tracking-wider mb-2 px-1">
           {t("events.upcoming")}
         </h3>
@@ -156,7 +156,7 @@ export default function UpcomingEvents({ village }: Props) {
   }
 
   return (
-    <div className="w-full max-w-2xl mt-3 animate-fadeSlideUp">
+    <div className="w-full max-w-2xl mx-auto mt-3 animate-fadeSlideUp">
       <h3 className="text-xs font-semibold text-text-500 uppercase tracking-wider mb-2 px-1">
         {t("events.upcoming")}
       </h3>
@@ -219,7 +219,7 @@ export default function UpcomingEvents({ village }: Props) {
           No events in this category
         </p>
       ) : (
-        <div className="space-y-1.5 max-h-[320px] overflow-y-auto scrollbar-hide pr-1">
+        <div className="space-y-1.5 pr-1">
           {Object.entries(grouped).map(([dateLabel, dateEvents]) => (
             <div key={dateLabel}>
               <div className="sticky top-0 z-10 bg-surface-100/90 backdrop-blur-sm py-1 px-1">

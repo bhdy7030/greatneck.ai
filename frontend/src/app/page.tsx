@@ -82,87 +82,52 @@ export default function Home() {
 
   return (
     <div
-      className={`flex-1 relative overflow-hidden transition-opacity duration-300 ${
+      className={`flex-1 relative overflow-y-auto transition-opacity duration-300 ${
         transitioning ? "opacity-0 scale-[1.02]" : "opacity-100"
       }`}
       style={{ transition: "opacity 0.3s ease, transform 0.3s ease" }}
     >
-      {/* Map background */}
-      <GreatNeckMap />
+      {/* Map background — fixed behind scroll */}
+      <div className="fixed inset-0 z-0">
+        <GreatNeckMap />
+        <div
+          className="absolute inset-x-0 bottom-0 h-2/3 pointer-events-none"
+          style={{
+            background:
+              "linear-gradient(to top, rgb(var(--color-surface-100)) 0%, rgba(var(--color-surface-100), 0.8) 40%, transparent 100%)",
+          }}
+        />
+      </div>
 
-      {/* Gradient overlay */}
-      <div
-        className="absolute inset-x-0 bottom-0 h-2/3 pointer-events-none"
-        style={{
-          background:
-            "linear-gradient(to top, rgb(var(--color-surface-100)) 0%, rgba(var(--color-surface-100), 0.8) 40%, transparent 100%)",
-        }}
-      />
+      {/* Scrollable content */}
+      <div className="relative z-10 flex flex-col items-center">
+        {/* Hero section — fills viewport */}
+        <div className="min-h-[100dvh] flex flex-col justify-center items-center w-full px-6 pb-8">
+          {/* Frosted card */}
+          <div className="bg-surface-50/10 backdrop-blur-sm rounded-2xl p-6 md:p-8 max-w-2xl w-full shadow-lg border border-surface-300/50">
+            <div className="text-center mb-5">
+              <h1 className="text-2xl md:text-4xl font-bold text-text-800 mb-1">
+                {t("welcome.title")}
+              </h1>
+              <p className="text-text-500 text-sm md:text-base">
+                {t("welcome.subtitle")}
+              </p>
+            </div>
 
-      {/* Content centered */}
-      <div className="relative z-10 flex flex-col h-full justify-center items-center px-6">
-        {/* Frosted card */}
-        <div className="bg-surface-50/10 backdrop-blur-sm rounded-2xl p-6 md:p-8 max-w-2xl w-full shadow-lg border border-surface-300/50">
-          <div className="text-center mb-5">
-            <h1 className="text-2xl md:text-4xl font-bold text-text-800 mb-1">
-              {t("welcome.title")}
-            </h1>
-            <p className="text-text-500 text-sm md:text-base">
-              {t("welcome.subtitle")}
-            </p>
+            <VillageSelector onSelect={handleVillageSelect} />
           </div>
 
-          <VillageSelector onSelect={handleVillageSelect} />
-        </div>
-
-        {/* Chat input */}
-        <div className={`w-full max-w-2xl ${showChatBox ? "mt-2" : "mt-6"}`}>
-          <div
-            className={`flex items-center gap-2 bg-surface-50/80 backdrop-blur-sm rounded-xl border-2 transition-all duration-300 px-4 py-2.5 ${
-              hasVillage
-                ? "border-sage/40 shadow-md shadow-sage/5 landing-chat-glow"
-                : "border-surface-300 opacity-60"
-            } ${showChatBox ? "animate-fadeSlideUp" : ""}`}
-          >
-            <svg
-              className="w-5 h-5 text-sage flex-shrink-0"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={1.5}
-                d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-              />
-            </svg>
-            <input
-              ref={inputRef}
-              type="text"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              onKeyDown={handleInputKeyDown}
-              onFocus={() => {
-                if (!hasVillage) return;
-              }}
-              placeholder={
+          {/* Chat input */}
+          <div className={`w-full max-w-2xl ${showChatBox ? "mt-2" : "mt-6"}`}>
+            <div
+              className={`flex items-center gap-2 bg-surface-50/80 backdrop-blur-sm rounded-xl border-2 transition-all duration-300 px-4 py-2.5 ${
                 hasVillage
-                  ? (query ? t("input.placeholder") : typedPlaceholder || t("input.placeholder"))
-                  : "Select a village first..."
-              }
-              disabled={!hasVillage}
-              className="flex-1 bg-transparent text-text-800 text-base md:text-sm focus:outline-none placeholder-text-500 disabled:cursor-not-allowed"
-              style={{ fontSize: "max(16px, 0.875rem)" }}
-            />
-            <button
-              onClick={() => navigateToChat()}
-              disabled={!hasVillage}
-              className="flex-shrink-0 p-2 min-w-[44px] min-h-[44px] flex items-center justify-center bg-sage text-white rounded-lg hover:bg-sage-dark transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-              title="Start chatting"
+                  ? "border-sage/40 shadow-md shadow-sage/5 landing-chat-glow"
+                  : "border-surface-300 opacity-60"
+              } ${showChatBox ? "animate-fadeSlideUp" : ""}`}
             >
               <svg
-                className="w-4 h-4"
+                className="w-5 h-5 text-sage flex-shrink-0"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -170,33 +135,123 @@ export default function Home() {
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M14 5l7 7m0 0l-7 7m7-7H3"
+                  strokeWidth={1.5}
+                  d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
                 />
               </svg>
-            </button>
+              <input
+                ref={inputRef}
+                type="text"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                onKeyDown={handleInputKeyDown}
+                onFocus={() => {
+                  if (!hasVillage) return;
+                }}
+                placeholder={
+                  hasVillage
+                    ? (query ? t("input.placeholder") : typedPlaceholder || t("input.placeholder"))
+                    : "Select a village first..."
+                }
+                disabled={!hasVillage}
+                className="flex-1 bg-transparent text-text-800 text-base md:text-sm focus:outline-none placeholder-text-500 disabled:cursor-not-allowed"
+                style={{ fontSize: "max(16px, 0.875rem)" }}
+              />
+              <button
+                onClick={() => navigateToChat()}
+                disabled={!hasVillage}
+                className="flex-shrink-0 p-2 min-w-[44px] min-h-[44px] flex items-center justify-center bg-sage text-white rounded-lg hover:bg-sage-dark transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                title="Start chatting"
+              >
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M14 5l7 7m0 0l-7 7m7-7H3"
+                  />
+                </svg>
+              </button>
+            </div>
+
+            {/* Suggestion chips */}
+            {showChips && (
+              <div className="flex flex-wrap justify-center gap-2 mt-3">
+                {SAMPLE_QUESTIONS.map((q, i) => (
+                  <button
+                    key={q}
+                    onClick={() => navigateToChat(q)}
+                    className="animate-chipBounceIn text-xs bg-surface-50/80 backdrop-blur-sm text-text-600 px-3 py-2 rounded-full border border-surface-300/60 hover:border-sage/40 hover:text-sage transition-colors"
+                    style={{ animationDelay: `${i * 150}ms` }}
+                  >
+                    {q}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
-          {/* Suggestion chips */}
-          {showChips && (
-            <div className="flex flex-wrap justify-center gap-2 mt-3">
-              {SAMPLE_QUESTIONS.map((q, i) => (
-                <button
-                  key={q}
-                  onClick={() => navigateToChat(q)}
-                  className="animate-chipBounceIn text-xs bg-surface-50/80 backdrop-blur-sm text-text-600 px-3 py-2 rounded-full border border-surface-300/60 hover:border-sage/40 hover:text-sage transition-colors"
-                  style={{ animationDelay: `${i * 150}ms` }}
-                >
-                  {q}
-                </button>
-              ))}
+          {/* Scroll hint arrow */}
+          {showEvents && selectedVillage && (
+            <div className="mt-6 animate-arrowBounce text-text-400">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+              </svg>
             </div>
           )}
         </div>
 
-        {/* Upcoming events — vertical feed below chat */}
+        {/* Sticky chat bar — appears when scrolled past hero */}
         {showEvents && selectedVillage && (
-          <UpcomingEvents village={selectedVillage} />
+          <div className="sticky top-0 z-20 w-full bg-surface-100/90 backdrop-blur-md border-b border-surface-300/50 px-6 py-2">
+            <div className="max-w-2xl mx-auto">
+              <div className="flex items-center gap-2 bg-surface-50/80 rounded-xl border-2 border-sage/40 shadow-md px-4 py-2">
+                <svg
+                  className="w-5 h-5 text-sage flex-shrink-0"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={1.5}
+                    d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                  />
+                </svg>
+                <input
+                  type="text"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  onKeyDown={handleInputKeyDown}
+                  placeholder={t("input.placeholder")}
+                  className="flex-1 bg-transparent text-text-800 text-sm focus:outline-none placeholder-text-500"
+                  style={{ fontSize: "max(16px, 0.875rem)" }}
+                />
+                <button
+                  onClick={() => navigateToChat()}
+                  className="flex-shrink-0 p-2 min-w-[44px] min-h-[44px] flex items-center justify-center bg-sage text-white rounded-lg hover:bg-sage-dark transition-colors"
+                  title="Start chatting"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Events — full page feed */}
+        {showEvents && selectedVillage && (
+          <div className="w-full px-6 pb-12">
+            <UpcomingEvents village={selectedVillage} />
+          </div>
         )}
       </div>
     </div>
