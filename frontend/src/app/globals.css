@@ -176,6 +176,15 @@ body {
   }
 }
 
+/* Hide scrollbar for horizontal scroll containers */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
 /* Auto-growing textarea reset */
 textarea {
   field-sizing: content;

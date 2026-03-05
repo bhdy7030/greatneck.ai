@@ -417,6 +417,39 @@ export async function deleteDebugMemory(id: string): Promise<void> {
   if (!res.ok) throw new Error(`Failed to delete debug entry: ${res.status}`);
 }
 
+// ── Events API ──
+
+export interface UpcomingEvent {
+  id: number;
+  title: string;
+  description: string;
+  event_date: string;
+  event_time: string;
+  end_date: string | null;
+  location: string;
+  venue: string;
+  url: string;
+  image_url: string;
+  category: string;
+  scope: string;
+  village: string;
+  source: string;
+}
+
+export async function getUpcomingEvents(
+  village: string = "",
+  limit: number = 8
+): Promise<UpcomingEvent[]> {
+  const params = new URLSearchParams();
+  if (village) params.set("village", village);
+  params.set("limit", String(limit));
+  const res = await fetch(`${BASE_URL}/api/events?${params}`, {
+    headers: authHeaders(),
+  });
+  if (!res.ok) throw new Error(`Failed to fetch events: ${res.status}`);
+  return res.json();
+}
+
 // ── Auth API ──
 
 export async function fetchCurrentUser(): Promise<AuthUser> {

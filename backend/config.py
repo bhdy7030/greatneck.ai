@@ -49,6 +49,10 @@ class Settings(BaseSettings):
     # Admin emails (comma-separated) — auto-grant is_admin on login
     admin_emails: str = ""
 
+    # Events
+    eventbrite_api_key: str = ""
+    cron_secret: str = ""
+
     model_config = {"env_file": ["../.env", ".env"], "env_file_encoding": "utf-8"}
 
 

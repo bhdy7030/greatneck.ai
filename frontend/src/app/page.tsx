@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import GreatNeckMap from "@/components/GreatNeckMap";
 import VillageSelector from "@/components/VillageSelector";
+import UpcomingEvents from "@/components/UpcomingEvents";
 import { useLanguage } from "@/components/LanguageProvider";
 
 const SAMPLE_QUESTIONS = [
@@ -21,14 +22,18 @@ export default function Home() {
 
   // Check if village is already selected
   const [hasVillage, setHasVillage] = useState(false);
+  const [selectedVillage, setSelectedVillage] = useState("");
+  const [showEvents, setShowEvents] = useState(false);
   const [showChatBox, setShowChatBox] = useState(false);
   const [typedPlaceholder, setTypedPlaceholder] = useState("");
   const [showChips, setShowChips] = useState(false);
 
   useEffect(() => {
-    const stored = !!localStorage.getItem("gn_village");
-    setHasVillage(stored);
+    const stored = localStorage.getItem("gn_village") || "";
+    setHasVillage(!!stored);
+    setSelectedVillage(stored);
     if (stored) {
+      setShowEvents(true);
       setShowChatBox(true);
       setShowChips(true);
     }
@@ -50,7 +55,9 @@ export default function Home() {
 
   const handleVillageSelect = (village: string) => {
     setHasVillage(true);
-    // Staggered entrance: chat box first, then chips
+    setSelectedVillage(village);
+    // Staggered entrance: events → chat box → chips
+    setTimeout(() => setShowEvents(true), 100);
     setTimeout(() => setShowChatBox(true), 200);
     setTimeout(() => setShowChips(true), 600);
   };
@@ -108,7 +115,7 @@ export default function Home() {
           <VillageSelector onSelect={handleVillageSelect} />
         </div>
 
-        {/* Chat input at bottom */}
+        {/* Chat input */}
         <div className={`w-full max-w-2xl ${showChatBox ? "mt-2" : "mt-6"}`}>
           <div
             className={`flex items-center gap-2 bg-surface-50/80 backdrop-blur-sm rounded-xl border-2 transition-all duration-300 px-4 py-2.5 ${
@@ -186,6 +193,11 @@ export default function Home() {
             </div>
           )}
         </div>
+
+        {/* Upcoming events — vertical feed below chat */}
+        {showEvents && selectedVillage && (
+          <UpcomingEvents village={selectedVillage} />
+        )}
       </div>
     </div>
   );

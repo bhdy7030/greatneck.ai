@@ -64,6 +64,29 @@ def init_db():
 
         CREATE INDEX IF NOT EXISTS idx_conversations_user ON conversations(user_id, updated_at DESC);
         CREATE INDEX IF NOT EXISTS idx_messages_convo ON messages(conversation_id, created_at);
+
+        CREATE TABLE IF NOT EXISTS events (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            title TEXT NOT NULL,
+            description TEXT DEFAULT '',
+            event_date TEXT NOT NULL,
+            event_time TEXT DEFAULT '',
+            end_date TEXT,
+            location TEXT DEFAULT '',
+            venue TEXT DEFAULT '',
+            url TEXT DEFAULT '',
+            image_url TEXT DEFAULT '',
+            category TEXT DEFAULT 'general',
+            scope TEXT DEFAULT 'area',
+            village TEXT DEFAULT '',
+            source TEXT DEFAULT '',
+            source_id TEXT DEFAULT '',
+            created_at TEXT DEFAULT (datetime('now')),
+            updated_at TEXT DEFAULT (datetime('now')),
+            UNIQUE(source, source_id)
+        );
+        CREATE INDEX IF NOT EXISTS idx_events_date ON events(event_date);
+        CREATE INDEX IF NOT EXISTS idx_events_scope ON events(scope, village);
     """)
     # Migration: add can_debug column if missing (existing databases)
     cols = [row[1] for row in conn.execute("PRAGMA table_info(users)").fetchall()]
@@ -229,3 +252,121 @@ def get_messages(conversation_id: str) -> list[dict]:
             d["sources"] = []
         result.append(d)
     return result
+
+
+# ── Events ──
+
+
+def upsert_event(event: dict) -> dict:
+    """Insert or update an event. Deduplicates by (source, source_id)."""
+    conn = _get_conn()
+    now = datetime.now(timezone.utc).isoformat()
+    conn.execute(
+        """INSERT INTO events (title, description, event_date, event_time, end_date,
+               location, venue, url, image_url, category, scope, village,
+               source, source_id, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+           ON CONFLICT(source, source_id) DO UPDATE SET
+             title=excluded.title, description=excluded.description,
+             event_date=excluded.event_date, event_time=excluded.event_time,
+             end_date=excluded.end_date, location=excluded.location,
+             venue=excluded.venue, url=excluded.url, image_url=excluded.image_url,
+             category=excluded.category, scope=excluded.scope, village=excluded.village,
+             updated_at=?""",
+        (
+            event.get("title", ""),
+            event.get("description", ""),
+            event["event_date"],
+            event.get("event_time", ""),
+            event.get("end_date"),
+            event.get("location", ""),
+            event.get("venue", ""),
+            event.get("url", ""),
+            event.get("image_url", ""),
+            event.get("category", "general"),
+            event.get("scope", "area"),
+            event.get("village", ""),
+            event.get("source", ""),
+            event.get("source_id", ""),
+            now,
+            now,
+            now,
+        ),
+    )
+    conn.commit()
+    row = conn.execute(
+        "SELECT * FROM events WHERE source=? AND source_id=?",
+        (event.get("source", ""), event.get("source_id", "")),
+    ).fetchone()
+    return dict(row) if row else event
+
+
+def get_upcoming_events(
+    village: str | None = None,
+    limit: int = 8,
+    category: str | None = None,
+) -> list[dict]:
+    """Get upcoming events with waterfall fallback:
+    1. Village-specific events
+    2. Backfill with Great Neck area events
+    3. Always include Long Island entertainment/food/festivals
+    Sorted by date, max `limit` events.
+    """
+    conn = _get_conn()
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    results: list[dict] = []
+    seen_ids: set[int] = set()
+
+    def _fetch(where_clause: str, params: tuple, max_rows: int) -> list[dict]:
+        base_sql = f"""
+            SELECT * FROM events
+            WHERE event_date >= ? {where_clause}
+            ORDER BY event_date ASC, event_time ASC
+            LIMIT ?
+        """
+        rows = conn.execute(base_sql, (today, *params, max_rows)).fetchall()
+        fetched = []
+        for r in rows:
+            d = dict(r)
+            if d["id"] not in seen_ids:
+                seen_ids.add(d["id"])
+                fetched.append(d)
+        return fetched
+
+    # 1) Village-specific events
+    if village:
+        village_events = _fetch("AND scope='village' AND village=?", (village,), limit)
+        results.extend(village_events)
+
+    # 2) Great Neck area events
+    if len(results) < limit:
+        area_events = _fetch("AND scope='area'", (), limit - len(results))
+        results.extend(area_events)
+
+    # 3) Long Island entertainment/food/festivals
+    if len(results) < limit:
+        li_events = _fetch(
+            "AND scope='longisland' AND category IN ('entertainment','food','festival')",
+            (),
+            limit - len(results),
+        )
+        results.extend(li_events)
+
+    # If still under limit, fill with any remaining longisland events
+    if len(results) < limit:
+        extra = _fetch("AND scope='longisland'", (), limit - len(results))
+        results.extend(extra)
+
+    # Sort final results by date
+    results.sort(key=lambda e: (e.get("event_date", ""), e.get("event_time", "")))
+    return results[:limit]
+
+
+def cleanup_past_events(days_old: int = 7):
+    """Delete events more than `days_old` days in the past."""
+    conn = _get_conn()
+    conn.execute(
+        "DELETE FROM events WHERE event_date < date('now', ? || ' days')",
+        (f"-{days_old}",),
+    )
+    conn.commit()

@@ -33,12 +33,14 @@ from rag.ingest import ingest_document  # noqa: E402
 from scrapers.ecode360 import scrape_village_codes, format_section_for_ingestion  # noqa: E402
 from scrapers.social import scrape_community, format_post_for_ingestion  # noqa: E402
 from scrapers.village_sites import scrape_village_site, village_subpage_urls  # noqa: E402
+from scrapers.events import scrape_all_events  # noqa: E402
+from db import init_db, upsert_event, cleanup_past_events  # noqa: E402
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
 logger = logging.getLogger(__name__)
 
 KNOWLEDGE_DIR = Path(__file__).resolve().parent.parent / "knowledge"
-VALID_SOURCES = {"codes", "sites", "community", "knowledge", "all"}
+VALID_SOURCES = {"codes", "sites", "community", "knowledge", "events", "all"}
 MIN_CONTENT_LENGTH = 50
 
 
@@ -198,6 +200,36 @@ async def ingest_knowledge(dry_run: bool) -> dict:
     return {"source": "knowledge", "chunks": total_chunks}
 
 
+async def ingest_events(dry_run: bool) -> dict:
+    """Scrape and store upcoming events in SQLite events table."""
+    from dataclasses import asdict
+
+    logger.info("[events] Scraping all event sources...")
+    events = await scrape_all_events()
+
+    if not dry_run:
+        init_db()
+
+    stored = 0
+    for event in events:
+        if dry_run:
+            print(f"  [events] [{event.source}] {event.event_date} — {event.title[:80]}")
+            stored += 1
+            continue
+
+        try:
+            upsert_event(asdict(event))
+            stored += 1
+        except Exception as e:
+            logger.warning(f"[events] Failed to upsert '{event.title}': {e}")
+
+    if not dry_run:
+        cleanup_past_events()
+
+    logger.info(f"[events] Stored {stored}/{len(events)} events")
+    return {"source": "events", "scraped": len(events), "stored": stored}
+
+
 # ---------------------------------------------------------------------------
 # CLI
 # ---------------------------------------------------------------------------
@@ -262,6 +294,9 @@ async def main():
 
     if run_all or "knowledge" in sources:
         results.append(await ingest_knowledge(args.dry_run))
+
+    if run_all or "events" in sources:
+        results.append(await ingest_events(args.dry_run))
 
     # Summary
     print(f"\n{'='*50}")

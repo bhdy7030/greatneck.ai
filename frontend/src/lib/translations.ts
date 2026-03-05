@@ -17,6 +17,9 @@ const translations: Record<string, Record<Lang, string>> = {
     zh: "所提供的信息仅供参考。有关法律或许可证相关事宜，请以官方村庄资源为准。",
   },
 
+  // ── Events ──
+  "events.upcoming": { en: "Upcoming Events", zh: "近期活动" },
+
   // ── Chat page ──
   "chat.village": { en: "Village:", zh: "村庄：" },
   "chat.searchWeb": { en: "Search web:", zh: "网络搜索：" },
