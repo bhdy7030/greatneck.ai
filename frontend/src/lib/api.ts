@@ -206,15 +206,9 @@ export async function sendMessageStream(
   let buffer = "";
   let finalResponse: ChatResponse | null = null;
 
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
+  let currentEventType = "";
 
-    buffer += decoder.decode(value, { stream: true });
-    const lines = buffer.split("\n");
-    buffer = lines.pop() || "";
-
-    let currentEventType = "";
+  const processLines = (lines: string[]) => {
     for (const line of lines) {
       if (line.startsWith("event: ")) {
         currentEventType = line.slice(7).trim();
@@ -236,7 +230,6 @@ export async function sendMessageStream(
             throw new Error(data.message || "Pipeline error");
           }
         } catch (e) {
-          // Re-throw pipeline/API errors; only swallow JSON parse failures
           if (e instanceof SyntaxError) {
             console.warn("Failed to parse SSE data:", line, e);
           } else {
@@ -245,6 +238,21 @@ export async function sendMessageStream(
         }
       }
     }
+  };
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split("\n");
+    buffer = lines.pop() || "";
+    processLines(lines);
+  }
+
+  // Flush remaining buffer after stream ends
+  if (buffer.trim()) {
+    processLines(buffer.split("\n"));
   }
 
   if (!finalResponse) {
