@@ -14,7 +14,9 @@ interface Props {
   activeId: string | null;
   onSelect: (id: string) => void;
   onNewChat: () => void;
-  refreshKey?: number; // increment to trigger refetch
+  refreshKey?: number;
+  mobileOpen?: boolean;
+  onMobileToggle?: () => void;
 }
 
 function groupByDate(convos: Conversation[], t: (key: string) => string) {
@@ -42,6 +44,8 @@ export default function ConversationSidebar({
   onSelect,
   onNewChat,
   refreshKey,
+  mobileOpen: controlledOpen,
+  onMobileToggle,
 }: Props) {
   const { user, login, logout } = useAuth();
   const { t } = useLanguage();
@@ -49,7 +53,13 @@ export default function ConversationSidebar({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState("");
   const editRef = useRef<HTMLInputElement>(null);
-  const [mobileOpen, setMobileOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+
+  const mobileOpen = controlledOpen ?? internalOpen;
+  const closeMobile = () => {
+    if (onMobileToggle) onMobileToggle();
+    else setInternalOpen(false);
+  };
 
   // Fetch conversations
   useEffect(() => {
@@ -92,7 +102,7 @@ export default function ConversationSidebar({
         <button
           onClick={() => {
             onNewChat();
-            setMobileOpen(false);
+            closeMobile();
           }}
           className="w-full flex items-center gap-2 px-3 py-2 text-sm font-medium text-text-700 bg-surface-200 hover:bg-surface-300 rounded-lg transition-colors"
         >
@@ -165,7 +175,7 @@ export default function ConversationSidebar({
                   }`}
                   onClick={() => {
                     onSelect(c.id);
-                    setMobileOpen(false);
+                    closeMobile();
                   }}
                 >
                   {editingId === c.id ? (
@@ -179,6 +189,7 @@ export default function ConversationSidebar({
                         if (e.key === "Escape") setEditingId(null);
                       }}
                       className="flex-1 min-w-0 bg-white border border-surface-300 rounded px-1 py-0.5 text-xs"
+                      style={{ fontSize: "16px" }}
                       onClick={(e) => e.stopPropagation()}
                     />
                   ) : (
@@ -290,32 +301,11 @@ export default function ConversationSidebar({
 
   return (
     <>
-      {/* Mobile hamburger */}
-      <button
-        onClick={() => setMobileOpen(!mobileOpen)}
-        className="md:hidden fixed top-[56px] left-3 z-50 p-2 bg-surface-50 border border-surface-300 rounded-lg shadow-sm"
-        aria-label="Toggle sidebar"
-      >
-        <svg
-          className="w-5 h-5 text-text-600"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d={mobileOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"}
-          />
-        </svg>
-      </button>
-
       {/* Mobile overlay */}
       {mobileOpen && (
         <div
           className="md:hidden fixed inset-0 bg-black/30 z-40"
-          onClick={() => setMobileOpen(false)}
+          onClick={closeMobile}
         />
       )}
 

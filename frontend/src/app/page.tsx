@@ -145,7 +145,8 @@ export default function Home() {
                   : "Select a village first..."
               }
               disabled={!hasVillage}
-              className="flex-1 bg-transparent text-text-800 text-sm focus:outline-none placeholder-text-500 disabled:cursor-not-allowed"
+              className="flex-1 bg-transparent text-text-800 text-base md:text-sm focus:outline-none placeholder-text-500 disabled:cursor-not-allowed"
+              style={{ fontSize: "max(16px, 0.875rem)" }}
             />
             <button
               onClick={() => navigateToChat()}

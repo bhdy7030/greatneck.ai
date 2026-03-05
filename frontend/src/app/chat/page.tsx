@@ -41,6 +41,7 @@ function ChatPageInner() {
   const [sidebarRefresh, setSidebarRefresh] = useState(0);
   const [webSearchMode, setWebSearchMode] = useState<WebSearchMode>("limited");
   const [fastMode, setFastMode] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const draftSentRef = useRef(false);
@@ -250,77 +251,107 @@ function ChatPageInner() {
         onSelect={handleSelectConversation}
         onNewChat={handleNewChat}
         refreshKey={sidebarRefresh}
+        mobileOpen={sidebarOpen}
+        onMobileToggle={() => setSidebarOpen(!sidebarOpen)}
       />
 
       {/* Chat area */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Village badge */}
-        <div className="flex-shrink-0 px-3 md:px-4 py-2 bg-surface-50 border-b border-surface-300">
-          <div className="max-w-3xl mx-auto flex flex-col md:flex-row md:items-center md:justify-between gap-1.5 md:gap-0">
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-text-500 hidden md:inline">{t("chat.village")}</span>
-              <span className="text-xs font-medium text-sage bg-sage/10 px-2 py-0.5 rounded-full">
-                {village}
-              </span>
-            </div>
-            <div className="flex items-center flex-wrap gap-2 md:gap-3">
-              <div className="flex items-center gap-1">
-                <span className="text-xs text-text-500 hidden md:inline">{t("chat.searchWeb")}</span>
-                {/* Mobile: globe icon */}
-                <svg className="w-3.5 h-3.5 text-text-500 md:hidden flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9" />
-                </svg>
-                {(["off", "limited", "unlimited"] as WebSearchMode[]).map((mode) => (
-                  <button
-                    key={mode}
-                    onClick={() => {
-                      setWebSearchMode(mode);
-                      localStorage.setItem("gn_web_search_mode", mode);
-                    }}
-                    className={`text-xs px-2 py-1 min-h-[28px] md:min-h-0 md:py-0.5 rounded-full transition-colors ${
-                      webSearchMode === mode
-                        ? "bg-sage text-white"
-                        : "bg-surface-200 text-text-500 hover:bg-surface-300"
-                    }`}
-                  >
-                    {mode === "off" ? t("chat.webOff") : mode === "limited" ? t("chat.webLimited") : t("chat.webUnlimited")}
-                  </button>
-                ))}
-              </div>
-              <div className="flex items-center gap-1">
-                <span className="text-xs text-text-500 hidden md:inline">Speed</span>
-                {/* Mobile: bolt icon */}
-                <svg className="w-3.5 h-3.5 text-text-500 md:hidden flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-                {(["full", "fast"] as const).map((mode) => (
-                  <button
-                    key={mode}
-                    onClick={() => {
-                      const isFast = mode === "fast";
-                      setFastMode(isFast);
-                      localStorage.setItem("gn_fast_mode", String(isFast));
-                    }}
-                    className={`text-xs px-2 py-1 min-h-[28px] md:min-h-0 md:py-0.5 rounded-full transition-colors ${
-                      (mode === "fast") === fastMode
-                        ? "bg-sage text-white"
-                        : "bg-surface-200 text-text-500 hover:bg-surface-300"
-                    }`}
-                  >
-                    {mode === "full" ? "Full" : "Fast"}
-                  </button>
-                ))}
-              </div>
+        <div className="flex-shrink-0 px-3 md:px-4 py-1.5 md:py-2 bg-surface-50 border-b border-surface-300">
+          <div className="max-w-3xl mx-auto flex items-center gap-2 md:gap-3">
+            {/* Mobile sidebar toggle */}
+            <button
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              className="md:hidden p-1 -ml-1 text-text-600 hover:text-text-800 transition-colors"
+              aria-label="Toggle chat history"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                  d={sidebarOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"} />
+              </svg>
+            </button>
+
+            {/* Village badge — tap to change */}
+            <button
+              onClick={() => {
+                localStorage.removeItem("gn_village");
+                router.push("/");
+              }}
+              className="flex items-center gap-1 text-xs font-medium text-sage bg-sage/10 px-2 py-0.5 rounded-full hover:bg-sage/20 transition-colors flex-shrink-0"
+              title={t("chat.changeVillage")}
+            >
+              {village}
+              <svg className="w-3 h-3 text-sage/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+
+            {/* Separator */}
+            <div className="w-px h-4 bg-surface-300 hidden md:block" />
+
+            {/* Web search: toggle on/off + ∞ option */}
+            <div className="flex items-center gap-1 ml-auto md:ml-0">
               <button
                 onClick={() => {
-                  localStorage.removeItem("gn_village");
-                  router.push("/");
+                  const next = webSearchMode === "off" ? "limited" : "off";
+                  setWebSearchMode(next);
+                  localStorage.setItem("gn_web_search_mode", next);
                 }}
-                className="text-xs text-text-500 hover:text-text-800 transition-colors ml-auto md:ml-0"
+                className="flex items-center gap-1 cursor-pointer"
+                title={webSearchMode === "off" ? "Enable web search" : "Disable web search"}
               >
-                {t("chat.changeVillage")}
+                <svg className={`w-3.5 h-3.5 flex-shrink-0 transition-colors ${webSearchMode === "off" ? "text-text-400" : "text-sage"}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9" />
+                </svg>
+                <div className={`w-7 h-4 rounded-full transition-colors relative ${webSearchMode === "off" ? "bg-surface-400" : "bg-sage"}`}>
+                  <div className={`absolute top-0.5 w-3 h-3 rounded-full bg-white shadow transition-transform ${webSearchMode === "off" ? "left-0.5" : "left-3.5"}`} />
+                </div>
               </button>
+              {webSearchMode !== "off" && (
+                <button
+                  onClick={() => {
+                    const next = webSearchMode === "unlimited" ? "limited" : "unlimited";
+                    setWebSearchMode(next);
+                    localStorage.setItem("gn_web_search_mode", next);
+                  }}
+                  className={`text-[11px] px-1.5 py-0.5 min-h-[24px] rounded-full transition-all ${
+                    webSearchMode === "unlimited"
+                      ? "bg-gold text-white shadow-sm shadow-gold/30"
+                      : "bg-surface-200 text-gold/60 hover:text-gold hover:bg-gold/10"
+                  }`}
+                  title={webSearchMode === "unlimited" ? "Switch to limited (up to 5)" : "Unlimited — deeper web search"}
+                >
+                  ∞
+                </button>
+              )}
             </div>
+
+            {/* Speed: bolt toggle */}
+            <button
+              onClick={() => {
+                const next = !fastMode;
+                setFastMode(next);
+                localStorage.setItem("gn_fast_mode", String(next));
+              }}
+              className={`flex items-center gap-0.5 text-[11px] px-1.5 py-0.5 min-h-[24px] rounded-full transition-colors ${
+                fastMode
+                  ? "bg-amber-500 text-white"
+                  : "bg-sage text-white"
+              }`}
+              title={fastMode ? "Fast mode (Sonnet)" : "Deep mode (Opus)"}
+            >
+              {fastMode ? (
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+              ) : (
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                </svg>
+              )}
+              {fastMode ? "Fast" : "Deep"}
+            </button>
           </div>
         </div>
 
