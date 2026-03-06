@@ -6,7 +6,6 @@ import GreatNeckMap from "@/components/GreatNeckMap";
 import VillageSelector from "@/components/VillageSelector";
 import UpcomingEvents from "@/components/UpcomingEvents";
 import { useLanguage } from "@/components/LanguageProvider";
-import { getUpcomingEvents, type UpcomingEvent } from "@/lib/api";
 
 const ANIMATED_QUESTIONS = [
   "Do I need a permit for a fence?",
@@ -25,20 +24,6 @@ const QUICK_CHIPS = [
   "Library activities this week?",
 ];
 
-const CATEGORY_EMOJI: Record<string, string> = {
-  school: "🏫", student: "🎒", kids: "🧒", teens: "🧑‍💻",
-  family: "👨‍👩‍👧", art: "🎨", entertainment: "🎭", food: "🍽",
-  festival: "🎪", health: "💪", education: "📚", community: "🤝",
-  general: "📌",
-};
-
-const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-
-function shortDate(dateStr: string): string {
-  const d = new Date(dateStr + "T00:00:00");
-  return `${WEEKDAYS[d.getDay()]}, ${MONTHS[d.getMonth()]} ${d.getDate()}`;
-}
 
 export default function Home() {
   const router = useRouter();
@@ -56,24 +41,52 @@ export default function Home() {
   const [showEvents, setShowEvents] = useState(false);
   const [showChatBox, setShowChatBox] = useState(false);
   const [showChips, setShowChips] = useState(false);
-  const [previewEvents, setPreviewEvents] = useState<UpcomingEvent[]>([]);
-  const [showPreview, setShowPreview] = useState(false);
   const [animatedPlaceholder, setAnimatedPlaceholder] = useState("");
   const [inputFocused, setInputFocused] = useState(false);
+
+  // Hero title typing animation
+  const [heroTitle, setHeroTitle] = useState("");
+  const [showSubtitle, setShowSubtitle] = useState(false);
+  const [titleCollapsed, setTitleCollapsed] = useState(false);
+  const [titleTyped, setTitleTyped] = useState(false);
 
   useEffect(() => {
     const stored = localStorage.getItem("gn_village") || "";
     setHasVillage(!!stored);
     setSelectedVillage(stored);
-    // Always show events and preview (even without village)
     setShowEvents(true);
-    setShowPreview(true);
-    getUpcomingEvents(stored || "", 3).then(setPreviewEvents).catch(() => {});
     if (stored) {
       setShowChatBox(true);
       setShowChips(true);
     }
   }, []);
+
+  // Title typing animation — starts immediately, collapses after
+  useEffect(() => {
+    const fullTitle = t("welcome.title");
+    let i = 0;
+    const timers: ReturnType<typeof setTimeout>[] = [];
+
+    const typeNext = () => {
+      i++;
+      setHeroTitle(fullTitle.slice(0, i));
+      if (i < fullTitle.length) {
+        timers.push(setTimeout(typeNext, 80));
+      } else {
+        // Done typing → show subtitle → hold 1s → collapse
+        timers.push(setTimeout(() => {
+          setShowSubtitle(true);
+          setTitleTyped(true);
+          timers.push(setTimeout(() => {
+            setTitleCollapsed(true);
+          }, 1000));
+        }, 300));
+      }
+    };
+
+    timers.push(setTimeout(typeNext, 100));
+    return () => timers.forEach(clearTimeout);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Typing animation cycling through sample questions
   useEffect(() => {
@@ -125,10 +138,9 @@ export default function Home() {
   const handleVillageSelect = (village: string) => {
     setHasVillage(true);
     setSelectedVillage(village);
-    // Staggered entrance: chat box → chips; events/preview already visible
+    // Staggered entrance: chat box → chips
     setTimeout(() => setShowChatBox(true), 200);
     setTimeout(() => setShowChips(true), 600);
-    getUpcomingEvents(village, 3).then(setPreviewEvents).catch(() => {});
   };
 
   const navigateToChat = (text?: string) => {
@@ -170,20 +182,37 @@ export default function Home() {
 
       {/* Scrollable content */}
       <div className="relative z-10 flex flex-col items-center will-change-transform">
-        {/* Hero section — fills viewport */}
-        <div className="min-h-[100dvh] flex flex-col justify-center items-center w-full px-6 pb-8">
+        {/* Hero section — fills viewport, shrinks after title collapse */}
+        <div className={`flex flex-col justify-center items-center w-full px-6 pb-8 transition-all duration-700 ${
+          titleCollapsed ? "min-h-0 pt-8" : "min-h-[100dvh]"
+        }`}>
           {/* Frosted card */}
           <div className="bg-surface-50/10 backdrop-blur-sm rounded-2xl p-6 md:p-8 max-w-2xl w-full shadow-lg border border-surface-300/50">
-            <div className="text-center mb-5">
-              <h1 className="text-2xl md:text-4xl font-bold text-text-800 mb-1">
-                {t("welcome.title")}
-              </h1>
-              <p className="text-text-500 text-sm md:text-base">
-                {t("welcome.subtitle")}
-              </p>
+            {/* Collapsible title area */}
+            <div
+              className={`overflow-hidden transition-all duration-700 ease-in-out ${
+                titleCollapsed ? "max-h-0 opacity-0 mb-0" : "max-h-40 opacity-100 mb-5"
+              }`}
+            >
+              <div className="text-center">
+                <h1 className="text-2xl md:text-4xl font-bold text-text-800 mb-1">
+                  {titleTyped ? t("welcome.title") : heroTitle}
+                  {!titleTyped && <span className="animate-pulse">|</span>}
+                </h1>
+                <p
+                  className={`text-text-500 text-sm md:text-base transition-opacity duration-500 ${
+                    showSubtitle ? "opacity-100" : "opacity-0"
+                  }`}
+                >
+                  {t("welcome.subtitle")}
+                </p>
+              </div>
             </div>
 
-            <VillageSelector onSelect={handleVillageSelect} />
+            <VillageSelector
+              onSelect={handleVillageSelect}
+              onChangeRequest={() => setTitleCollapsed(false)}
+            />
           </div>
 
           {/* Chat input — in hero, centered */}
@@ -240,65 +269,8 @@ export default function Home() {
             )}
           </div>
 
-          {/* Event preview — teaser cards to encourage scrolling */}
-          {showPreview && previewEvents.length > 0 && (
-            <div className="w-full max-w-2xl mt-4 animate-fadeSlideUp">
-              <p className="text-xs font-semibold text-text-500 uppercase tracking-wider mb-2 px-1">
-                {t("events.upcoming")}
-              </p>
-              <div className="space-y-1.5">
-                {previewEvents.map((event) => (
-                  <div
-                    key={`preview-${event.source}-${event.id}`}
-                    onClick={() => {
-                      localStorage.setItem("gn_event_context", JSON.stringify(event));
-                      localStorage.setItem("gn_fast_mode", "true");
-                      router.push("/chat/");
-                    }}
-                    className="flex items-center gap-3 bg-surface-50 rounded-lg border border-surface-300/50 px-3 py-2 hover:border-sage/40 transition-colors group cursor-pointer"
-                  >
-                    <span className="text-base flex-shrink-0">
-                      {CATEGORY_EMOJI[event.category] || "📌"}
-                    </span>
-                    <div className="flex-1 min-w-0">
-                      <h4 className="text-sm font-medium text-text-800 truncate group-hover:text-sage transition-colors">
-                        {event.title}
-                      </h4>
-                      <span className="text-xs text-text-500">
-                        {shortDate(event.event_date)}
-                        {event.event_time && ` · ${event.event_time}`}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-1.5 flex-shrink-0">
-                      {event.url && (
-                        <a
-                          href={event.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          onClick={(e) => e.stopPropagation()}
-                          className="text-text-400 hover:text-sage transition-colors"
-                          title="Open source"
-                        >
-                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                          </svg>
-                        </a>
-                      )}
-                      <svg className="w-3.5 h-3.5 text-text-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                      </svg>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <p className="text-xs text-text-400 text-center mt-2">
-                Scroll down for all events ↓
-              </p>
-            </div>
-          )}
-
           {/* Scroll hint arrow */}
-          {showEvents && previewEvents.length === 0 && (
+          {showEvents && !titleCollapsed && (
             <div className="mt-6 animate-arrowBounce text-text-400">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />

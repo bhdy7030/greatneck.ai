@@ -13,9 +13,10 @@ const VILLAGES = [
 
 interface VillageSelectorProps {
   onSelect: (village: string) => void;
+  onChangeRequest?: () => void;
 }
 
-export default function VillageSelector({ onSelect }: VillageSelectorProps) {
+export default function VillageSelector({ onSelect, onChangeRequest }: VillageSelectorProps) {
   const [selected, setSelected] = useState<string | null>(null);
 
   useEffect(() => {
@@ -26,6 +27,9 @@ export default function VillageSelector({ onSelect }: VillageSelectorProps) {
   }, []);
 
   const handleSelect = (villageName: string) => {
+    if (selected && villageName !== selected && onChangeRequest) {
+      onChangeRequest();
+    }
     setSelected(villageName);
     localStorage.setItem("gn_village", villageName);
     onSelect(villageName);
