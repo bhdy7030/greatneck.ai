@@ -3,10 +3,10 @@ type Lang = "en" | "zh";
 const translations: Record<string, Record<Lang, string>> = {
   // ── Landing page ──
   "welcome.location": { en: "Long Island, New York", zh: "纽约长岛" },
-  "welcome.title": { en: "your neighborhood, answered", zh: "你的社区，有问必答" },
+  "welcome.title": { en: "our neighborhood, answered", zh: "我们的社区，有问必答" },
   "welcome.subtitle": {
-    en: "village codes, permits, local info — all in one place.",
-    zh: "村庄法规、许可证、本地信息——尽在一处。",
+    en: "codes, permits, events & local know-how.",
+    zh: "法规、许可、活动与本地资讯。",
   },
   "welcome.selectVillage": {
     en: "Select your village to get started",
@@ -86,6 +86,52 @@ const translations: Record<string, Record<Lang, string>> = {
   // ── Auth ──
   "auth.signIn": { en: "Sign in", zh: "登录" },
   "auth.signOut": { en: "Sign out", zh: "退出" },
+
+  // ── Tier / Usage ──
+  "tier.trialExhaustedTitle": {
+    en: "Want to keep going?",
+    zh: "想继续提问吗？",
+  },
+  "tier.trialExhaustedDesc": {
+    en: "Each answer costs us real AI resources. We limit guest access so we can keep this free for the community. Get 10 more questions below, or sign in for unlimited access.",
+    zh: "每次回答都会消耗AI资源。我们限制访客使用量，以便为社区持续提供免费服务。点击下方获取10次额外提问，或登录以获得无限使用。",
+  },
+  "tier.mustSignInTitle": {
+    en: "You're part of the neighborhood",
+    zh: "您是社区的一员",
+  },
+  "tier.mustSignInDesc": {
+    en: "Sign in to keep asking questions, save your conversations, and get the most out of your community assistant. It only takes a second.",
+    zh: "登录以继续提问、保存对话记录，并充分利用您的社区助手。只需一秒钟。",
+  },
+  "tier.getMoreQueries": {
+    en: "Keep Asking",
+    zh: "继续提问",
+  },
+  "tier.signInUnlimited": {
+    en: "Sign in",
+    zh: "登录",
+  },
+  "tier.dismiss": {
+    en: "Maybe later",
+    zh: "以后再说",
+  },
+  "tier.proOnly": {
+    en: "Pro only",
+    zh: "仅限 Pro",
+  },
+  "tier.promoBanner": {
+    en: "Pro features active — {days} days remaining",
+    zh: "Pro 功能已激活 — 剩余 {days} 天",
+  },
+  "tier.deepLocked": {
+    en: "Deep mode requires Pro",
+    zh: "深度模式需要 Pro",
+  },
+  "tier.unlimitedSearchLocked": {
+    en: "Unlimited search requires Pro",
+    zh: "无限搜索需要 Pro",
+  },
 
   // ── Pipeline ──
   "pipeline.researching": { en: "Researching...", zh: "正在搜索..." },

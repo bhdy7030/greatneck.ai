@@ -4,6 +4,9 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass, field
 from datetime import datetime
+from zoneinfo import ZoneInfo
+
+_ET = ZoneInfo("America/New_York")
 from typing import Any, Callable, Awaitable, Optional
 
 from llm.provider import llm_call_with_tools
@@ -99,7 +102,7 @@ class BaseAgent:
         critic_feedback: str | None = None,
     ) -> list[dict]:
         system = self.system_prompt
-        now = datetime.now()
+        now = datetime.now(_ET)
         # Provide weekday context so LLM can resolve "this Friday", "tomorrow", etc.
         weekday = now.strftime('%A')  # e.g. "Tuesday"
         days_of_week = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
@@ -129,10 +132,14 @@ The local knowledge base may contain outdated information — businesses close, 
         # Response formatting guidelines (applies to all user-facing agents)
         system += """
 
-## Response Format
-- **Lead with a concise answer.** Put the key fact or summary in the first 1-2 sentences so the user gets their answer at a glance.
-- **Follow with balanced detail.** Add helpful context, key details, and actionable info (phone numbers, addresses, next steps) — but don't overwhelm.
-- **Always cite sources.** When your answer comes from search results or web pages, include the source names and URLs at the end under a "Sources" section. Never omit sources when you have them."""
+## Response Format (applies to your FINAL answer to the user — NOT to your search strategy)
+1. **BLUF (Bottom Line Up Front):** Your very first sentence must be the direct answer or key takeaway, in **bold**. Do not bury the lead.
+2. **Zero fluff:** No generic intros ("Great question!"), no empathetic filler, no summary conclusions that repeat what was already said.
+3. **Scannable structure:** Use ### headings, bullet points, and **bold** for key terms. No paragraphs longer than 3-4 sentences.
+4. **Actionable close:** End with a specific next step, contact info, or a targeted follow-up question — not a vague "hope this helps."
+5. **Always cite sources.** When your answer comes from search results or web pages, mention source names inline. Never omit sources when you have them.
+
+NOTE: These formatting rules apply to your written response ONLY. Do NOT reduce your search thoroughness — always do multi-hop searches, follow-up queries, and verify information as instructed by your search strategy."""
 
         if context:
             village = context.get("village", "")

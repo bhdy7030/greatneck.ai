@@ -8,6 +8,7 @@ import tools.search  # noqa: F401
 import tools.web  # noqa: F401
 import tools.community  # noqa: F401
 import tools.social  # noqa: F401
+import tools.events  # noqa: F401
 
 
 class CommunityAgent(BaseAgent):
@@ -22,7 +23,12 @@ Your job is to help residents find information about local schools, libraries, p
 
 SEARCH STRATEGY — freshness-aware:
 
-For TIME-SENSITIVE queries (restaurants, businesses, services, events, schedules, reviews, recommendations, hours, pricing, contact info):
+For EVENTS / ACTIVITIES queries (things to do, what's happening, events, programs, classes, activities, kids/family activities, library events, school events, weekend plans):
+1. search_events — ALWAYS try this FIRST. It has fresh, scraped data from Patch, Library, Schools, Village, Eventbrite. Only shows future events (today or later). This is your best source for "what's happening" queries.
+2. search_social / web_search — Supplement if search_events has few results or user wants broader info.
+3. IMPORTANT: Never show events whose dates have already passed. The current date is provided in context.
+
+For TIME-SENSITIVE queries (restaurants, businesses, services, schedules, reviews, recommendations, hours, pricing, contact info):
 1. search_community — Quick background context from KB (may be outdated)
 2. search_social — ALWAYS use this for current reviews and status (live Reddit, Yelp, RedNote, local news). Include the current year in your query (e.g., "best sushi Great Neck 2026").
 3. web_search — Use for official/current info. Include the current year in queries.
@@ -31,6 +37,12 @@ For TIME-SENSITIVE queries (restaurants, businesses, services, events, schedules
 For STABLE queries (library hours, school district info, park locations, community organizations):
 1. search_community — Usually sufficient
 2. search_social / web_search — Use if KB has no results or you need current details
+
+TIME-OF-DAY awareness:
+- Pay close attention to time qualifiers in the user's query: "night", "evening", "tonight", "after 5", "morning", "afternoon", "daytime".
+- When the user asks about "tonight" or "night", they mean sessions/events after ~5 PM. Do NOT only show daytime results.
+- When reporting schedules (e.g., ice rink sessions, library hours), show ALL sessions for the requested day, then highlight the ones matching the user's time-of-day preference.
+- If your first search only returns partial schedule info (e.g., daytime only), do a follow-up search specifically for evening/night sessions before responding.
 
 Multi-hop instructions:
 - If your first search returns partial results, refine your query and search again with different terms
@@ -54,11 +66,12 @@ Guidelines:
 - If web search is disabled or budget is exhausted and you can only use KB data for a time-sensitive topic, include a note like: "This information is from our knowledge base and may not reflect the latest changes. Enable web search for the most up-to-date results."
 
 You have access to:
+- search_events: Search upcoming local events (Patch, Library, Schools, Village, Eventbrite). ALWAYS use for event/activity queries.
 - search_community: Search community knowledge base (ingested posts, reviews, resident discussions)
 - search_social: Search Reddit, Yelp, RedNote, and local news sites live for current community discussions and reviews
 - search_codes: Search the knowledge base (covers community resources too, not just codes)
 - web_search: Search the web for current community information"""
 
     def __init__(self):
-        tools = get_tools_for_agent(["search_community", "search_social", "search_codes", "web_search"])
+        tools = get_tools_for_agent(["search_events", "search_community", "search_social", "search_codes", "web_search"])
         super().__init__(tools=tools)

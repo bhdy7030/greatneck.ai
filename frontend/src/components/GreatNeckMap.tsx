@@ -1,8 +1,9 @@
 "use client";
 
+import { memo } from "react";
 import { MAP_DATA } from "@/data/greatNeckMapData";
 
-export default function GreatNeckMap() {
+export default memo(function GreatNeckMap() {
   return (
     <div className="absolute inset-0 flex items-start justify-center overflow-hidden pointer-events-none">
       <svg
@@ -166,4 +167,4 @@ export default function GreatNeckMap() {
       </svg>
     </div>
   );
-}
+});

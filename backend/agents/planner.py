@@ -65,7 +65,7 @@ You MUST respond with ONLY a valid JSON object in this exact format:
   "applicable_domains": ["domain1", "domain2"],
   "complexity": "low|medium|high",
   "steps": [
-    {"tool": "search_permits|search_codes|search_community|search_social", "query": "specific search query", "domain_hint": "what this search targets", "priority": 1}
+    {"tool": "search_permits|search_codes|search_community|search_social|search_events", "query": "specific search query", "domain_hint": "what this search targets", "priority": 1}
   ],
   "web_fallback_queries": ["web search query 1", "web search query 2"]
 }
@@ -74,6 +74,7 @@ Rules:
 - Use search_permits for permit requirement queries, search_codes for code/regulation queries
 - Use search_community to find resident discussions, school reviews, neighborhood experiences in the knowledge base
 - Use search_social for live community discussions, reviews, and local news when KB data may be stale or insufficient
+- Use search_events for ANY query about events, activities, things to do, programs, classes, meetings, what's happening. This pulls from a live scraped database of future events only.
 - Priority 1 = most important, 2 = supplementary
 - Include 2-5 search steps covering different aspects of the question
 - Web fallback queries should include the village name AND "NY" AND the current year to get fresh results
@@ -113,7 +114,8 @@ class PlannerAgent:
             return None
 
         from datetime import datetime
-        current_year = datetime.now().strftime('%Y')
+        from zoneinfo import ZoneInfo
+        current_year = datetime.now(ZoneInfo("America/New_York")).strftime('%Y')
 
         system = PLANNER_SYSTEM_PROMPT
         system += f"\n\nCurrent year: {current_year}. Use this in search queries for time-sensitive topics."

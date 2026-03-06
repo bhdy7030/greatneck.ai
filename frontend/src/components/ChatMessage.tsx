@@ -17,7 +17,7 @@ export default function ChatMessage({ message }: ChatMessageProps) {
   return (
     <div className={`flex ${isUser ? "justify-end" : "justify-start"} mb-4`}>
       <div
-        className={`max-w-[92%] md:max-w-[70%] ${
+        className={`${isUser ? "max-w-[92%] md:max-w-[70%]" : "w-full"} ${
           isUser
             ? "bg-sage text-white rounded-2xl rounded-br-md"
             : "bg-surface-50 border border-surface-300 shadow-sm text-text-800 rounded-2xl rounded-bl-md"
@@ -145,18 +145,28 @@ export default function ChatMessage({ message }: ChatMessageProps) {
         )}
 
         {/* Sources — compact list */}
-        {!isUser && message.sources && message.sources.length > 0 && (
-          <div className="mt-2 pt-1.5 border-t border-surface-300">
-            <p className="text-[10px] text-text-600 font-medium uppercase tracking-wider mb-1">
-              Sources ({message.sources.length})
-            </p>
-            <div className="space-y-0">
-              {message.sources.map((src, i) => (
-                <SourceCitation key={i} source={src} index={i} />
-              ))}
+        {!isUser && message.sources && message.sources.length > 0 && (() => {
+          const MAX_SOURCES = 5;
+          const shown = message.sources!.slice(0, MAX_SOURCES);
+          const remaining = message.sources!.length - MAX_SOURCES;
+          return (
+            <div className="mt-2 pt-1.5 border-t border-surface-300">
+              <p className="text-[10px] text-text-600 font-medium uppercase tracking-wider mb-1">
+                Sources ({message.sources!.length})
+              </p>
+              <div className="space-y-0">
+                {shown.map((src, i) => (
+                  <SourceCitation key={i} source={src} index={i} />
+                ))}
+                {remaining > 0 && (
+                  <p className="text-[10px] text-text-500 mt-1">
+                    (and {remaining} more)
+                  </p>
+                )}
+              </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
       </div>
     </div>
   );

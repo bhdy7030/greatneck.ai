@@ -3,7 +3,9 @@
  */
 
 const TOKEN_KEY = "gn_token";
+const REFRESH_KEY = "gn_refresh";
 const USER_KEY = "gn_user";
+const SESSION_KEY = "gn_session_id";
 
 export interface AuthUser {
   id: number;
@@ -12,6 +14,8 @@ export interface AuthUser {
   avatar_url: string;
   is_admin: boolean;
   can_debug: boolean;
+  tier?: string;
+  promo_expires_at?: string | null;
 }
 
 export function getToken(): string | null {
@@ -25,6 +29,19 @@ export function setToken(token: string): void {
 
 export function clearToken(): void {
   localStorage.removeItem(TOKEN_KEY);
+}
+
+export function getRefreshToken(): string | null {
+  if (typeof window === "undefined") return null;
+  return localStorage.getItem(REFRESH_KEY);
+}
+
+export function setRefreshToken(token: string): void {
+  localStorage.setItem(REFRESH_KEY, token);
+}
+
+export function clearRefreshToken(): void {
+  localStorage.removeItem(REFRESH_KEY);
 }
 
 export function getStoredUser(): AuthUser | null {
@@ -48,5 +65,17 @@ export function clearStoredUser(): void {
 
 export function clearAuth(): void {
   clearToken();
+  clearRefreshToken();
   clearStoredUser();
+}
+
+/** Get or create a persistent anonymous session ID (UUID v4). */
+export function getSessionId(): string {
+  if (typeof window === "undefined") return "";
+  let id = localStorage.getItem(SESSION_KEY);
+  if (!id) {
+    id = crypto.randomUUID();
+    localStorage.setItem(SESSION_KEY, id);
+  }
+  return id;
 }

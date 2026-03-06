@@ -39,15 +39,25 @@ class Settings(BaseSettings):
     google_redirect_uri: str = "http://localhost:8001/api/auth/google/callback"
 
     # JWT
-    jwt_secret: str = "change-me-in-production"
+    jwt_secret: str = ""
     jwt_algorithm: str = "HS256"
-    jwt_expire_hours: int = 72
+    jwt_expire_hours: int = 1
 
     # Frontend URL (for OAuth redirect)
     frontend_url: str = "http://localhost:3000"
 
     # Admin emails (comma-separated) — auto-grant is_admin on login
     admin_emails: str = ""
+
+    # Pro emails (comma-separated) — auto-grant pro tier on login
+    pro_emails: str = ""
+
+    # Tier limits
+    anon_initial_queries: int = 10
+    anon_extended_queries: int = 10
+    free_promo_days: int = 14
+    free_web_search_mode: str = "limited"
+    free_fast_mode_only: bool = False
 
     # Events
     eventbrite_api_key: str = ""

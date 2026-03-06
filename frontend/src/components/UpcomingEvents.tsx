@@ -81,18 +81,12 @@ export default function UpcomingEvents({ village }: Props) {
   const [sourceFilter, setSourceFilter] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!village) {
-      setEvents([]);
-      setLoading(false);
-      return;
-    }
-
     let cancelled = false;
     setLoading(true);
     setActiveFilter(null);
     setSourceFilter(null);
 
-    getUpcomingEvents(village, 30)
+    getUpcomingEvents(village || "", 30)
       .then((data) => {
         if (!cancelled) setEvents(data);
       })
@@ -238,7 +232,7 @@ export default function UpcomingEvents({ village }: Props) {
                       href={event.url || undefined}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="block bg-surface-50/80 backdrop-blur-sm rounded-xl border border-surface-300/50 px-4 py-3 hover:border-sage/40 hover:shadow-md transition-all duration-200 group cursor-pointer"
+                      className="block bg-surface-50 rounded-xl border border-surface-300/50 px-4 py-3 hover:border-sage/40 hover:shadow-md transition-all duration-200 group cursor-pointer"
                     >
                       {/* Top row */}
                       <div className="flex items-center gap-2 mb-1 text-xs">

@@ -8,10 +8,12 @@ import ChatMessage from "@/components/ChatMessage";
 import ChatInput from "@/components/ChatInput";
 import PipelineSteps from "@/components/PipelineSteps";
 import ConversationSidebar from "@/components/ConversationSidebar";
+import UsageLimitModal from "@/components/UsageLimitModal";
 import {
   sendMessageStream,
   getConversation,
   createConversation,
+  TierError,
   type ChatMessage as ChatMessageType,
   type PipelineEvent,
   type WebSearchMode,
@@ -28,7 +30,7 @@ export default function ChatPage() {
 function ChatPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { user } = useAuth();
+  const { user, features, usage, refreshUsage, tier } = useAuth();
   const { language, t } = useLanguage();
 
   const [village, setVillage] = useState<string>("");
@@ -42,6 +44,7 @@ function ChatPageInner() {
   const [webSearchMode, setWebSearchMode] = useState<WebSearchMode>("limited");
   const [fastMode, setFastMode] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [tierModal, setTierModal] = useState<"trial_exhausted" | "must_sign_in" | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const draftSentRef = useRef(false);
@@ -105,11 +108,30 @@ function ChatPageInner() {
     }
   };
 
-  // Auto-scroll to bottom on new messages or pipeline events
+  // Auto-scroll: while loading, follow bottom; when response arrives, scroll to its start
+  const lastMessageCountRef = useRef(0);
   useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    if (!scrollRef.current) return;
+    const messageCount = messages.length;
+    const justAdded = messageCount > lastMessageCountRef.current;
+    lastMessageCountRef.current = messageCount;
+
+    if (justAdded && messageCount > 0 && messages[messageCount - 1].role === "assistant") {
+      // New assistant message — scroll to the start of it
+      const container = scrollRef.current;
+      const allMsgEls = container.querySelectorAll("[data-msg-idx]");
+      const lastMsgEl = allMsgEls[allMsgEls.length - 1] as HTMLElement | undefined;
+      if (lastMsgEl) {
+        // Scroll so the top of the response is near the top of the viewport
+        const containerRect = container.getBoundingClientRect();
+        const msgRect = lastMsgEl.getBoundingClientRect();
+        const offset = msgRect.top - containerRect.top + container.scrollTop - 16;
+        container.scrollTo({ top: offset, behavior: "smooth" });
+        return;
+      }
     }
+    // Default: scroll to bottom (loading states, user messages, pipeline events)
+    scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
   }, [messages, isLoading, pipelineEvents]);
 
   const handleNewChat = useCallback(() => {
@@ -222,7 +244,16 @@ function ChatPageInner() {
         setMessages((prev) => [...prev, assistantMessage]);
         // Trigger sidebar refresh to show new/updated conversation
         setSidebarRefresh((n) => n + 1);
+        // Refresh usage counters
+        refreshUsage();
       } catch (err) {
+        if (err instanceof TierError) {
+          setTierModal(err.code as "trial_exhausted" | "must_sign_in");
+          // Remove the user message we optimistically added
+          setMessages((prev) => prev.slice(0, -1));
+          setIsLoading(false);
+          return;
+        }
         const errMsg =
           err instanceof Error ? err.message : "Something went wrong";
         setError(errMsg);
@@ -236,7 +267,7 @@ function ChatPageInner() {
         setIsLoading(false);
       }
     },
-    [village, messages, conversationId, user, webSearchMode, language, fastMode]
+    [village, messages, conversationId, user, webSearchMode, language, fastMode, features, refreshUsage]
   );
 
   if (!village) {
@@ -311,16 +342,25 @@ function ChatPageInner() {
               {webSearchMode !== "off" && (
                 <button
                   onClick={() => {
+                    if (features?.web_search_mode !== "unlimited" && webSearchMode !== "unlimited") return;
                     const next = webSearchMode === "unlimited" ? "limited" : "unlimited";
                     setWebSearchMode(next);
                     localStorage.setItem("gn_web_search_mode", next);
                   }}
                   className={`text-[11px] px-1.5 py-0.5 min-h-[24px] rounded-full transition-all ${
-                    webSearchMode === "unlimited"
-                      ? "bg-gold text-white shadow-sm shadow-gold/30"
-                      : "bg-surface-200 text-gold/60 hover:text-gold hover:bg-gold/10"
+                    features?.web_search_mode !== "unlimited" && webSearchMode !== "unlimited"
+                      ? "bg-surface-200 text-text-300 cursor-not-allowed"
+                      : webSearchMode === "unlimited"
+                        ? "bg-gold text-white shadow-sm shadow-gold/30"
+                        : "bg-surface-200 text-gold/60 hover:text-gold hover:bg-gold/10"
                   }`}
-                  title={webSearchMode === "unlimited" ? "Switch to limited (up to 5)" : "Unlimited — deeper web search"}
+                  title={
+                    features?.web_search_mode !== "unlimited"
+                      ? t("tier.unlimitedSearchLocked")
+                      : webSearchMode === "unlimited"
+                        ? "Switch to limited (up to 5)"
+                        : "Unlimited — deeper web search"
+                  }
                 >
                   ∞
                 </button>
@@ -330,18 +370,27 @@ function ChatPageInner() {
             {/* Speed: bolt toggle */}
             <button
               onClick={() => {
+                if (features?.fast_mode_forced) return;
                 const next = !fastMode;
                 setFastMode(next);
                 localStorage.setItem("gn_fast_mode", String(next));
               }}
               className={`flex items-center gap-0.5 text-[11px] px-1.5 py-0.5 min-h-[24px] rounded-full transition-colors ${
-                fastMode
-                  ? "bg-amber-500 text-white"
-                  : "bg-sage text-white"
+                features?.fast_mode_forced
+                  ? "bg-surface-300 text-text-400 cursor-not-allowed"
+                  : fastMode
+                    ? "bg-amber-500 text-white"
+                    : "bg-sage text-white"
               }`}
-              title={fastMode ? "Fast mode (Sonnet)" : "Deep mode (Opus)"}
+              title={
+                features?.fast_mode_forced
+                  ? t("tier.deepLocked")
+                  : fastMode
+                    ? "Fast mode (Sonnet)"
+                    : "Deep mode (Opus)"
+              }
             >
-              {fastMode ? (
+              {fastMode || features?.fast_mode_forced ? (
                 <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                 </svg>
@@ -350,10 +399,21 @@ function ChatPageInner() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
                 </svg>
               )}
-              {fastMode ? "Fast" : "Deep"}
+              {fastMode || features?.fast_mode_forced ? "Fast" : "Deep"}
             </button>
           </div>
         </div>
+
+        {/* Promo banner */}
+        {tier === "free_promo" && usage?.promo_expires_at && (
+          <div className="flex-shrink-0 px-3 py-1 bg-amber-50 border-b border-amber-200 text-center">
+            <span className="text-xs text-amber-700">
+              {t("tier.promoBanner", {
+                days: String(Math.max(0, Math.ceil((new Date(usage.promo_expires_at).getTime() - Date.now()) / 86400000))),
+              })}
+            </span>
+          </div>
+        )}
 
         {/* Messages container */}
         <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-6">
@@ -399,7 +459,9 @@ function ChatPageInner() {
             )}
 
             {messages.map((msg, i) => (
-              <ChatMessage key={i} message={msg} />
+              <div key={i} data-msg-idx={i}>
+                <ChatMessage message={msg} />
+              </div>
             ))}
 
             {/* Pipeline steps (shown while loading) */}
@@ -443,6 +505,14 @@ function ChatPageInner() {
           <ChatInput onSend={handleSend} disabled={isLoading} />
         </div>
       </div>
+
+      {/* Tier limit modal */}
+      {tierModal && (
+        <UsageLimitModal
+          code={tierModal}
+          onClose={() => setTierModal(null)}
+        />
+      )}
     </div>
   );
 }

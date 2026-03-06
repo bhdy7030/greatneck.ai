@@ -18,7 +18,7 @@ Your ONLY job is to classify the user's query and return a JSON routing decision
 Classify into one of these categories:
 - "village_code" — questions about zoning laws, building codes, ordinances, setback requirements, noise rules, property regulations, code enforcement
 - "permit" — questions about permits, applications, forms, fees, inspections, building department submissions, construction projects, renovations, driveway work, fences, decks, roofing, plumbing, electrical work, or any home improvement that may require a permit
-- "community" — questions about schools, libraries, parks, community events, local services, recreation, restaurants, neighborhood life, real estate
+- "community" — questions about schools, libraries, parks, community events, activities, things to do, what's happening, programs, classes, local services, recreation, restaurants, neighborhood life, real estate
 - "vision" — when the user provides an image and wants analysis of construction/renovation work, code compliance from photos
 - "general" — greetings or simple conversational messages (hi, hello, thanks)
 - "off_topic" — queries completely unrelated to Great Neck or local community topics. Examples: coding help, homework, math problems, recipes, general AI chat, medical advice, stock picks, writing essays. Be strict: if it has nothing to do with Great Neck / Long Island / local life / housing / community, it's off_topic.

@@ -8,6 +8,8 @@ import {
   getKnowledgeStats,
   listUsers,
   updateUserPermissions,
+  updateUserTier,
+  updateUserPromo,
   getModelConfig,
   updateModelConfig,
   type SourceDoc,
@@ -124,6 +126,24 @@ function AdminContent() {
       loadUsers();
     } catch (err) {
       alert(err instanceof Error ? err.message : "Failed to update permissions");
+    }
+  };
+
+  const handleTierChange = async (userId: number, tier: "free" | "pro") => {
+    try {
+      await updateUserTier(userId, tier);
+      loadUsers();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to update tier");
+    }
+  };
+
+  const handlePromoChange = async (userId: number, days: number) => {
+    try {
+      await updateUserPromo(userId, days);
+      loadUsers();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to update promo");
     }
   };
 
@@ -450,37 +470,93 @@ function AdminContent() {
           )}
 
           <div className="space-y-2">
-            {users.map((u) => (
-              <div
-                key={u.id}
-                className="flex items-center justify-between bg-surface-100 rounded-lg px-4 py-3 border border-surface-300"
-              >
-                <div className="flex-1 min-w-0">
-                  <span className="text-sm font-medium text-text-900">{u.name || u.email}</span>
-                  <span className="text-xs text-text-500 ml-2">{u.email}</span>
+            {users.map((u) => {
+              const promoDaysLeft = u.promo_expires_at
+                ? Math.max(0, Math.ceil((new Date(u.promo_expires_at).getTime() - Date.now()) / 86400000))
+                : 0;
+
+              return (
+                <div
+                  key={u.id}
+                  className="bg-surface-100 rounded-lg px-4 py-3 border border-surface-300"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1 min-w-0">
+                      <span className="text-sm font-medium text-text-900">{u.name || u.email}</span>
+                      <span className="text-xs text-text-500 ml-2">{u.email}</span>
+                      {/* Tier badge */}
+                      <span className={`ml-2 text-[10px] px-1.5 py-0.5 rounded-full font-medium ${
+                        u.tier === "pro" ? "bg-sage/20 text-sage"
+                          : u.tier === "free_promo" ? "bg-amber-100 text-amber-700"
+                          : "bg-surface-300 text-text-500"
+                      }`}>
+                        {u.tier === "pro" ? "Pro" : u.tier === "free_promo" ? `Trial (${promoDaysLeft}d)` : "Free"}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-3 flex-shrink-0">
+                      <label className="flex items-center gap-1.5 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={u.is_admin}
+                          onChange={() => handleTogglePermission(u.id, "is_admin", u.is_admin)}
+                          className="w-3.5 h-3.5 rounded accent-sage"
+                        />
+                        <span className="text-xs text-text-600">Admin</span>
+                      </label>
+                      <label className="flex items-center gap-1.5 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={u.can_debug}
+                          onChange={() => handleTogglePermission(u.id, "can_debug", u.can_debug)}
+                          className="w-3.5 h-3.5 rounded accent-gold"
+                        />
+                        <span className="text-xs text-text-600">Debug</span>
+                      </label>
+                    </div>
+                  </div>
+
+                  {/* Tier controls */}
+                  <div className="flex items-center gap-3 mt-2 pt-2 border-t border-surface-200">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[11px] text-text-500">Tier:</span>
+                      <select
+                        value={u.raw_tier}
+                        onChange={(e) => handleTierChange(u.id, e.target.value as "free" | "pro")}
+                        className="text-xs bg-white border border-surface-300 rounded px-1.5 py-0.5 text-text-700"
+                      >
+                        <option value="free">Free</option>
+                        <option value="pro">Pro</option>
+                      </select>
+                    </div>
+
+                    {u.raw_tier === "free" && (
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[11px] text-text-500">Trial:</span>
+                        <select
+                          value={promoDaysLeft > 0 ? "active" : "none"}
+                          onChange={(e) => {
+                            if (e.target.value === "none") handlePromoChange(u.id, 0);
+                          }}
+                          className="text-xs bg-white border border-surface-300 rounded px-1.5 py-0.5 text-text-700"
+                        >
+                          <option value="none">None</option>
+                          {promoDaysLeft > 0 && <option value="active">{promoDaysLeft}d left</option>}
+                        </select>
+                        {[7, 14, 30].map((d) => (
+                          <button
+                            key={d}
+                            onClick={() => handlePromoChange(u.id, d)}
+                            className="text-[11px] px-1.5 py-0.5 rounded bg-surface-200 text-text-600 hover:bg-surface-300 transition-colors"
+                          >
+                            +{d}d
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
-                <div className="flex items-center gap-3 flex-shrink-0">
-                  <label className="flex items-center gap-1.5 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={u.is_admin}
-                      onChange={() => handleTogglePermission(u.id, "is_admin", u.is_admin)}
-                      className="w-3.5 h-3.5 rounded accent-sage"
-                    />
-                    <span className="text-xs text-text-600">Admin</span>
-                  </label>
-                  <label className="flex items-center gap-1.5 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={u.can_debug}
-                      onChange={() => handleTogglePermission(u.id, "can_debug", u.can_debug)}
-                      className="w-3.5 h-3.5 rounded accent-gold"
-                    />
-                    <span className="text-xs text-text-600">Debug</span>
-                  </label>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
 

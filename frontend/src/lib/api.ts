@@ -1,4 +1,11 @@
-import { getToken, type AuthUser } from "@/lib/auth";
+import {
+  getToken,
+  setToken,
+  getRefreshToken,
+  clearAuth,
+  getSessionId,
+  type AuthUser,
+} from "@/lib/auth";
 
 const BASE_URL =
   process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8001";
@@ -9,6 +16,82 @@ function authHeaders(): Record<string, string> {
     return { Authorization: `Bearer ${token}` };
   }
   return {};
+}
+
+function sessionHeaders(): Record<string, string> {
+  return { "X-Session-ID": getSessionId() };
+}
+
+// ── Tier / Usage types ──
+
+export interface TierFeatures {
+  web_search_mode: "off" | "limited" | "unlimited";
+  fast_mode_forced: boolean;
+  deep_mode_allowed: boolean;
+  max_queries: number | null;
+}
+
+export interface UsageInfo {
+  tier: "anonymous" | "free" | "free_promo" | "pro";
+  features: TierFeatures;
+  queries_used: number;
+  queries_remaining: number | null;
+  extended_trial?: boolean;
+  promo_expires_at?: string;
+}
+
+/** SSE error with a machine-readable code */
+export class TierError extends Error {
+  code: string;
+  constructor(code: string, message: string) {
+    super(message);
+    this.code = code;
+  }
+}
+
+// ── Token refresh ──
+
+let _refreshPromise: Promise<boolean> | null = null;
+
+async function tryRefreshToken(): Promise<boolean> {
+  if (_refreshPromise) return _refreshPromise;
+  _refreshPromise = (async () => {
+    const refresh = getRefreshToken();
+    if (!refresh) return false;
+    try {
+      const res = await fetch(`${BASE_URL}/api/auth/refresh`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ refresh_token: refresh }),
+      });
+      if (!res.ok) return false;
+      const data = await res.json();
+      setToken(data.token);
+      return true;
+    } catch {
+      return false;
+    } finally {
+      _refreshPromise = null;
+    }
+  })();
+  return _refreshPromise;
+}
+
+/** Fetch with automatic 401 → refresh → retry. */
+async function fetchWithRefresh(
+  url: string,
+  init: RequestInit
+): Promise<Response> {
+  let res = await fetch(url, init);
+  if (res.status === 401 && getRefreshToken()) {
+    const refreshed = await tryRefreshToken();
+    if (refreshed) {
+      // Rebuild auth header
+      const newInit = { ...init, headers: { ...init.headers, ...authHeaders() } };
+      res = await fetch(url, newInit);
+    }
+  }
+  return res;
 }
 
 // ── Conversation types ──
@@ -97,9 +180,9 @@ export async function sendMessage(
   language?: string,
   fastMode?: boolean
 ): Promise<ChatResponse> {
-  const res = await fetch(`${BASE_URL}/api/chat`, {
+  const res = await fetchWithRefresh(`${BASE_URL}/api/chat`, {
     method: "POST",
-    headers: { "Content-Type": "application/json", ...authHeaders() },
+    headers: { "Content-Type": "application/json", ...authHeaders(), ...sessionHeaders() },
     body: JSON.stringify({
       message,
       village,
@@ -180,9 +263,9 @@ export async function sendMessageStream(
   language?: string,
   fastMode?: boolean
 ): Promise<ChatResponse> {
-  const res = await fetch(`${BASE_URL}/api/chat/stream`, {
+  const res = await fetchWithRefresh(`${BASE_URL}/api/chat/stream`, {
     method: "POST",
-    headers: { "Content-Type": "application/json", ...authHeaders() },
+    headers: { "Content-Type": "application/json", ...authHeaders(), ...sessionHeaders() },
     body: JSON.stringify({
       message,
       village,
@@ -227,6 +310,9 @@ export async function sendMessageStream(
             };
           }
           if (currentEventType === "error") {
+            if (data.code) {
+              throw new TierError(data.code, data.message || "Usage limit reached");
+            }
             throw new Error(data.message || "Pipeline error");
           }
         } catch (e) {
@@ -453,10 +539,41 @@ export async function getUpcomingEvents(
 // ── Auth API ──
 
 export async function fetchCurrentUser(): Promise<AuthUser> {
-  const res = await fetch(`${BASE_URL}/api/auth/me`, {
+  const res = await fetchWithRefresh(`${BASE_URL}/api/auth/me`, {
     headers: authHeaders(),
   });
   if (!res.ok) throw new Error(`Not authenticated: ${res.status}`);
+  return res.json();
+}
+
+export async function logoutServer(): Promise<void> {
+  const refresh = getRefreshToken();
+  if (refresh) {
+    await fetch(`${BASE_URL}/api/auth/logout`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ refresh_token: refresh }),
+    }).catch(() => {});
+  }
+  clearAuth();
+}
+
+// ── Tier / Usage API ──
+
+export async function getUsageInfo(): Promise<UsageInfo> {
+  const res = await fetch(`${BASE_URL}/api/chat/usage`, {
+    headers: { ...authHeaders(), ...sessionHeaders() },
+  });
+  if (!res.ok) throw new Error(`Failed to fetch usage: ${res.status}`);
+  return res.json();
+}
+
+export async function extendTrial(): Promise<{ ok: boolean; message: string }> {
+  const res = await fetch(`${BASE_URL}/api/chat/extend-trial`, {
+    method: "POST",
+    headers: { ...sessionHeaders() },
+  });
+  if (!res.ok) throw new Error(`Failed to extend trial: ${res.status}`);
   return res.json();
 }
 
@@ -521,6 +638,9 @@ export interface UserInfo {
   name: string;
   is_admin: boolean;
   can_debug: boolean;
+  tier: string;
+  raw_tier: string;
+  promo_expires_at: string | null;
   last_login_at: string;
 }
 
@@ -543,4 +663,28 @@ export async function updateUserPermissions(
   });
   if (!res.ok) throw new Error(`Failed to update permissions: ${res.status}`);
   return res.json();
+}
+
+export async function updateUserTier(
+  userId: number,
+  tier: "free" | "pro"
+): Promise<void> {
+  const res = await fetch(`${BASE_URL}/api/auth/users/${userId}/tier`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json", ...authHeaders() },
+    body: JSON.stringify({ tier }),
+  });
+  if (!res.ok) throw new Error(`Failed to update tier: ${res.status}`);
+}
+
+export async function updateUserPromo(
+  userId: number,
+  days: number
+): Promise<void> {
+  const res = await fetch(`${BASE_URL}/api/auth/users/${userId}/promo`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json", ...authHeaders() },
+    body: JSON.stringify({ days }),
+  });
+  if (!res.ok) throw new Error(`Failed to update promo: ${res.status}`);
 }

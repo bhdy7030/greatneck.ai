@@ -7,7 +7,7 @@ import logging
 import re
 from typing import Any, AsyncGenerator
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Header, Request
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
@@ -21,18 +21,68 @@ from agents.critic import CriticAgent
 from agents.base import AgentResponse
 from debug.memory import debug_memory
 from knowledge.registry import lookup_and_format as registry_lookup
+from config import settings
 from api.deps import get_optional_user
+from api.tier import resolve_tier, get_tier_features
 from db import (
     add_message,
     get_messages,
     get_conversation,
     update_conversation_title,
     create_conversation,
+    get_or_create_usage,
+    increment_usage,
+    claim_extended_trial,
 )
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
+
+
+def _enforce_tier(request: "ChatRequest", user: dict | None, session_id: str | None) -> dict | None:
+    """Apply tier-based limits. Returns an error dict if blocked, None if allowed.
+
+    Also mutates request to server-enforce fast_mode and web_search_mode.
+    """
+    tier = resolve_tier(user)
+    features = get_tier_features(tier)
+
+    # Server-override client toggles
+    if features["fast_mode_forced"]:
+        request.fast_mode = True
+    if request.web_search_mode == "unlimited" and features["web_search_mode"] != "unlimited":
+        request.web_search_mode = features["web_search_mode"]
+
+    # Anonymous usage limits
+    if tier == "anonymous":
+        if not session_id:
+            return {"code": "missing_session", "message": "Session ID required"}
+
+        usage = get_or_create_usage(session_id)
+        query_count = usage["query_count"]
+        initial = settings.anon_initial_queries
+        extended = settings.anon_extended_queries
+
+        if usage["extended_trial"]:
+            limit = initial + extended
+        else:
+            limit = initial
+
+        if query_count >= limit:
+            if not usage["extended_trial"]:
+                return {"code": "trial_exhausted", "message": "Free trial queries used up. Get 10 more or sign in for unlimited access."}
+            else:
+                return {"code": "must_sign_in", "message": "Extended trial used up. Sign in with Google for unlimited access."}
+
+        # Increment usage count
+        increment_usage(session_id)
+    elif user and session_id:
+        # Track usage for logged-in users too (analytics)
+        usage = get_or_create_usage(session_id, user_id=user["id"])
+        increment_usage(session_id)
+
+    return None
 
 # Pre-instantiate agents (they are stateless, safe to reuse)
 _router_agent = RouterAgent()
@@ -83,9 +133,18 @@ def _auto_title(conversation_id: str, message: str):
 
 
 @router.post("/chat", response_model=ChatResponse)
-async def chat(request: ChatRequest, user: dict | None = Depends(get_optional_user)) -> ChatResponse:
+async def chat(
+    request: ChatRequest,
+    user: dict | None = Depends(get_optional_user),
+    x_session_id: str | None = Header(default=None),
+) -> ChatResponse:
     """Main chat endpoint. Routes through RouterAgent then to a specialist."""
     try:
+        # Tier enforcement
+        block = _enforce_tier(request, user, x_session_id)
+        if block:
+            return ChatResponse(response=block["message"], sources=[], agent_used="tier_gate")
+
         # If authenticated with conversation_id, load history from DB
         if user and request.conversation_id:
             convo = get_conversation(request.conversation_id)
@@ -122,8 +181,23 @@ async def chat(request: ChatRequest, user: dict | None = Depends(get_optional_us
 
 
 @router.post("/chat/stream")
-async def chat_stream(request: ChatRequest, user: dict | None = Depends(get_optional_user)):
+async def chat_stream(
+    request: ChatRequest,
+    user: dict | None = Depends(get_optional_user),
+    x_session_id: str | None = Header(default=None),
+):
     """Streaming chat endpoint. Emits SSE events for each pipeline step."""
+    # Tier enforcement
+    block = _enforce_tier(request, user, x_session_id)
+    if block:
+        async def _blocked_stream():
+            yield _sse_event("error", {"message": block["message"], "code": block["code"]})
+        return StreamingResponse(
+            _blocked_stream(),
+            media_type="text/event-stream",
+            headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+        )
+
     # If authenticated with conversation_id, load history from DB and save user message
     if user and request.conversation_id:
         convo = get_conversation(request.conversation_id)
@@ -628,6 +702,53 @@ async def _handle_chat(request: ChatRequest) -> ChatResponse:
         agent_used=agent_name,
         pipeline_debug=debug,
     )
+
+
+@router.post("/chat/extend-trial")
+async def extend_trial(x_session_id: str = Header(...)):
+    """One-click extended trial for anonymous users."""
+    success = claim_extended_trial(x_session_id)
+    if not success:
+        return {"ok": False, "message": "Already extended or session not found"}
+    return {"ok": True, "message": "Extended trial activated"}
+
+
+@router.get("/chat/usage")
+async def get_usage(
+    user: dict | None = Depends(get_optional_user),
+    x_session_id: str | None = Header(default=None),
+):
+    """Return tier, features, and usage info for the current session."""
+    tier = resolve_tier(user)
+    features = get_tier_features(tier)
+
+    result = {
+        "tier": tier,
+        "features": features,
+        "queries_used": 0,
+        "queries_remaining": None,
+    }
+
+    session_id = x_session_id
+    if user:
+        session_id = f"user:{user['id']}" if not session_id else session_id
+
+        # Add promo info
+        if tier == "free_promo" and user.get("promo_expires_at"):
+            result["promo_expires_at"] = user["promo_expires_at"]
+
+    if session_id:
+        usage = get_or_create_usage(session_id, user_id=user["id"] if user else None)
+        result["queries_used"] = usage["query_count"]
+
+        if tier == "anonymous":
+            initial = settings.anon_initial_queries
+            extended = settings.anon_extended_queries
+            limit = (initial + extended) if usage["extended_trial"] else initial
+            result["queries_remaining"] = max(0, limit - usage["query_count"])
+            result["extended_trial"] = bool(usage["extended_trial"])
+
+    return result
 
 
 def _build_off_topic_response() -> str:

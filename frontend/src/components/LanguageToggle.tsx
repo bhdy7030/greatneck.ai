@@ -8,7 +8,7 @@ export default function LanguageToggle() {
   return (
     <button
       onClick={toggleLanguage}
-      className="flex items-center gap-1 text-sm text-text-500 hover:text-text-800 transition-colors"
+      className="flex items-center justify-center gap-1 text-sm text-text-500 hover:text-text-800 transition-colors min-w-[44px] min-h-[44px]"
       title={language === "en" ? "Switch to Chinese" : "切换为英文"}
       aria-label={language === "en" ? "Switch to Chinese" : "Switch to English"}
     >

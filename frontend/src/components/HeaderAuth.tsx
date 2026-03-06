@@ -2,6 +2,7 @@
 
 import { useAuth } from "@/components/AuthProvider";
 import { useLanguage } from "./LanguageProvider";
+import TierBadge from "./TierBadge";
 
 export default function HeaderAuth() {
   const { user, isLoading, login, logout } = useAuth();
@@ -21,7 +22,7 @@ export default function HeaderAuth() {
         {/* Mobile: icon-only sign in */}
         <button
           onClick={login}
-          className="md:hidden p-2 text-text-500 hover:text-text-800 transition-colors"
+          className="md:hidden p-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-text-500 hover:text-text-800 transition-colors"
           title={t("auth.signIn")}
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -34,6 +35,7 @@ export default function HeaderAuth() {
 
   return (
     <div className="flex items-center gap-1 md:gap-2">
+      <TierBadge />
       {user.avatar_url ? (
         <img
           src={user.avatar_url}

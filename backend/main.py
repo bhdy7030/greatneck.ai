@@ -1,14 +1,27 @@
 """GreatNeck.ai — FastAPI backend."""
 
+import logging
+import secrets as _secrets
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from config import settings
 from db import init_db
 
+logger = logging.getLogger(__name__)
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # JWT secret validation
+    if not settings.jwt_secret or settings.jwt_secret == "change-me-in-production":
+        is_dev = "localhost" in settings.frontend_url or "127.0.0.1" in settings.frontend_url
+        if is_dev:
+            settings.jwt_secret = _secrets.token_urlsafe(32)
+            logger.warning("JWT_SECRET not set — using ephemeral secret (dev mode). Sessions won't survive restarts.")
+        else:
+            raise RuntimeError("JWT_SECRET must be set in production. Set the JWT_SECRET environment variable.")
+
     init_db()
     yield
 

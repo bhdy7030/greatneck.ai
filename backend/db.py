@@ -1,12 +1,17 @@
 """SQLite database for users, conversations, and messages."""
 from __future__ import annotations
 
+import hashlib
+import secrets
 import sqlite3
 import threading
 import json
 import uuid
 from pathlib import Path
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
+from zoneinfo import ZoneInfo
+
+_ET = ZoneInfo("America/New_York")
 
 DB_PATH = Path(__file__).parent / "data" / "askmura.db"
 
@@ -87,11 +92,36 @@ def init_db():
         );
         CREATE INDEX IF NOT EXISTS idx_events_date ON events(event_date);
         CREATE INDEX IF NOT EXISTS idx_events_scope ON events(scope, village);
+
+        CREATE TABLE IF NOT EXISTS usage_tracking (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            session_id TEXT UNIQUE NOT NULL,
+            user_id INTEGER REFERENCES users(id),
+            query_count INTEGER DEFAULT 0,
+            extended_trial INTEGER DEFAULT 0,
+            ip_hash TEXT DEFAULT '',
+            first_query_at TEXT DEFAULT (datetime('now')),
+            last_query_at TEXT DEFAULT (datetime('now'))
+        );
+
+        CREATE TABLE IF NOT EXISTS refresh_tokens (
+            id TEXT PRIMARY KEY,
+            user_id INTEGER NOT NULL REFERENCES users(id),
+            token_hash TEXT NOT NULL,
+            expires_at TEXT NOT NULL,
+            created_at TEXT DEFAULT (datetime('now')),
+            revoked INTEGER DEFAULT 0
+        );
     """)
     # Migration: add can_debug column if missing (existing databases)
     cols = [row[1] for row in conn.execute("PRAGMA table_info(users)").fetchall()]
     if "can_debug" not in cols:
         conn.execute("ALTER TABLE users ADD COLUMN can_debug INTEGER NOT NULL DEFAULT 0")
+    # Migration: add tier columns
+    if "tier" not in cols:
+        conn.execute("ALTER TABLE users ADD COLUMN tier TEXT NOT NULL DEFAULT 'free'")
+    if "promo_expires_at" not in cols:
+        conn.execute("ALTER TABLE users ADD COLUMN promo_expires_at TEXT")
     # Migration: conversations.id INTEGER → TEXT (UUID)
     # If old schema exists, drop conversations+messages and let CREATE TABLE IF NOT EXISTS rebuild
     convo_cols = {row[1]: row[2] for row in conn.execute("PRAGMA table_info(conversations)").fetchall()}
@@ -109,7 +139,7 @@ def init_db():
 def upsert_user(google_id: str, email: str, name: str, avatar_url: str = "") -> dict:
     """Insert or update a user from Google OAuth. Returns user dict."""
     conn = _get_conn()
-    now = datetime.now(timezone.utc).isoformat()
+    now = datetime.now(_ET).isoformat()
     conn.execute(
         """INSERT INTO users (google_id, email, name, avatar_url, created_at, last_login_at)
            VALUES (?, ?, ?, ?, ?, ?)
@@ -260,7 +290,7 @@ def get_messages(conversation_id: str) -> list[dict]:
 def upsert_event(event: dict) -> dict:
     """Insert or update an event. Deduplicates by (source, source_id)."""
     conn = _get_conn()
-    now = datetime.now(timezone.utc).isoformat()
+    now = datetime.now(_ET).isoformat()
     conn.execute(
         """INSERT INTO events (title, description, event_date, event_time, end_date,
                location, venue, url, image_url, category, scope, village,
@@ -313,7 +343,7 @@ def get_upcoming_events(
     Sorted by date, max `limit` events.
     """
     conn = _get_conn()
-    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    today = datetime.now(_ET).strftime("%Y-%m-%d")
     results: list[dict] = []
     seen_ids: set[int] = set()
 
@@ -360,6 +390,107 @@ def get_upcoming_events(
     # Sort final results by date
     results.sort(key=lambda e: (e.get("event_date", ""), e.get("event_time", "")))
     return results[:limit]
+
+
+def set_user_tier(user_id: int, tier: str) -> dict | None:
+    """Set a user's tier ('free' or 'pro')."""
+    conn = _get_conn()
+    conn.execute("UPDATE users SET tier=? WHERE id=?", (tier, user_id))
+    conn.commit()
+    return get_user_by_id(user_id)
+
+
+def set_promo_expiry(user_id: int, expires_at: str) -> dict | None:
+    """Set promo_expires_at for a user (ISO datetime string)."""
+    conn = _get_conn()
+    conn.execute("UPDATE users SET promo_expires_at=? WHERE id=?", (expires_at, user_id))
+    conn.commit()
+    return get_user_by_id(user_id)
+
+
+# ── Usage Tracking ──
+
+
+def get_or_create_usage(session_id: str, user_id: int | None = None) -> dict:
+    """Get or create a usage_tracking row for a session."""
+    conn = _get_conn()
+    row = conn.execute("SELECT * FROM usage_tracking WHERE session_id=?", (session_id,)).fetchone()
+    if row:
+        return dict(row)
+    conn.execute(
+        "INSERT INTO usage_tracking (session_id, user_id) VALUES (?, ?)",
+        (session_id, user_id),
+    )
+    conn.commit()
+    row = conn.execute("SELECT * FROM usage_tracking WHERE session_id=?", (session_id,)).fetchone()
+    return dict(row)
+
+
+def increment_usage(session_id: str) -> dict:
+    """Increment query_count for a session and update last_query_at."""
+    conn = _get_conn()
+    conn.execute(
+        "UPDATE usage_tracking SET query_count=query_count+1, last_query_at=datetime('now') WHERE session_id=?",
+        (session_id,),
+    )
+    conn.commit()
+    row = conn.execute("SELECT * FROM usage_tracking WHERE session_id=?", (session_id,)).fetchone()
+    return dict(row)
+
+
+def claim_extended_trial(session_id: str) -> bool:
+    """Set extended_trial=1. Returns False if already claimed."""
+    conn = _get_conn()
+    row = conn.execute("SELECT extended_trial FROM usage_tracking WHERE session_id=?", (session_id,)).fetchone()
+    if not row or row["extended_trial"]:
+        return False
+    conn.execute("UPDATE usage_tracking SET extended_trial=1 WHERE session_id=?", (session_id,))
+    conn.commit()
+    return True
+
+
+# ── Refresh Tokens ──
+
+
+def create_refresh_token(user_id: int) -> str:
+    """Create a new refresh token for a user. Returns the raw token."""
+    token = secrets.token_urlsafe(32)
+    token_hash = hashlib.sha256(token.encode()).hexdigest()
+    token_id = uuid.uuid4().hex
+    expires_at = (datetime.now(timezone.utc) + timedelta(days=30)).isoformat()
+    conn = _get_conn()
+    conn.execute(
+        "INSERT INTO refresh_tokens (id, user_id, token_hash, expires_at) VALUES (?, ?, ?, ?)",
+        (token_id, user_id, token_hash, expires_at),
+    )
+    conn.commit()
+    return token
+
+
+def validate_refresh_token(token: str) -> dict | None:
+    """Validate a refresh token. Returns user dict if valid, None otherwise."""
+    token_hash = hashlib.sha256(token.encode()).hexdigest()
+    conn = _get_conn()
+    row = conn.execute(
+        "SELECT * FROM refresh_tokens WHERE token_hash=? AND revoked=0",
+        (token_hash,),
+    ).fetchone()
+    if not row:
+        return None
+    # Check expiry
+    expires = datetime.fromisoformat(row["expires_at"])
+    if expires.tzinfo is None:
+        expires = expires.replace(tzinfo=timezone.utc)
+    if datetime.now(timezone.utc) > expires:
+        return None
+    return get_user_by_id(row["user_id"])
+
+
+def revoke_user_refresh_tokens(user_id: int):
+    """Revoke all refresh tokens for a user."""
+    conn = _get_conn()
+    conn.execute("UPDATE refresh_tokens SET revoked=1 WHERE user_id=?", (user_id,))
+    conn.commit()
 
 
 def cleanup_past_events(days_old: int = 7):

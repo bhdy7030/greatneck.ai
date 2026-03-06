@@ -96,7 +96,7 @@ export default function ConversationSidebar({
   const groups = groupByDate(convos, t);
 
   const sidebarContent = (
-    <div className="flex flex-col h-full bg-surface-50 border-r border-surface-300">
+    <div className="flex flex-col h-full max-h-screen bg-surface-50 border-r border-surface-300">
       {/* New Chat */}
       <div className="p-3 border-b border-surface-300">
         <button
@@ -257,45 +257,55 @@ export default function ConversationSidebar({
         )}
       </div>
 
-      {/* User section */}
-      {user && (
-        <div className="p-3 border-t border-surface-300 flex items-center gap-2">
-          {user.avatar_url ? (
-            <img
-              src={user.avatar_url}
-              alt=""
-              className="w-7 h-7 rounded-full"
-              referrerPolicy="no-referrer"
-            />
-          ) : (
-            <div className="w-7 h-7 rounded-full bg-sage/20 flex items-center justify-center text-xs font-medium text-sage">
-              {user.name?.[0] || user.email?.[0] || "?"}
-            </div>
-          )}
-          <span className="flex-1 text-xs text-text-600 truncate">
-            {user.name || user.email}
-          </span>
-          <button
-            onClick={logout}
-            className="text-xs text-text-400 hover:text-text-700"
-            title={t("auth.signOut")}
-          >
-            <svg
-              className="w-4 h-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+      {/* User section + contact */}
+      <div className="flex-shrink-0 border-t border-surface-300">
+        {user && (
+          <div className="p-3 flex items-center gap-2">
+            {user.avatar_url ? (
+              <img
+                src={user.avatar_url}
+                alt=""
+                className="w-7 h-7 rounded-full"
+                referrerPolicy="no-referrer"
               />
-            </svg>
-          </button>
+            ) : (
+              <div className="w-7 h-7 rounded-full bg-sage/20 flex items-center justify-center text-xs font-medium text-sage">
+                {user.name?.[0] || user.email?.[0] || "?"}
+              </div>
+            )}
+            <span className="flex-1 text-xs text-text-600 truncate">
+              {user.name || user.email}
+            </span>
+            <button
+              onClick={logout}
+              className="text-xs text-text-400 hover:text-text-700"
+              title={t("auth.signOut")}
+            >
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+                />
+              </svg>
+            </button>
+          </div>
+        )}
+        <div className="px-3 pb-2 pt-0">
+          <a
+            href="mailto:contact@askmura.com"
+            className="text-[10px] text-text-400 hover:text-sage transition-colors"
+          >
+            contact@askmura.com
+          </a>
         </div>
-      )}
+      </div>
     </div>
   );
 
@@ -312,7 +322,7 @@ export default function ConversationSidebar({
       {/* Sidebar — mobile drawer or desktop fixed */}
       <aside
         className={`
-          fixed md:relative z-40 h-full w-64
+          fixed md:relative z-40 inset-y-0 md:h-full w-64
           transition-transform duration-200
           ${mobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}
         `}
