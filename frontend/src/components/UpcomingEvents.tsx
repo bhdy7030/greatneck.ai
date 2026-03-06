@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { getUpcomingEvents, type UpcomingEvent } from "@/lib/api";
 import { useLanguage } from "@/components/LanguageProvider";
 
@@ -74,6 +75,7 @@ interface Props {
 }
 
 export default function UpcomingEvents({ village }: Props) {
+  const router = useRouter();
   const { t } = useLanguage();
   const [events, setEvents] = useState<UpcomingEvent[]>([]);
   const [loading, setLoading] = useState(true);
@@ -226,12 +228,15 @@ export default function UpcomingEvents({ village }: Props) {
                 {dateEvents.map((event) => {
                   const cat =
                     CATEGORY_MAP[event.category] || CATEGORY_MAP.general;
+                  const handleEventClick = () => {
+                    localStorage.setItem("gn_event_context", JSON.stringify(event));
+                    localStorage.setItem("gn_fast_mode", "true");
+                    router.push("/chat/");
+                  };
                   return (
-                    <a
+                    <div
                       key={`${event.source}-${event.id}`}
-                      href={event.url || undefined}
-                      target="_blank"
-                      rel="noopener noreferrer"
+                      onClick={handleEventClick}
                       className="block bg-surface-50 rounded-xl border border-surface-300/50 px-4 py-3 hover:border-sage/40 hover:shadow-md transition-all duration-200 group cursor-pointer"
                     >
                       {/* Top row */}
@@ -245,8 +250,22 @@ export default function UpcomingEvents({ village }: Props) {
                           <span>{cat.emoji}</span>
                           {cat.label}
                         </span>
-                        <span className="ml-auto text-text-400">
+                        <span className="ml-auto flex items-center gap-1.5 text-text-400">
                           {SOURCE_LABELS[event.source] || event.source}
+                          {event.url && (
+                            <a
+                              href={event.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={(e) => e.stopPropagation()}
+                              className="text-text-400 hover:text-sage transition-colors"
+                              title="Open source"
+                            >
+                              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                              </svg>
+                            </a>
+                          )}
                         </span>
                       </div>
 
@@ -289,7 +308,7 @@ export default function UpcomingEvents({ village }: Props) {
                           </span>
                         </div>
                       )}
-                    </a>
+                    </div>
                   );
                 })}
               </div>

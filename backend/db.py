@@ -13,7 +13,14 @@ from zoneinfo import ZoneInfo
 
 _ET = ZoneInfo("America/New_York")
 
-DB_PATH = Path(__file__).parent / "data" / "askmura.db"
+import os as _os
+
+# Use GCS FUSE mount for persistence in production, local path otherwise
+_knowledge_dir = _os.environ.get("KNOWLEDGE_DIR")
+if _knowledge_dir:
+    DB_PATH = Path(_knowledge_dir) / "askmura.db"
+else:
+    DB_PATH = Path(__file__).parent / "data" / "askmura.db"
 
 _local = threading.local()
 
@@ -24,7 +31,11 @@ def _get_conn() -> sqlite3.Connection:
     if conn is None:
         DB_PATH.parent.mkdir(parents=True, exist_ok=True)
         conn = sqlite3.connect(str(DB_PATH), check_same_thread=False)
-        conn.execute("PRAGMA journal_mode=WAL")
+        # Use DELETE journal on network filesystems (GCS FUSE), WAL locally
+        if _knowledge_dir:
+            conn.execute("PRAGMA journal_mode=DELETE")
+        else:
+            conn.execute("PRAGMA journal_mode=WAL")
         conn.execute("PRAGMA foreign_keys=ON")
         conn.row_factory = sqlite3.Row
         _local.conn = conn
@@ -392,6 +403,13 @@ def get_upcoming_events(
     return results[:limit]
 
 
+def get_event_by_id(event_id: int) -> dict | None:
+    """Fetch a single event by primary key."""
+    conn = _get_conn()
+    row = conn.execute("SELECT * FROM events WHERE id=?", (event_id,)).fetchone()
+    return dict(row) if row else None
+
+
 def set_user_tier(user_id: int, tier: str) -> dict | None:
     """Set a user's tier ('free' or 'pro')."""
     conn = _get_conn()
@@ -501,3 +519,87 @@ def cleanup_past_events(days_old: int = 7):
         (f"-{days_old}",),
     )
     conn.commit()
+
+
+# ── Analytics Queries ──
+
+
+def get_dau(days: int = 30) -> list[dict]:
+    """Distinct user_ids and session_ids per day from usage_tracking."""
+    conn = _get_conn()
+    rows = conn.execute(
+        """SELECT date(last_query_at) AS date,
+                  COUNT(DISTINCT user_id) AS users,
+                  COUNT(DISTINCT session_id) AS sessions
+           FROM usage_tracking
+           WHERE last_query_at >= datetime('now', ? || ' days')
+           GROUP BY date(last_query_at)
+           ORDER BY date(last_query_at)""",
+        (f"-{days}",),
+    ).fetchall()
+    return [dict(r) for r in rows]
+
+
+def get_daily_queries(days: int = 30) -> list[dict]:
+    """Sum of query_count grouped by date(last_query_at)."""
+    conn = _get_conn()
+    rows = conn.execute(
+        """SELECT date(last_query_at) AS date,
+                  SUM(query_count) AS count
+           FROM usage_tracking
+           WHERE last_query_at >= datetime('now', ? || ' days')
+           GROUP BY date(last_query_at)
+           ORDER BY date(last_query_at)""",
+        (f"-{days}",),
+    ).fetchall()
+    return [dict(r) for r in rows]
+
+
+def get_tier_breakdown() -> dict:
+    """Count users by effective tier (free, free_promo, pro)."""
+    conn = _get_conn()
+    rows = conn.execute(
+        "SELECT id, tier, promo_expires_at, is_admin FROM users"
+    ).fetchall()
+    counts = {"free": 0, "free_promo": 0, "pro": 0}
+    now = datetime.now(timezone.utc)
+    for r in rows:
+        if r["is_admin"] or r["tier"] == "pro":
+            counts["pro"] += 1
+        elif r["promo_expires_at"]:
+            try:
+                exp = datetime.fromisoformat(r["promo_expires_at"])
+                if exp.tzinfo is None:
+                    exp = exp.replace(tzinfo=timezone.utc)
+                if now < exp:
+                    counts["free_promo"] += 1
+                else:
+                    counts["free"] += 1
+            except (ValueError, TypeError):
+                counts["free"] += 1
+        else:
+            counts["free"] += 1
+    return counts
+
+
+def get_total_users() -> int:
+    """Total number of registered users."""
+    conn = _get_conn()
+    row = conn.execute("SELECT COUNT(*) AS cnt FROM users").fetchone()
+    return row["cnt"] if row else 0
+
+
+def get_top_agents(days: int = 7) -> list[dict]:
+    """Top agents by message count from messages.agent_used."""
+    conn = _get_conn()
+    rows = conn.execute(
+        """SELECT agent_used AS agent, COUNT(*) AS count
+           FROM messages
+           WHERE agent_used IS NOT NULL
+             AND created_at >= datetime('now', ? || ' days')
+           GROUP BY agent_used
+           ORDER BY count DESC
+           LIMIT 10""",
+        (f"-{days}",),
+    ).fetchall()
+    return [dict(r) for r in rows]

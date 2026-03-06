@@ -248,12 +248,14 @@ export default function Home() {
               </p>
               <div className="space-y-1.5">
                 {previewEvents.map((event) => (
-                  <a
+                  <div
                     key={`preview-${event.source}-${event.id}`}
-                    href={event.url || undefined}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-3 bg-surface-50 rounded-lg border border-surface-300/50 px-3 py-2 hover:border-sage/40 transition-colors group"
+                    onClick={() => {
+                      localStorage.setItem("gn_event_context", JSON.stringify(event));
+                      localStorage.setItem("gn_fast_mode", "true");
+                      router.push("/chat/");
+                    }}
+                    className="flex items-center gap-3 bg-surface-50 rounded-lg border border-surface-300/50 px-3 py-2 hover:border-sage/40 transition-colors group cursor-pointer"
                   >
                     <span className="text-base flex-shrink-0">
                       {CATEGORY_EMOJI[event.category] || "📌"}
@@ -267,10 +269,26 @@ export default function Home() {
                         {event.event_time && ` · ${event.event_time}`}
                       </span>
                     </div>
-                    <svg className="w-3.5 h-3.5 text-text-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
-                  </a>
+                    <div className="flex items-center gap-1.5 flex-shrink-0">
+                      {event.url && (
+                        <a
+                          href={event.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          className="text-text-400 hover:text-sage transition-colors"
+                          title="Open source"
+                        >
+                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                          </svg>
+                        </a>
+                      )}
+                      <svg className="w-3.5 h-3.5 text-text-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </div>
+                  </div>
                 ))}
               </div>
               <p className="text-xs text-text-400 text-center mt-2">

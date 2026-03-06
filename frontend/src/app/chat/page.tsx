@@ -65,9 +65,31 @@ function ChatPageInner() {
     if (storedFast === "true") setFastMode(true);
   }, [router]);
 
-  // Auto-send draft from landing page
+  // Auto-send draft or event context from landing page
   useEffect(() => {
     if (draftSentRef.current || !village) return;
+
+    // Check for event context first (click on event card)
+    const eventJson = localStorage.getItem("gn_event_context");
+    if (eventJson) {
+      localStorage.removeItem("gn_event_context");
+      draftSentRef.current = true;
+      try {
+        const event = JSON.parse(eventJson);
+        const parts = [`Tell me about this event: ${event.title}`];
+        if (event.event_date) parts.push(`Date: ${event.event_date}${event.event_time ? " " + event.event_time : ""}`);
+        if (event.venue) parts.push(`Venue: ${event.venue}`);
+        if (event.url) parts.push(`Source: ${event.url}`);
+        if (event.id) parts.push(`Event ID: ${event.id}`);
+        const msg = parts.join("\n");
+        setTimeout(() => handleSend(msg), 100);
+      } catch {
+        // Ignore bad JSON
+      }
+      return;
+    }
+
+    // Check for text draft (typed query from landing page)
     const draft = localStorage.getItem("gn_draft");
     if (draft) {
       localStorage.removeItem("gn_draft");
