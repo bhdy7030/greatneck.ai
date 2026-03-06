@@ -40,8 +40,14 @@ const MONTHS = [
   "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
 ];
 
-function formatDateLabel(dateStr: string): string {
+function parseLocalDate(dateStr: string): Date {
   const d = new Date(dateStr + "T00:00:00");
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
+function formatDateLabel(dateStr: string): string {
+  const d = parseLocalDate(dateStr);
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const tomorrow = new Date(today);
@@ -53,6 +59,36 @@ function formatDateLabel(dateStr: string): string {
   const weekday = WEEKDAYS[d.getDay()];
   const month = MONTHS[d.getMonth()];
   return `${weekday}, ${month} ${d.getDate()}`;
+}
+
+type DateRange = "today" | "tomorrow" | "weekend" | "all";
+
+function filterByDateRange(events: UpcomingEvent[], range: DateRange): UpcomingEvent[] {
+  if (range === "all") return events;
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  if (range === "today") {
+    return events.filter((e) => parseLocalDate(e.event_date).getTime() === today.getTime());
+  }
+
+  if (range === "tomorrow") {
+    const tmrw = new Date(today);
+    tmrw.setDate(tmrw.getDate() + 1);
+    return events.filter((e) => parseLocalDate(e.event_date).getTime() === tmrw.getTime());
+  }
+
+  // weekend: this Saturday & Sunday
+  const dayOfWeek = today.getDay(); // 0=Sun, 6=Sat
+  const sat = new Date(today);
+  sat.setDate(sat.getDate() + (6 - dayOfWeek));
+  const sun = new Date(sat);
+  sun.setDate(sun.getDate() + 1);
+  return events.filter((e) => {
+    const t = parseLocalDate(e.event_date).getTime();
+    return t === sat.getTime() || t === sun.getTime();
+  });
 }
 
 function SkeletonCard() {
@@ -81,12 +117,14 @@ export default function UpcomingEvents({ village }: Props) {
   const [loading, setLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState<string | null>(null);
   const [sourceFilter, setSourceFilter] = useState<string | null>(null);
+  const [dateRange, setDateRange] = useState<DateRange>("all");
 
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
     setActiveFilter(null);
     setSourceFilter(null);
+    setDateRange("all");
 
     getUpcomingEvents(village || "", 30)
       .then((data) => {
@@ -139,7 +177,7 @@ export default function UpcomingEvents({ village }: Props) {
   const availableSources = SOURCE_FILTERS.filter((s) => presentSources.has(s.key));
 
   // Apply filters
-  let filtered = events;
+  let filtered = filterByDateRange(events, dateRange);
   if (activeFilter) filtered = filtered.filter((e) => e.category === activeFilter);
   if (sourceFilter) filtered = filtered.filter((e) => e.source === sourceFilter);
 
@@ -156,6 +194,23 @@ export default function UpcomingEvents({ village }: Props) {
       <h3 className="text-xs font-semibold text-text-500 uppercase tracking-wider mb-2 px-1">
         {t("events.upcoming")}
       </h3>
+
+      {/* Date range tabs */}
+      <div className="flex gap-1 mb-2 px-0.5">
+        {(["all", "today", "tomorrow", "weekend"] as DateRange[]).map((range) => (
+          <button
+            key={range}
+            onClick={() => setDateRange(range)}
+            className={`text-xs px-3 py-1.5 rounded-lg font-medium transition-colors ${
+              dateRange === range
+                ? "bg-sage text-white"
+                : "text-text-500 hover:bg-surface-200/80"
+            }`}
+          >
+            {range === "today" ? "Today" : range === "tomorrow" ? "Tomorrow" : range === "weekend" ? "Weekend" : "All"}
+          </button>
+        ))}
+      </div>
 
       {/* Filter chips */}
       {availableFilters.length > 1 && (

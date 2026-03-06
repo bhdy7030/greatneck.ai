@@ -302,7 +302,7 @@ export default function ConversationSidebar({
             href="mailto:contact@askmura.com"
             className="text-[10px] text-text-400 hover:text-sage transition-colors"
           >
-            contact@askmura.com
+            hello@greatneck.ai
           </a>
         </div>
       </div>

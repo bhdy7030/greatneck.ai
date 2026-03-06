@@ -422,6 +422,37 @@ export async function getKnowledgeStats(): Promise<KnowledgeStats> {
   return res.json();
 }
 
+// ── Metrics API ──
+
+export interface MetricsDay {
+  date: string;
+  users: number;
+  sessions: number;
+}
+
+export interface MetricsQueryDay {
+  date: string;
+  count: number;
+}
+
+export interface MetricsData {
+  dau: MetricsDay[];
+  daily_queries: MetricsQueryDay[];
+  tier_breakdown: { free: number; free_promo: number; pro: number };
+  total_users: number;
+  top_agents: { agent: string; count: number }[];
+  today: { queries: number; sessions: number; users: number };
+  estimated_cost: { today_usd: number; month_usd: number };
+}
+
+export async function getMetrics(): Promise<MetricsData> {
+  const res = await fetchWithRefresh(`${BASE_URL}/api/admin/metrics`, {
+    headers: authHeaders(),
+  });
+  if (!res.ok) throw new Error(`Failed to fetch metrics: ${res.status}`);
+  return res.json();
+}
+
 // ── Model Config API ──
 
 export interface ModelConfig {

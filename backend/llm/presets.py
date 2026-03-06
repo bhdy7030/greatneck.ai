@@ -1,4 +1,5 @@
 """Provider presets and runtime config for model selection."""
+from __future__ import annotations
 
 import contextvars
 import json

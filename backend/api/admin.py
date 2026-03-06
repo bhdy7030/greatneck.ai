@@ -11,11 +11,54 @@ from rag.ingest import ingest_document, ingest_pdf
 from rag.store import KnowledgeStore
 from api.deps import require_admin
 from llm.presets import PROVIDERS, ROLE_PRESETS, load_config, save_config
+from db import get_dau, get_daily_queries, get_tier_breakdown, get_total_users, get_top_agents
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
 _store = KnowledgeStore()
+
+# Average cost per query (based on ~2K input + 1K output tokens at typical rates)
+_COST_PER_QUERY_USD = 0.03
+
+
+@router.get("/metrics")
+async def get_metrics(user: dict = Depends(require_admin)) -> dict:
+    """Return DAU, query volume, tier breakdown, and cost estimates."""
+    from datetime import date
+
+    dau = get_dau(30)
+    daily_queries = get_daily_queries(30)
+    tier_breakdown = get_tier_breakdown()
+    total_users = get_total_users()
+    top_agents = get_top_agents(7)
+
+    today_str = date.today().isoformat()
+    today_dau = next((d for d in dau if d["date"] == today_str), None)
+    today_queries_row = next((d for d in daily_queries if d["date"] == today_str), None)
+
+    today_queries = today_queries_row["count"] if today_queries_row else 0
+    today_sessions = today_dau["sessions"] if today_dau else 0
+    today_users = today_dau["users"] if today_dau else 0
+
+    month_queries = sum(d["count"] for d in daily_queries)
+
+    return {
+        "dau": dau,
+        "daily_queries": daily_queries,
+        "tier_breakdown": tier_breakdown,
+        "total_users": total_users,
+        "top_agents": top_agents,
+        "today": {
+            "queries": today_queries,
+            "sessions": today_sessions,
+            "users": today_users,
+        },
+        "estimated_cost": {
+            "today_usd": round(today_queries * _COST_PER_QUERY_USD, 2),
+            "month_usd": round(month_queries * _COST_PER_QUERY_USD, 2),
+        },
+    }
 
 
 class ModelConfigUpdate(BaseModel):

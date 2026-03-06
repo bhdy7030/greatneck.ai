@@ -9,7 +9,7 @@ from pathlib import Path
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from config import settings
-from db import init_db
+from db import init_db, close_pg_pool, _is_pg
 
 logger = logging.getLogger(__name__)
 
@@ -78,13 +78,17 @@ async def lifespan(app: FastAPI):
         else:
             raise RuntimeError("JWT_SECRET must be set in production. Set the JWT_SECRET environment variable.")
 
-    # Wait for EFS mount before touching the database
-    if not _wait_for_knowledge_dir():
-        raise RuntimeError("KNOWLEDGE_DIR is not mounted. Refusing to start to prevent data loss.")
+    # Only wait for mount when using SQLite (needs GCS FUSE)
+    if not _is_pg():
+        if not _wait_for_knowledge_dir():
+            raise RuntimeError("KNOWLEDGE_DIR is not mounted. Refusing to start to prevent data loss.")
 
     _knowledge_mounted = True
     init_db()
+    logger.info("Database initialized (mode=%s)", "PostgreSQL" if _is_pg() else "SQLite")
     yield
+    # Shutdown: close PostgreSQL pool if active
+    close_pg_pool()
 
 
 app = FastAPI(

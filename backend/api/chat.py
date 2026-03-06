@@ -5,6 +5,7 @@ import asyncio
 import json as _json
 import logging
 import re
+import time
 from typing import Any, AsyncGenerator
 
 from fastapi import APIRouter, Depends, Header, Request
@@ -241,12 +242,77 @@ def _friendly_error(e: Exception) -> str:
     return "Something went wrong. Please try again in a moment."
 
 
+# ── Event response cache ──
+# When users click event cards, every click generates the identical query.
+# Cache the first LLM response (summary) keyed by event ID to avoid
+# redundant pipeline runs. TTL = 6 hours (events don't change).
+_EVENT_CACHE: dict[tuple[int, str], tuple[float, dict]] = {}  # (event_id, lang) → (timestamp, response_data)
+_EVENT_CACHE_TTL = 6 * 3600  # 6 hours
+
+_EVENT_ID_RE = re.compile(r"Event ID:\s*(\d+)")
+
+
+def _get_cached_event_response(message: str, language: str) -> dict | None:
+    """Check if this is an event detail query with a cached response."""
+    m = _EVENT_ID_RE.search(message)
+    if not m:
+        return None
+    key = (int(m.group(1)), language)
+    entry = _EVENT_CACHE.get(key)
+    if not entry:
+        return None
+    ts, data = entry
+    if time.time() - ts > _EVENT_CACHE_TTL:
+        del _EVENT_CACHE[key]
+        return None
+    return data
+
+
+def _cache_event_response(message: str, language: str, response: str, sources: list, agent_used: str):
+    """Cache the response for an event detail query."""
+    m = _EVENT_ID_RE.search(message)
+    if not m:
+        return
+    # Only cache the first response (summary), not follow-ups
+    if "Tell me about this event:" not in message:
+        return
+    key = (int(m.group(1)), language)
+    _EVENT_CACHE[key] = (time.time(), {
+        "response": response,
+        "sources": sources,
+        "agent_used": agent_used,
+    })
+
+
 async def _handle_chat_stream(request: ChatRequest, user: dict | None = None) -> AsyncGenerator[str, None]:
     """Stream pipeline events as SSE."""
     from tools.budget import set_budget
     from llm.presets import set_fast_mode
     set_budget(mode=request.web_search_mode, limit=5)
     set_fast_mode(request.fast_mode)
+
+    # Check event response cache — skip entire pipeline if hit
+    # Only for first message (no history = user just clicked the event card)
+    if not request.history:
+        cached = _get_cached_event_response(request.message, request.language)
+        if cached:
+            # Save to conversation DB if logged in
+            if user and request.conversation_id:
+                add_message(request.conversation_id, "user", request.message)
+                add_message(
+                    request.conversation_id, "assistant", cached["response"],
+                    sources=cached["sources"] if cached["sources"] else None,
+                    agent_used=cached["agent_used"],
+                )
+            yield _sse_event("step", {"stage": "router", "status": "done", "label": "Understood"})
+            yield _sse_event("step", {"stage": "specialist", "status": "done", "label": "Found answer"})
+            yield _sse_event("response", {
+                "response": cached["response"],
+                "sources": cached["sources"],
+                "agent_used": cached["agent_used"],
+                "conversation_id": request.conversation_id,
+            })
+            return
 
     context: dict[str, Any] = {
         "village": request.village,
@@ -275,14 +341,14 @@ async def _handle_chat_stream(request: ChatRequest, user: dict | None = None) ->
                 })
 
         # Step 1: Router
-        yield _sse_event("step", {"stage": "router", "status": "running", "label": "Classifying query..."})
+        yield _sse_event("step", {"stage": "router", "status": "running", "label": "Understanding your question..."})
         routing = await _router_agent.run(request.message, context=context)
         agent_name = routing.get("agent", "general")
         refined_query = routing.get("refined_query", request.message)
         yield _sse_event("step", {
             "stage": "router", "status": "done",
-            "label": f"Routed to {agent_name}",
-            "detail": refined_query,
+            "label": "Understood",
+            "detail": f"Routed to {agent_name}" if is_debug else None,
         })
         if is_debug:
             yield _sse_event("debug", {"stage": "router", "data": routing})
@@ -337,16 +403,16 @@ async def _handle_chat_stream(request: ChatRequest, user: dict | None = None) ->
 
             yield _sse_event("step", {
                 "stage": "planner", "status": "done",
-                "label": f"Plan: {plan.project_type} ({plan.complexity} complexity)",
-                "detail": f"{len(plan.steps)} search steps planned",
+                "label": "Planned search",
+                "detail": f"Plan: {plan.project_type} ({plan.complexity})" if is_debug else None,
                 "plan": {
                     "steps": [{"tool": s.tool, "query": s.query} for s in plan.steps],
                     "web_fallbacks": plan.web_fallback_queries,
                     "model": specialist_model_role or "reasoning",
-                },
+                } if is_debug else None,
             })
         else:
-            yield _sse_event("step", {"stage": "planner", "status": "skipped", "label": "Planning skipped (simple query)"})
+            yield _sse_event("step", {"stage": "planner", "status": "skipped", "label": "Quick lookup"})
 
         if is_debug:
             yield _sse_event("debug", {
@@ -360,7 +426,7 @@ async def _handle_chat_stream(request: ChatRequest, user: dict | None = None) ->
 
         # Step 3: Specialist with tool call streaming
         model_label = "Sonnet" if specialist_model_role == "specialist" else "Opus"
-        yield _sse_event("step", {"stage": "specialist", "status": "running", "label": f"Searching ({model_label})..."})
+        yield _sse_event("step", {"stage": "specialist", "status": "running", "label": "Searching..."})
 
         async def on_tool_event(event: dict):
             """Callback for streaming tool calls from BaseAgent."""
@@ -402,13 +468,13 @@ async def _handle_chat_stream(request: ChatRequest, user: dict | None = None) ->
         tool_count = len(agent_response.tool_calls_made)
         yield _sse_event("step", {
             "stage": "specialist", "status": "done",
-            "label": f"Completed ({tool_count} tool calls)",
+            "label": "Search complete" if not is_debug else f"Completed ({tool_count} tool calls)",
         })
 
         # Step 4: Critic (skip for simple community queries without a plan)
         skip_critic = agent_name == "community" and not plan
         if not skip_critic:
-            yield _sse_event("step", {"stage": "critic", "status": "running", "label": "Validating response..."})
+            yield _sse_event("step", {"stage": "critic", "status": "running", "label": "Reviewing answer..."})
             verdict = await _critic_agent.run(
                 original_query=request.message,
                 draft_response=agent_response.content,
@@ -417,8 +483,8 @@ async def _handle_chat_stream(request: ChatRequest, user: dict | None = None) ->
             )
             yield _sse_event("step", {
                 "stage": "critic", "status": "done",
-                "label": f"Verdict: {verdict.decision} ({verdict.confidence:.0%})",
-                "detail": verdict.feedback[:200] if verdict.feedback else "",
+                "label": "Reviewed" if not is_debug else f"Verdict: {verdict.decision} ({verdict.confidence:.0%})",
+                "detail": (verdict.feedback[:200] if verdict.feedback else "") if is_debug else None,
             })
             if is_debug:
                 yield _sse_event("debug", {
@@ -431,7 +497,7 @@ async def _handle_chat_stream(request: ChatRequest, user: dict | None = None) ->
                 })
 
             if verdict.decision == "retry":
-                yield _sse_event("step", {"stage": "retry", "status": "running", "label": "Retrying with Opus + feedback..."})
+                yield _sse_event("step", {"stage": "retry", "status": "running", "label": "Improving answer..."})
 
                 # Retry with queue pattern
                 retry_queue: asyncio.Queue[dict | None] = asyncio.Queue()
@@ -463,10 +529,10 @@ async def _handle_chat_stream(request: ChatRequest, user: dict | None = None) ->
                 await retry_task
                 agent_response = retry_holder[0]
 
-                yield _sse_event("step", {"stage": "retry", "status": "done", "label": "Retry completed"})
+                yield _sse_event("step", {"stage": "retry", "status": "done", "label": "Answer improved"})
 
                 # Second critic
-                yield _sse_event("step", {"stage": "critic2", "status": "running", "label": "Final validation..."})
+                yield _sse_event("step", {"stage": "critic2", "status": "running", "label": "Final review..."})
                 verdict = await _critic_agent.run(
                     original_query=request.message,
                     draft_response=agent_response.content,
@@ -475,7 +541,7 @@ async def _handle_chat_stream(request: ChatRequest, user: dict | None = None) ->
                 )
                 yield _sse_event("step", {
                     "stage": "critic2", "status": "done",
-                    "label": f"Final verdict: {verdict.decision} ({verdict.confidence:.0%})",
+                    "label": "Verified" if not is_debug else f"Final verdict: {verdict.decision} ({verdict.confidence:.0%})",
                 })
 
             if verdict.decision == "insufficient":
@@ -500,6 +566,9 @@ async def _handle_chat_stream(request: ChatRequest, user: dict | None = None) ->
                 sources=sources if sources else None,
                 agent_used=agent_name,
             )
+
+        # Cache event detail responses for subsequent clicks
+        _cache_event_response(request.message, request.language, agent_response.content, sources, agent_name)
 
         yield _sse_event("response", {
             "response": agent_response.content,

@@ -49,6 +49,19 @@ function Spinner({ className = "" }: { className?: string }) {
   );
 }
 
+const TOOL_LABELS: Record<string, string> = {
+  web_search: "Web search",
+  search_codes: "Searching codes",
+  search_permits: "Searching permits",
+  search_community: "Searching community info",
+  search_social: "Searching local posts",
+  get_code_section: "Looking up code section",
+};
+
+function friendlyToolName(tool: string | undefined): string {
+  return TOOL_LABELS[tool || ""] || "Searching";
+}
+
 function ToolCallItem({ event }: { event: PipelineEvent }) {
   const isWebSearch = event.tool === "web_search";
   const hasResults = event.has_results !== false;
@@ -61,14 +74,11 @@ function ToolCallItem({ event }: { event: PipelineEvent }) {
     return (
       <div className="flex items-center gap-2 text-xs text-text-500 pl-8 py-0.5">
         <Spinner className="w-3 h-3 text-gold flex-shrink-0" />
-        <span className="font-mono text-text-500">{event.tool}</span>
+        <span className="text-text-500">{friendlyToolName(event.tool)}</span>
         {queryArg && (
           <span className="text-text-500 truncate max-w-[300px]">
             &quot;{queryArg}&quot;
           </span>
-        )}
-        {event.retry && (
-          <span className="text-gold-dark text-[10px] font-medium">(retry)</span>
         )}
       </div>
     );
@@ -82,7 +92,7 @@ function ToolCallItem({ event }: { event: PipelineEvent }) {
             hasResults ? "bg-sage" : "bg-red-400"
           }`}
         />
-        <span className="font-mono text-text-500">{event.tool}</span>
+        <span className="text-text-500">{friendlyToolName(event.tool)}</span>
         <ToolResultLabel hasResults={hasResults} />
         {isWebSearch && hasResults && (
           <span className="text-gold text-[10px]">web</span>
@@ -143,12 +153,12 @@ function StepItem({ event }: { event: PipelineEvent }) {
             {event.detail}
           </div>
         )}
-        {/* Show planned search steps */}
-        {event.plan && (
+        {/* Show planned search steps (only in debug mode, when plan data is present) */}
+        {event.plan && event.plan.steps && (
           <div className="mt-1 space-y-0.5">
-            {event.plan.steps.map((s, i) => (
-              <div key={i} className="text-[10px] text-text-500 pl-2 font-mono">
-                {s.tool}(&quot;{s.query}&quot;)
+            {event.plan.steps.map((s: { tool: string; query: string }, i: number) => (
+              <div key={i} className="text-[10px] text-text-500 pl-2">
+                {friendlyToolName(s.tool)}: &quot;{s.query}&quot;
               </div>
             ))}
           </div>

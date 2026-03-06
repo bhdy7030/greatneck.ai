@@ -1,3 +1,4 @@
+from pydantic import model_validator
 from pydantic_settings import BaseSettings
 from pathlib import Path
 
@@ -12,6 +13,13 @@ class Settings(BaseSettings):
     # Paths
     knowledge_dir: Path = Path(__file__).parent.parent / "knowledge"
     chroma_dir: Path = Path(__file__).parent.parent / "knowledge" / "chroma_db"
+
+    @model_validator(mode="after")
+    def _derive_chroma_dir(self):
+        """Ensure chroma_dir follows knowledge_dir when KNOWLEDGE_DIR is set."""
+        if "CHROMA_DIR" not in __import__("os").environ:
+            self.chroma_dir = self.knowledge_dir / "chroma_db"
+        return self
 
     # CORS
     cors_origins: str = "http://localhost:3000,http://localhost:8001"
@@ -58,6 +66,9 @@ class Settings(BaseSettings):
     free_promo_days: int = 14
     free_web_search_mode: str = "limited"
     free_fast_mode_only: bool = False
+
+    # Database (empty = SQLite fallback, set = PostgreSQL)
+    database_url: str = ""
 
     # Events
     eventbrite_api_key: str = ""

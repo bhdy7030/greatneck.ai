@@ -357,7 +357,8 @@ export default function Home() {
         )}
 
         {/* Footer */}
-        <div className="w-full py-6 text-center">
+        <div className="w-full py-6 text-center space-y-1">
+          <p className="text-xs text-text-400">Made with <span className="text-red-400">♥</span> in Great Neck</p>
           <a
             href="mailto:contact@askmura.com"
             className="text-xs text-text-400 hover:text-sage transition-colors"

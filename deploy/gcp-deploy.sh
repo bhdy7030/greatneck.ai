@@ -24,6 +24,7 @@ gcloud services enable \
   secretmanager.googleapis.com \
   storage.googleapis.com \
   compute.googleapis.com \
+  sqladmin.googleapis.com \
   --quiet
 
 # ── 2. IAM: Grant default compute SA access to secrets & storage ─
@@ -54,7 +55,7 @@ echo "  ✓ Knowledge synced"
 
 # ── 5. Secrets ────────────────────────────────────────────────────
 echo "→ Creating/updating secrets..."
-SECRETS="ANTHROPIC_API_KEY OPENAI_API_KEY GEMINI_API_KEY TAVILY_API_KEY GOOGLE_CLIENT_ID GOOGLE_CLIENT_SECRET JWT_SECRET"
+SECRETS="ANTHROPIC_API_KEY OPENAI_API_KEY GEMINI_API_KEY TAVILY_API_KEY GOOGLE_CLIENT_ID GOOGLE_CLIENT_SECRET JWT_SECRET DATABASE_URL"
 
 for secret in $SECRETS; do
   value=$(grep "^${secret}=" "$PROJECT_DIR/.env" | head -1 | cut -d= -f2-)
@@ -92,11 +93,12 @@ gcloud run deploy askmura-backend \
   --memory 1Gi --cpu 1 \
   --min-instances 1 --max-instances 3 \
   --timeout 300 \
-  --set-secrets="ANTHROPIC_API_KEY=ANTHROPIC_API_KEY:latest,OPENAI_API_KEY=OPENAI_API_KEY:latest,GEMINI_API_KEY=GEMINI_API_KEY:latest,TAVILY_API_KEY=TAVILY_API_KEY:latest,GOOGLE_CLIENT_ID=GOOGLE_CLIENT_ID:latest,GOOGLE_CLIENT_SECRET=GOOGLE_CLIENT_SECRET:latest,JWT_SECRET=JWT_SECRET:latest" \
+  --set-secrets="ANTHROPIC_API_KEY=ANTHROPIC_API_KEY:latest,OPENAI_API_KEY=OPENAI_API_KEY:latest,GEMINI_API_KEY=GEMINI_API_KEY:latest,TAVILY_API_KEY=TAVILY_API_KEY:latest,GOOGLE_CLIENT_ID=GOOGLE_CLIENT_ID:latest,GOOGLE_CLIENT_SECRET=GOOGLE_CLIENT_SECRET:latest,JWT_SECRET=JWT_SECRET:latest,DATABASE_URL=DATABASE_URL:latest" \
   --set-env-vars="^::^KNOWLEDGE_DIR=/data/knowledge::CORS_ORIGINS=https://greatneck.ai,https://www.greatneck.ai::FRONTEND_URL=https://greatneck.ai::GOOGLE_REDIRECT_URI=https://greatneck.ai/api/auth/google/callback::ADMIN_EMAILS=duyuanvvv@gmail.com" \
   --clear-volumes \
   --add-volume=name=knowledge,type=cloud-storage,bucket="$BUCKET" \
   --add-volume-mount=volume=knowledge,mount-path=/data/knowledge \
+  --add-cloudsql-instances=askmura:us-east1:askmura-pg \
   --execution-environment=gen2 \
   --no-cpu-throttling \
   --allow-unauthenticated \

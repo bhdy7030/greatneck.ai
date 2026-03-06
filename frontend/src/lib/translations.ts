@@ -5,8 +5,8 @@ const translations: Record<string, Record<Lang, string>> = {
   "welcome.location": { en: "Long Island, New York", zh: "纽约长岛" },
   "welcome.title": { en: "our neighborhood, answered", zh: "我们的社区，有问必答" },
   "welcome.subtitle": {
-    en: "codes, permits, events & local know-how.",
-    zh: "法规、许可、活动与本地资讯。",
+    en: "codes, permits, events & more.",
+    zh: "法规、许可、活动与更多。",
   },
   "welcome.selectVillage": {
     en: "Select your village to get started",

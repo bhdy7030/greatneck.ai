@@ -25,6 +25,59 @@ import {
   type TierFeatures,
 } from "@/lib/api";
 
+/** Detect in-app browsers (Facebook, Instagram, WeChat, LINE, etc.) where Google blocks OAuth. */
+function isInAppBrowser(): boolean {
+  const ua = navigator.userAgent || "";
+  return /FBAN|FBAV|Instagram|Line|WeChat|MicroMessenger|Twitter|Snapchat|Pinterest/i.test(ua);
+}
+
+function isWeChat(): boolean {
+  return /MicroMessenger|WeChat/i.test(navigator.userAgent || "");
+}
+
+function InAppBrowserPrompt({ onClose }: { onClose: () => void }) {
+  const wechat = isWeChat();
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={onClose}>
+      <div
+        className="bg-white rounded-2xl shadow-xl max-w-sm w-full p-6 text-center"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="text-3xl mb-3">{wechat ? "🔗" : "🌐"}</div>
+        <h3 className="text-lg font-semibold text-gray-900 mb-2">
+          {wechat ? "请在浏览器中打开" : "Open in Browser to Sign In"}
+        </h3>
+        <p className="text-sm text-gray-600 mb-4">
+          {wechat
+            ? "微信内无法使用 Google 登录，请点击右上角 ··· 选择「在浏览器打开」"
+            : "Google sign-in is not supported in this browser. Please open this page in Safari or Chrome."}
+        </p>
+        <div className="bg-gray-50 rounded-xl p-3 mb-4 text-left text-sm text-gray-700">
+          {wechat ? (
+            <ol className="list-decimal list-inside space-y-1">
+              <li>点击右上角 <span className="font-bold">···</span></li>
+              <li>选择 <span className="font-bold">&quot;在浏览器打开&quot;</span></li>
+              <li>然后点击登录</li>
+            </ol>
+          ) : (
+            <ol className="list-decimal list-inside space-y-1">
+              <li>Tap the <span className="font-bold">···</span> or share button</li>
+              <li>Choose <span className="font-bold">&quot;Open in Safari&quot;</span> or <span className="font-bold">&quot;Open in Browser&quot;</span></li>
+              <li>Then sign in</li>
+            </ol>
+          )}
+        </div>
+        <button
+          onClick={onClose}
+          className="w-full py-2.5 bg-gray-100 hover:bg-gray-200 rounded-xl text-sm font-medium text-gray-700 transition-colors"
+        >
+          {wechat ? "知道了" : "Got it"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 interface AuthContextValue {
   user: AuthUser | null;
   isLoading: boolean;
@@ -65,6 +118,7 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [usage, setUsage] = useState<UsageInfo | null>(null);
+  const [showBrowserPrompt, setShowBrowserPrompt] = useState(false);
 
   const refreshUsage = useCallback(async () => {
     try {
@@ -125,6 +179,11 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const login = useCallback(() => {
+    // Google blocks OAuth in in-app browsers (Facebook, Instagram, WeChat, etc.)
+    if (isInAppBrowser()) {
+      setShowBrowserPrompt(true);
+      return;
+    }
     const returnTo = window.location.pathname + window.location.search;
     window.location.href = `${BASE_URL}/api/auth/google?return_to=${encodeURIComponent(returnTo)}`;
   }, []);
@@ -144,6 +203,9 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
       value={{ user, isLoading, login, logout, tier, features, usage, refreshUsage }}
     >
       {children}
+      {showBrowserPrompt && (
+        <InAppBrowserPrompt onClose={() => setShowBrowserPrompt(false)} />
+      )}
     </AuthContext.Provider>
   );
 }
