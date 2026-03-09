@@ -4,7 +4,7 @@ import { useState, useRef, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import GreatNeckMap from "@/components/GreatNeckMap";
 import VillageSelector from "@/components/VillageSelector";
-import UpcomingEvents from "@/components/UpcomingEvents";
+import UpcomingEvents, { DateRangeTabs, type DateRange } from "@/components/UpcomingEvents";
 import { useLanguage } from "@/components/LanguageProvider";
 
 const ANIMATED_QUESTION_KEYS = [
@@ -40,6 +40,8 @@ export default function Home() {
   const stickyInputRef = useRef<HTMLInputElement>(null);
   const heroChatRef = useRef<HTMLDivElement>(null);
   const [chatPinned, setChatPinned] = useState(false);
+  const [dateRange, setDateRange] = useState<DateRange>("all");
+  const [dateRangeCounts, setDateRangeCounts] = useState<Record<DateRange, number>>({ all: 0, today: 0, tomorrow: 0, weekend: 0 });
 
   // Pick 3 random chips from the animated questions pool (stable per mount)
   const chipKeys = useMemo(() => {
@@ -338,13 +340,18 @@ export default function Home() {
                 </svg>
               </button>
             </div>
+            {dateRangeCounts.all > 0 && (
+              <div className="mt-2">
+                <DateRangeTabs dateRange={dateRange} setDateRange={setDateRange} counts={dateRangeCounts} t={t} />
+              </div>
+            )}
           </div>
         </div>
 
         {/* Events — full page feed */}
         {showEvents && (
           <div className="w-full px-6 pb-12">
-            <UpcomingEvents village={selectedVillage} />
+            <UpcomingEvents village={selectedVillage} dateRange={dateRange} setDateRange={setDateRange} onCountsChange={setDateRangeCounts} />
           </div>
         )}
 

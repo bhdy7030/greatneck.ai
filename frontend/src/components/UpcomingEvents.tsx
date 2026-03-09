@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getUpcomingEvents, type UpcomingEvent } from "@/lib/api";
 import { useLanguage } from "@/components/LanguageProvider";
@@ -126,18 +126,61 @@ function SkeletonCard() {
   );
 }
 
-interface Props {
-  village: string;
+export type { DateRange };
+
+export function DateRangeTabs({
+  dateRange,
+  setDateRange,
+  counts,
+  t,
+}: {
+  dateRange: DateRange;
+  setDateRange: (r: DateRange) => void;
+  counts: Record<DateRange, number>;
+  t: (key: string) => string;
+}) {
+  return (
+    <div className="flex gap-1 px-0.5">
+      {(["all", "today", "tomorrow", "weekend"] as DateRange[]).map((range) => (
+        <button
+          key={range}
+          onClick={() => setDateRange(range)}
+          className={`text-xs px-3 py-2 rounded-lg font-medium transition-all flex items-center gap-1 ${
+            dateRange === range
+              ? "bg-sage text-white shadow-sm"
+              : "text-text-500 hover:bg-surface-200/80"
+          }`}
+        >
+          {t(`events.range.${range}`)}
+          {counts[range] > 0 && (
+            <span className={`inline-flex items-center justify-center min-w-[16px] h-4 px-1 rounded-full text-[10px] font-semibold tabular-nums ${
+              dateRange === range
+                ? "bg-white/25 text-white"
+                : "bg-surface-300/50 text-text-500"
+            }`}>
+              {counts[range]}
+            </span>
+          )}
+        </button>
+      ))}
+    </div>
+  );
 }
 
-export default function UpcomingEvents({ village }: Props) {
+interface Props {
+  village: string;
+  dateRange: DateRange;
+  setDateRange: (r: DateRange) => void;
+  onCountsChange?: (counts: Record<DateRange, number>) => void;
+}
+
+export default function UpcomingEvents({ village, dateRange, setDateRange, onCountsChange }: Props) {
   const router = useRouter();
   const { language, t } = useLanguage();
   const [events, setEvents] = useState<UpcomingEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState<string | null>(null);
   const [sourceFilters, setSourceFilters] = useState<Set<string>>(new Set());
-  const [dateRange, setDateRange] = useState<DateRange>("all");
 
   useEffect(() => {
     let cancelled = false;
@@ -163,6 +206,18 @@ export default function UpcomingEvents({ village }: Props) {
     };
   }, [village, language]);
 
+  // Compute date range counts
+  const dateRangeCounts = useMemo<Record<DateRange, number>>(() => ({
+    all: events.length,
+    today: filterByDateRange(events, "today").length,
+    tomorrow: filterByDateRange(events, "tomorrow").length,
+    weekend: filterByDateRange(events, "weekend").length,
+  }), [events]);
+
+  // Report counts to parent for sticky tabs
+  useEffect(() => {
+    onCountsChange?.(dateRangeCounts);
+  }, [dateRangeCounts, onCountsChange]);
 
   if (loading) {
     return (
@@ -224,33 +279,9 @@ export default function UpcomingEvents({ village }: Props) {
         {t("events.upcoming")}
       </h3>
 
-      {/* Date range tabs */}
-      <div className="flex gap-1 mb-2 px-0.5">
-        {(["all", "today", "tomorrow", "weekend"] as DateRange[]).map((range) => {
-          const count = filterByDateRange(events, range).length;
-          return (
-            <button
-              key={range}
-              onClick={() => setDateRange(range)}
-              className={`text-xs px-3 py-2 rounded-lg font-medium transition-all flex items-center gap-1 ${
-                dateRange === range
-                  ? "bg-sage text-white shadow-sm"
-                  : "text-text-500 hover:bg-surface-200/80"
-              }`}
-            >
-              {t(`events.range.${range}`)}
-              {count > 0 && (
-                <span className={`inline-flex items-center justify-center min-w-[16px] h-4 px-1 rounded-full text-[10px] font-semibold tabular-nums ${
-                  dateRange === range
-                    ? "bg-white/25 text-white"
-                    : "bg-surface-300/50 text-text-500"
-                }`}>
-                  {count}
-                </span>
-              )}
-            </button>
-          );
-        })}
+      {/* Date range tabs (inline, always visible here) */}
+      <div className="mb-2">
+        <DateRangeTabs dateRange={dateRange} setDateRange={setDateRange} counts={dateRangeCounts} t={t} />
       </div>
 
       {/* Category grid */}
