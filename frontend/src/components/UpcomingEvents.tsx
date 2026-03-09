@@ -189,7 +189,7 @@ export default function UpcomingEvents({ village }: Props) {
     .map((g) => ({ ...g, label: t(`events.cat.${g.key}`) }));
 
   const presentSources = new Set(events.map((e) => e.source));
-  const namedSources = new Set(SOURCE_FILTER_KEYS.filter((s) => s.key !== "other").map((s) => s.key));
+  const namedSources: Set<string> = new Set(SOURCE_FILTER_KEYS.filter((s) => s.key !== "other").map((s) => s.key));
   const hasOther = events.some((e) => !namedSources.has(e.source));
   const availableSources = SOURCE_FILTER_KEYS
     .filter((s) => s.key === "other" ? hasOther : presentSources.has(s.key))
