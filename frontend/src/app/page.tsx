@@ -7,27 +7,27 @@ import VillageSelector from "@/components/VillageSelector";
 import UpcomingEvents from "@/components/UpcomingEvents";
 import { useLanguage } from "@/components/LanguageProvider";
 
-const ANIMATED_QUESTIONS = [
-  "Do I need a permit for a fence?",
-  "When is the next library event?",
-  "What are the parking rules overnight?",
-  "Where can I sign my kid up for swim lessons?",
-  "How do I report a pothole?",
-  "Can I rent out my basement?",
-  "What's the noise ordinance after 10pm?",
-  "Are there senior programs nearby?",
+const ANIMATED_QUESTION_KEYS = [
+  "landing.q.fence",
+  "landing.q.library",
+  "landing.q.parking",
+  "landing.q.swim",
+  "landing.q.pothole",
+  "landing.q.basement",
+  "landing.q.noise",
+  "landing.q.senior",
 ];
 
-const QUICK_CHIPS = [
-  "How do I get a pool permit?",
-  "When is spring break?",
-  "Library activities this week?",
+const QUICK_CHIP_KEYS = [
+  "landing.chip.pool",
+  "landing.chip.spring",
+  "landing.chip.library",
 ];
 
 
 export default function Home() {
   const router = useRouter();
-  const { t } = useLanguage();
+  const { language, t } = useLanguage();
   const [query, setQuery] = useState("");
   const [transitioning, setTransitioning] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -61,9 +61,16 @@ export default function Home() {
     }
   }, []);
 
-  // Title typing animation — starts immediately, collapses after
+  // Title typing animation — starts on mount, restarts on language change
   useEffect(() => {
     const fullTitle = t("welcome.title");
+
+    // On language switch after initial animation, just snap to full title
+    if (titleTyped) {
+      setHeroTitle(fullTitle);
+      return;
+    }
+
     let i = 0;
     const timers: ReturnType<typeof setTimeout>[] = [];
 
@@ -86,9 +93,10 @@ export default function Home() {
 
     timers.push(setTimeout(typeNext, 100));
     return () => timers.forEach(clearTimeout);
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [language]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Typing animation cycling through sample questions
+  const animatedQuestions = ANIMATED_QUESTION_KEYS.map((k) => t(k));
   useEffect(() => {
     if (inputFocused || query) {
       setAnimatedPlaceholder("");
@@ -100,7 +108,7 @@ export default function Home() {
     let timer: ReturnType<typeof setTimeout>;
 
     const step = () => {
-      const q = ANIMATED_QUESTIONS[qIdx];
+      const q = animatedQuestions[qIdx];
       if (phase === "typing") {
         cIdx++;
         setAnimatedPlaceholder(q.slice(0, cIdx));
@@ -113,7 +121,7 @@ export default function Home() {
         setAnimatedPlaceholder(q.slice(0, cIdx));
         timer = setTimeout(step, cIdx <= 0 ? ((phase = "gap"), 400) : 30);
       } else {
-        qIdx = (qIdx + 1) % ANIMATED_QUESTIONS.length;
+        qIdx = (qIdx + 1) % animatedQuestions.length;
         phase = "typing";
         timer = setTimeout(step, 60);
       }
@@ -121,7 +129,7 @@ export default function Home() {
 
     timer = setTimeout(step, 500);
     return () => clearTimeout(timer);
-  }, [inputFocused, query]);
+  }, [inputFocused, query, language]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Pin chat bar to top when hero input scrolls out of view
   useEffect(() => {
@@ -255,14 +263,14 @@ export default function Home() {
             {/* Quick chips */}
             {showChips && (
               <div className="flex flex-wrap justify-center gap-2 mt-3">
-                {QUICK_CHIPS.map((q, i) => (
+                {QUICK_CHIP_KEYS.map((key, i) => (
                   <button
-                    key={q}
-                    onClick={() => navigateToChat(q)}
+                    key={key}
+                    onClick={() => navigateToChat(t(key))}
                     className="animate-chipBounceIn text-xs bg-surface-50/80 backdrop-blur-sm text-text-600 px-3 py-2 rounded-full border border-surface-300/60 hover:border-sage/40 hover:text-sage transition-colors"
                     style={{ animationDelay: `${i * 150}ms` }}
                   >
-                    {q}
+                    {t(key)}
                   </button>
                 ))}
               </div>
@@ -329,15 +337,21 @@ export default function Home() {
         )}
 
         {/* Footer */}
-        <div className="w-full py-6 text-center space-y-1">
+        <footer className="w-full py-6 text-center space-y-1">
           <p className="text-xs text-text-400">Made with <span className="text-red-400">♥</span> in Great Neck</p>
-          <a
-            href="mailto:contact@askmura.com"
-            className="text-xs text-text-400 hover:text-sage transition-colors"
-          >
-            contact@askmura.com
-          </a>
-        </div>
+          <div className="flex items-center justify-center gap-3 text-xs text-text-400">
+            <a
+              href="mailto:contact@askmura.com"
+              className="hover:text-sage transition-colors"
+            >
+              contact@askmura.com
+            </a>
+            <span>·</span>
+            <a href="/privacy/" className="hover:text-sage transition-colors">Privacy</a>
+            <span>·</span>
+            <a href="/terms/" className="hover:text-sage transition-colors">Terms</a>
+          </div>
+        </footer>
       </div>
     </div>
   );

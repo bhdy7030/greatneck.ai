@@ -188,7 +188,8 @@ def _exec_scalar(sql_sqlite: str, sql_pg: str, params: tuple = ()):
 _PG_SCHEMA = """
 CREATE TABLE IF NOT EXISTS users (
     id SERIAL PRIMARY KEY,
-    google_id TEXT UNIQUE NOT NULL,
+    google_id TEXT UNIQUE,
+    apple_id TEXT UNIQUE,
     email TEXT UNIQUE NOT NULL,
     name TEXT NOT NULL DEFAULT '',
     avatar_url TEXT NOT NULL DEFAULT '',
@@ -239,6 +240,9 @@ CREATE TABLE IF NOT EXISTS events (
     village TEXT DEFAULT '',
     source TEXT DEFAULT '',
     source_id TEXT DEFAULT '',
+    title_zh TEXT,
+    description_zh TEXT,
+    venue_zh TEXT,
     created_at TIMESTAMP DEFAULT NOW(),
     updated_at TIMESTAMP DEFAULT NOW(),
     UNIQUE(source, source_id)
@@ -265,12 +269,29 @@ CREATE TABLE IF NOT EXISTS refresh_tokens (
     created_at TIMESTAMP DEFAULT NOW(),
     revoked BOOLEAN DEFAULT FALSE
 );
+
+CREATE TABLE IF NOT EXISTS llm_usage (
+    id SERIAL PRIMARY KEY,
+    created_at TIMESTAMP DEFAULT NOW(),
+    session_id TEXT DEFAULT '',
+    conversation_id TEXT DEFAULT '',
+    role TEXT NOT NULL,
+    model TEXT NOT NULL,
+    prompt_tokens INTEGER NOT NULL DEFAULT 0,
+    completion_tokens INTEGER NOT NULL DEFAULT 0,
+    total_tokens INTEGER NOT NULL DEFAULT 0,
+    cost_usd REAL NOT NULL DEFAULT 0,
+    latency_ms INTEGER DEFAULT 0
+);
+CREATE INDEX IF NOT EXISTS idx_llm_usage_date ON llm_usage(created_at);
+CREATE INDEX IF NOT EXISTS idx_llm_usage_role ON llm_usage(role, created_at);
 """
 
 _SQLITE_SCHEMA = """
 CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    google_id TEXT UNIQUE NOT NULL,
+    google_id TEXT UNIQUE,
+    apple_id TEXT UNIQUE,
     email TEXT UNIQUE NOT NULL,
     name TEXT NOT NULL DEFAULT '',
     avatar_url TEXT NOT NULL DEFAULT '',
@@ -321,6 +342,9 @@ CREATE TABLE IF NOT EXISTS events (
     village TEXT DEFAULT '',
     source TEXT DEFAULT '',
     source_id TEXT DEFAULT '',
+    title_zh TEXT,
+    description_zh TEXT,
+    venue_zh TEXT,
     created_at TEXT DEFAULT (datetime('now')),
     updated_at TEXT DEFAULT (datetime('now')),
     UNIQUE(source, source_id)
@@ -347,7 +371,70 @@ CREATE TABLE IF NOT EXISTS refresh_tokens (
     created_at TEXT DEFAULT (datetime('now')),
     revoked INTEGER DEFAULT 0
 );
+
+CREATE TABLE IF NOT EXISTS llm_usage (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    created_at TEXT DEFAULT (datetime('now')),
+    session_id TEXT DEFAULT '',
+    conversation_id TEXT DEFAULT '',
+    role TEXT NOT NULL,
+    model TEXT NOT NULL,
+    prompt_tokens INTEGER NOT NULL DEFAULT 0,
+    completion_tokens INTEGER NOT NULL DEFAULT 0,
+    total_tokens INTEGER NOT NULL DEFAULT 0,
+    cost_usd REAL NOT NULL DEFAULT 0,
+    latency_ms INTEGER DEFAULT 0
+);
+CREATE INDEX IF NOT EXISTS idx_llm_usage_date ON llm_usage(created_at);
+CREATE INDEX IF NOT EXISTS idx_llm_usage_role ON llm_usage(role, created_at);
 """
+
+
+def _migrate_events_zh():
+    """Add _zh translation columns to events table if missing."""
+    zh_cols = ["title_zh", "description_zh", "venue_zh"]
+    if _is_pg():
+        with _PgConnWrapper() as conn:
+            with conn.cursor() as cur:
+                cur.execute("SELECT column_name FROM information_schema.columns WHERE table_name='events'")
+                existing = {row[0] for row in cur.fetchall()}
+                for col in zh_cols:
+                    if col not in existing:
+                        cur.execute(f"ALTER TABLE events ADD COLUMN {col} TEXT")
+                conn.commit()
+    else:
+        conn = _get_sqlite_conn()
+        existing = {row[1] for row in conn.execute("PRAGMA table_info(events)").fetchall()}
+        for col in zh_cols:
+            if col not in existing:
+                conn.execute(f"ALTER TABLE events ADD COLUMN {col} TEXT")
+        conn.commit()
+
+
+def _migrate_apple_id():
+    """Add apple_id column and make google_id nullable."""
+    if _is_pg():
+        with _PgConnWrapper() as conn:
+            with conn.cursor() as cur:
+                cur.execute("SELECT column_name FROM information_schema.columns WHERE table_name='users'")
+                existing = {row[0] for row in cur.fetchall()}
+                if "apple_id" not in existing:
+                    cur.execute("ALTER TABLE users ADD COLUMN apple_id TEXT UNIQUE")
+                # Drop NOT NULL on google_id if still present
+                cur.execute("""
+                    SELECT is_nullable FROM information_schema.columns
+                    WHERE table_name='users' AND column_name='google_id'
+                """)
+                row = cur.fetchone()
+                if row and row[0] == "NO":
+                    cur.execute("ALTER TABLE users ALTER COLUMN google_id DROP NOT NULL")
+                conn.commit()
+    else:
+        conn = _get_sqlite_conn()
+        existing = {row[1] for row in conn.execute("PRAGMA table_info(users)").fetchall()}
+        if "apple_id" not in existing:
+            conn.execute("ALTER TABLE users ADD COLUMN apple_id TEXT UNIQUE")
+        conn.commit()
 
 
 def init_db():
@@ -357,11 +444,16 @@ def init_db():
             with conn.cursor() as cur:
                 cur.execute(_PG_SCHEMA)
                 conn.commit()
+        _migrate_events_zh()
+        _migrate_apple_id()
         return
 
     # SQLite path (existing logic)
     conn = _get_sqlite_conn()
     conn.executescript(_SQLITE_SCHEMA)
+    # Migration: add _zh columns to events
+    _migrate_events_zh()
+    _migrate_apple_id()
     # Migration: add columns if missing
     cols = [row[1] for row in conn.execute("PRAGMA table_info(users)").fetchall()]
     if "can_debug" not in cols:
@@ -386,27 +478,54 @@ def init_db():
 
 
 def upsert_user(google_id: str, email: str, name: str, avatar_url: str = "") -> dict:
-    """Insert or update a user from Google OAuth. Returns user dict."""
+    """Insert or update a user from Google OAuth. Upserts by email so accounts link automatically."""
     now = datetime.now(_ET).isoformat()
     _exec_modify(
         # SQLite
         """INSERT INTO users (google_id, email, name, avatar_url, created_at, last_login_at)
            VALUES (?, ?, ?, ?, ?, ?)
-           ON CONFLICT(google_id) DO UPDATE SET
-             email=excluded.email, name=excluded.name,
+           ON CONFLICT(email) DO UPDATE SET
+             google_id=excluded.google_id, name=excluded.name,
              avatar_url=excluded.avatar_url, last_login_at=?""",
         # PostgreSQL
         """INSERT INTO users (google_id, email, name, avatar_url, created_at, last_login_at)
            VALUES (%s, %s, %s, %s, %s, %s)
-           ON CONFLICT(google_id) DO UPDATE SET
-             email=EXCLUDED.email, name=EXCLUDED.name,
+           ON CONFLICT(email) DO UPDATE SET
+             google_id=EXCLUDED.google_id, name=EXCLUDED.name,
              avatar_url=EXCLUDED.avatar_url, last_login_at=%s""",
         (google_id, email, name, avatar_url, now, now, now),
     )
     return _exec_one(
-        "SELECT * FROM users WHERE google_id=?",
-        "SELECT * FROM users WHERE google_id=%s",
-        (google_id,),
+        "SELECT * FROM users WHERE email=?",
+        "SELECT * FROM users WHERE email=%s",
+        (email,),
+    )
+
+
+def upsert_user_apple(apple_id: str, email: str, name: str) -> dict:
+    """Insert or update a user from Apple Sign In. Upserts by email so accounts link automatically."""
+    now = datetime.now(_ET).isoformat()
+    _exec_modify(
+        # SQLite
+        """INSERT INTO users (apple_id, email, name, created_at, last_login_at)
+           VALUES (?, ?, ?, ?, ?)
+           ON CONFLICT(email) DO UPDATE SET
+             apple_id=excluded.apple_id,
+             name=CASE WHEN users.name='' OR users.name IS NULL THEN excluded.name ELSE users.name END,
+             last_login_at=?""",
+        # PostgreSQL
+        """INSERT INTO users (apple_id, email, name, created_at, last_login_at)
+           VALUES (%s, %s, %s, %s, %s)
+           ON CONFLICT(email) DO UPDATE SET
+             apple_id=EXCLUDED.apple_id,
+             name=CASE WHEN users.name='' OR users.name IS NULL THEN EXCLUDED.name ELSE users.name END,
+             last_login_at=%s""",
+        (apple_id, email, name, now, now, now),
+    )
+    return _exec_one(
+        "SELECT * FROM users WHERE email=?",
+        "SELECT * FROM users WHERE email=%s",
+        (email,),
     )
 
 
@@ -596,6 +715,9 @@ def upsert_event(event: dict) -> dict:
              end_date=excluded.end_date, location=excluded.location,
              venue=excluded.venue, url=excluded.url, image_url=excluded.image_url,
              category=excluded.category, scope=excluded.scope, village=excluded.village,
+             title_zh = CASE WHEN events.title = excluded.title THEN events.title_zh ELSE NULL END,
+             description_zh = CASE WHEN events.description = excluded.description THEN events.description_zh ELSE NULL END,
+             venue_zh = CASE WHEN events.venue = excluded.venue THEN events.venue_zh ELSE NULL END,
              updated_at=?""",
         """INSERT INTO events (title, description, event_date, event_time, end_date,
                location, venue, url, image_url, category, scope, village,
@@ -607,6 +729,9 @@ def upsert_event(event: dict) -> dict:
              end_date=EXCLUDED.end_date, location=EXCLUDED.location,
              venue=EXCLUDED.venue, url=EXCLUDED.url, image_url=EXCLUDED.image_url,
              category=EXCLUDED.category, scope=EXCLUDED.scope, village=EXCLUDED.village,
+             title_zh = CASE WHEN events.title = EXCLUDED.title THEN events.title_zh ELSE NULL END,
+             description_zh = CASE WHEN events.description = EXCLUDED.description THEN events.description_zh ELSE NULL END,
+             venue_zh = CASE WHEN events.venue = EXCLUDED.venue THEN events.venue_zh ELSE NULL END,
              updated_at=%s""",
         params,
     )
@@ -920,6 +1045,147 @@ def get_top_agents(days: int = 7) -> list[dict]:
            GROUP BY agent_used
            ORDER BY count DESC
            LIMIT 10""",
+        "",
+        (f"-{days}",),
+    )
+
+
+# ── LLM Usage (batch insert + aggregation) ────────────────────
+
+
+def batch_insert_usage(records: list) -> None:
+    """Batch-insert UsageRecord objects into llm_usage table.
+
+    Called by the metrics collector background task — NOT on the hot path.
+    """
+    if not records:
+        return
+
+    if _is_pg():
+        from psycopg2.extras import execute_values
+        with _PgConnWrapper() as conn:
+            with conn.cursor() as cur:
+                sql = """INSERT INTO llm_usage
+                    (session_id, conversation_id, role, model,
+                     prompt_tokens, completion_tokens, total_tokens,
+                     cost_usd, latency_ms)
+                    VALUES %s"""
+                values = [
+                    (r.session_id, r.conversation_id, r.role, r.model,
+                     r.prompt_tokens, r.completion_tokens, r.total_tokens,
+                     r.cost_usd, r.latency_ms)
+                    for r in records
+                ]
+                execute_values(cur, sql, values)
+                conn.commit()
+    else:
+        conn = _get_sqlite_conn()
+        conn.executemany(
+            """INSERT INTO llm_usage
+                (session_id, conversation_id, role, model,
+                 prompt_tokens, completion_tokens, total_tokens,
+                 cost_usd, latency_ms)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            [(r.session_id, r.conversation_id, r.role, r.model,
+              r.prompt_tokens, r.completion_tokens, r.total_tokens,
+              r.cost_usd, r.latency_ms)
+             for r in records],
+        )
+        conn.commit()
+
+
+def get_daily_token_usage(days: int = 30) -> list[dict]:
+    """Daily totals: tokens, cost, call count."""
+    if _is_pg():
+        return _exec(
+            "",
+            """SELECT DATE(created_at)::TEXT AS date,
+                      SUM(prompt_tokens) AS prompt_tokens,
+                      SUM(completion_tokens) AS completion_tokens,
+                      SUM(total_tokens) AS total_tokens,
+                      SUM(cost_usd) AS cost_usd,
+                      COUNT(*) AS call_count
+               FROM llm_usage
+               WHERE created_at >= NOW() - make_interval(days => %s)
+               GROUP BY DATE(created_at)
+               ORDER BY DATE(created_at)""",
+            (days,),
+        )
+    return _exec(
+        """SELECT date(created_at) AS date,
+                  SUM(prompt_tokens) AS prompt_tokens,
+                  SUM(completion_tokens) AS completion_tokens,
+                  SUM(total_tokens) AS total_tokens,
+                  SUM(cost_usd) AS cost_usd,
+                  COUNT(*) AS call_count
+           FROM llm_usage
+           WHERE created_at >= datetime('now', ? || ' days')
+           GROUP BY date(created_at)
+           ORDER BY date(created_at)""",
+        "",
+        (f"-{days}",),
+    )
+
+
+def get_usage_by_role(days: int = 7) -> list[dict]:
+    """Token usage broken down by agent role."""
+    if _is_pg():
+        return _exec(
+            "",
+            """SELECT role,
+                      SUM(prompt_tokens) AS prompt_tokens,
+                      SUM(completion_tokens) AS completion_tokens,
+                      SUM(total_tokens) AS total_tokens,
+                      SUM(cost_usd) AS cost_usd,
+                      COUNT(*) AS call_count,
+                      ROUND(AVG(latency_ms)) AS avg_latency_ms
+               FROM llm_usage
+               WHERE created_at >= NOW() - make_interval(days => %s)
+               GROUP BY role
+               ORDER BY SUM(total_tokens) DESC""",
+            (days,),
+        )
+    return _exec(
+        """SELECT role,
+                  SUM(prompt_tokens) AS prompt_tokens,
+                  SUM(completion_tokens) AS completion_tokens,
+                  SUM(total_tokens) AS total_tokens,
+                  SUM(cost_usd) AS cost_usd,
+                  COUNT(*) AS call_count,
+                  ROUND(AVG(latency_ms)) AS avg_latency_ms
+           FROM llm_usage
+           WHERE created_at >= datetime('now', ? || ' days')
+           GROUP BY role
+           ORDER BY SUM(total_tokens) DESC""",
+        "",
+        (f"-{days}",),
+    )
+
+
+def get_usage_by_model(days: int = 7) -> list[dict]:
+    """Token usage broken down by model."""
+    if _is_pg():
+        return _exec(
+            "",
+            """SELECT model,
+                      SUM(total_tokens) AS total_tokens,
+                      SUM(cost_usd) AS cost_usd,
+                      COUNT(*) AS call_count
+               FROM llm_usage
+               WHERE created_at >= NOW() - make_interval(days => %s)
+               GROUP BY model
+               ORDER BY SUM(cost_usd) DESC""",
+            (days,),
+        )
+    return _exec(
+        """SELECT model,
+                  SUM(total_tokens) AS total_tokens,
+                  SUM(cost_usd) AS cost_usd,
+                  COUNT(*) AS call_count
+           FROM llm_usage
+           WHERE created_at >= datetime('now', ? || ' days')
+           GROUP BY model
+           ORDER BY SUM(cost_usd) DESC""",
         "",
         (f"-{days}",),
     )

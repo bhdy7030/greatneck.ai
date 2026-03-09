@@ -438,11 +438,14 @@ export interface MetricsQueryDay {
 export interface MetricsData {
   dau: MetricsDay[];
   daily_queries: MetricsQueryDay[];
+  daily_tokens: { date: string; prompt_tokens: number; completion_tokens: number; total_tokens: number; cost_usd: number; call_count: number }[];
   tier_breakdown: { free: number; free_promo: number; pro: number };
   total_users: number;
   top_agents: { agent: string; count: number }[];
-  today: { queries: number; sessions: number; users: number };
-  estimated_cost: { today_usd: number; month_usd: number };
+  usage_by_role: { role: string; prompt_tokens: number; completion_tokens: number; total_tokens: number; cost_usd: number; call_count: number; avg_latency_ms: number }[];
+  usage_by_model: { model: string; total_tokens: number; cost_usd: number; call_count: number }[];
+  today: { queries: number; sessions: number; users: number; tokens: number; cost_usd: number };
+  cost: { today_usd: number; month_usd: number; month_tokens: number };
 }
 
 export async function getMetrics(): Promise<MetricsData> {
@@ -555,11 +558,13 @@ export interface UpcomingEvent {
 
 export async function getUpcomingEvents(
   village: string = "",
-  limit: number = 8
+  limit: number = 8,
+  lang: string = "en"
 ): Promise<UpcomingEvent[]> {
   const params = new URLSearchParams();
   if (village) params.set("village", village);
   params.set("limit", String(limit));
+  if (lang && lang !== "en") params.set("lang", lang);
   const res = await fetch(`${BASE_URL}/api/events?${params}`, {
     headers: authHeaders(),
   });

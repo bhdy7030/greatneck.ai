@@ -132,7 +132,7 @@ export default function ChatInput({ onSend, disabled }: ChatInputProps) {
           value={text}
           onChange={handleTextChange}
           onKeyDown={handleKeyDown}
-          placeholder=""
+          placeholder={t("input.placeholder")}
           disabled={disabled}
           rows={1}
           className="flex-1 bg-surface-50 text-text-800 rounded-xl px-4 py-2.5 resize-none focus:outline-none focus:ring-2 focus:ring-sage placeholder-text-500 text-base md:text-sm disabled:opacity-50 border border-surface-300"

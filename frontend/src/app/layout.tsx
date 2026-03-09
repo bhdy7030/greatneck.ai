@@ -12,9 +12,34 @@ import NavLinks from "@/components/NavLinks";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "greatneck.ai",
+  title: {
+    default: "greatneck.ai — AI Community Assistant for Great Neck, NY",
+    template: "%s | greatneck.ai",
+  },
   description:
-    "AI-powered community assistant for Great Neck village codes, permits, and local info",
+    "Ask questions about village codes, permits, events, and local info in Great Neck, NY. AI-powered community assistant.",
+  metadataBase: new URL("https://greatneck.ai"),
+  openGraph: {
+    title: "greatneck.ai — AI Community Assistant for Great Neck, NY",
+    description:
+      "Ask questions about village codes, permits, events, and local info in Great Neck, NY.",
+    url: "https://greatneck.ai",
+    siteName: "greatneck.ai",
+    type: "website",
+    locale: "en_US",
+  },
+  twitter: {
+    card: "summary",
+    title: "greatneck.ai",
+    description: "AI-powered community assistant for Great Neck, NY",
+  },
+  alternates: {
+    canonical: "https://greatneck.ai",
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 };
 
 export default function RootLayout({
@@ -26,7 +51,24 @@ export default function RootLayout({
     <html lang="en" className="h-full" suppressHydrationWarning>
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
-        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="mobile-web-app-capable" content="yes" />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "WebSite",
+              name: "greatneck.ai",
+              url: "https://greatneck.ai",
+              description: "AI-powered community assistant for Great Neck, NY",
+              potentialAction: {
+                "@type": "SearchAction",
+                target: "https://greatneck.ai/chat/?q={search_term_string}",
+                "query-input": "required name=search_term_string",
+              },
+            }),
+          }}
+        />
         <script
           dangerouslySetInnerHTML={{
             __html: `(function(){try{var t=localStorage.getItem("gn_theme");if(t&&["light","dark","classic"].includes(t)){document.documentElement.setAttribute("data-theme",t)}else{document.documentElement.setAttribute("data-theme","light")}}catch(e){document.documentElement.setAttribute("data-theme","light")}})()`,

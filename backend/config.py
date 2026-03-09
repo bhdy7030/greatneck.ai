@@ -22,7 +22,7 @@ class Settings(BaseSettings):
         return self
 
     # CORS
-    cors_origins: str = "http://localhost:3000,http://localhost:8001"
+    cors_origins: str = "http://localhost:3000,http://localhost:8001,https://greatneck.ai,https://askmura-frontend-461310212965.us-east1.run.app"
 
     # Agent model config — LiteLLM requires provider/ prefix
     # Philosophy: planning uses the best model (hardest cognitive task),
@@ -45,6 +45,13 @@ class Settings(BaseSettings):
     google_client_id: str = ""
     google_client_secret: str = ""
     google_redirect_uri: str = "http://localhost:8001/api/auth/google/callback"
+
+    # Apple Sign In
+    apple_client_id: str = ""       # Services ID, e.g. com.greatneck.web.auth
+    apple_team_id: str = ""
+    apple_key_id: str = ""
+    apple_private_key: str = ""     # Contents of .p8 file (use \n for newlines in env vars)
+    apple_redirect_uri: str = "http://localhost:8001/api/auth/apple/callback"
 
     # JWT
     jwt_secret: str = ""

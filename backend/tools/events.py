@@ -75,6 +75,8 @@ def search_events(query: str, limit: int = 10) -> str:
         if ev.get("url"):
             line += f"\n  Link: {ev['url']}"
         line += f"\n  Source: {ev.get('source', 'unknown')} | Category: {ev.get('category', 'general')}"
+        if ev.get("source_id"):
+            line += f"\n  Event ID: {ev['source_id']}"
         parts.append(line)
 
     return "\n\n".join(parts)

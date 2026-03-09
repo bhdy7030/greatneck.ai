@@ -80,7 +80,8 @@ function ChatPageInner() {
         if (event.event_date) parts.push(`Date: ${event.event_date}${event.event_time ? " " + event.event_time : ""}`);
         if (event.venue) parts.push(`Venue: ${event.venue}`);
         if (event.url) parts.push(`Source: ${event.url}`);
-        if (event.id) parts.push(`Event ID: ${event.id}`);
+        if (event.source_id) parts.push(`Event ID: ${event.source_id}`);
+        else if (event.id) parts.push(`Event ID: ${event.id}`);
         const msg = parts.join("\n");
         setTimeout(() => handleSend(msg), 100);
       } catch {
@@ -425,17 +426,6 @@ function ChatPageInner() {
             </button>
           </div>
         </div>
-
-        {/* Promo banner */}
-        {tier === "free_promo" && usage?.promo_expires_at && (
-          <div className="flex-shrink-0 px-3 py-1 bg-amber-50 border-b border-amber-200 text-center">
-            <span className="text-xs text-amber-700">
-              {t("tier.promoBanner", {
-                days: String(Math.max(0, Math.ceil((new Date(usage.promo_expires_at).getTime() - Date.now()) / 86400000))),
-              })}
-            </span>
-          </div>
-        )}
 
         {/* Messages container */}
         <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-6">

@@ -9,7 +9,8 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
 // Regex to match [calendar:/api/events/{id}/calendar](Title | Date | Venue)
-const CALENDAR_RE = /\[calendar:(\/api\/events\/\d+\/calendar)\]\(([^)]+)\)/g;
+// Accepts numeric IDs and UUIDs; uses .+ (greedy) to handle titles with parentheses
+const CALENDAR_RE = /\[calendar:(\/api\/events\/[\w-]+\/calendar)\]\((.+)\)/g;
 
 interface CalendarMatch {
   url: string;

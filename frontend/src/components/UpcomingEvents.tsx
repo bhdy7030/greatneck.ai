@@ -5,40 +5,27 @@ import { useRouter } from "next/navigation";
 import { getUpcomingEvents, type UpcomingEvent } from "@/lib/api";
 import { useLanguage } from "@/components/LanguageProvider";
 
-const CATEGORIES: { key: string; emoji: string; label: string }[] = [
-  { key: "school", emoji: "🏫", label: "School" },
-  { key: "student", emoji: "🎒", label: "Student" },
-  { key: "kids", emoji: "🧒", label: "Kids" },
-  { key: "teens", emoji: "🧑‍💻", label: "Teens" },
-  { key: "family", emoji: "👨‍👩‍👧", label: "Family" },
-  { key: "art", emoji: "🎨", label: "Art" },
-  { key: "entertainment", emoji: "🎭", label: "Entertainment" },
-  { key: "food", emoji: "🍽", label: "Food" },
-  { key: "festival", emoji: "🎪", label: "Festival" },
-  { key: "health", emoji: "💪", label: "Health" },
-  { key: "education", emoji: "📚", label: "Education" },
-  { key: "community", emoji: "🤝", label: "Community" },
-  { key: "general", emoji: "📌", label: "Event" },
-];
+const CATEGORY_KEYS = [
+  "school", "student", "kids", "teens", "family", "art",
+  "entertainment", "food", "festival", "health", "education",
+  "community", "general",
+] as const;
 
-const CATEGORY_MAP: Record<string, { emoji: string; label: string }> = {};
-for (const c of CATEGORIES) CATEGORY_MAP[c.key] = c;
-
-const SOURCE_LABELS: Record<string, string> = {
-  patch: "Patch",
-  longisland: "LI Events",
-  eventbrite: "Eventbrite",
-  islandnow: "Island Now",
-  library: "GN Library",
-  school: "GN Schools",
-  village: "Village",
+const CATEGORY_EMOJIS: Record<string, string> = {
+  school: "🏫", student: "🎒", kids: "🧒", teens: "🧑‍💻",
+  family: "👨‍👩‍👧", art: "🎨", entertainment: "🎭", food: "🍽",
+  festival: "🎪", health: "💪", education: "📚", community: "🤝",
+  general: "📌",
 };
 
-const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-const MONTHS = [
-  "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
-];
+const SOURCE_FILTER_KEYS = [
+  { key: "library", emoji: "📖" },
+  { key: "school", emoji: "🏫" },
+  { key: "village", emoji: "🏘" },
+  { key: "patch", emoji: "📰" },
+  { key: "longisland", emoji: "🏝" },
+  { key: "eventbrite", emoji: "🎫" },
+] as const;
 
 function parseLocalDate(dateStr: string): Date {
   const d = new Date(dateStr + "T00:00:00");
@@ -46,18 +33,18 @@ function parseLocalDate(dateStr: string): Date {
   return d;
 }
 
-function formatDateLabel(dateStr: string): string {
+function formatDateLabel(dateStr: string, t: (key: string) => string): string {
   const d = parseLocalDate(dateStr);
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const tomorrow = new Date(today);
   tomorrow.setDate(tomorrow.getDate() + 1);
 
-  if (d.getTime() === today.getTime()) return "Today";
-  if (d.getTime() === tomorrow.getTime()) return "Tomorrow";
+  if (d.getTime() === today.getTime()) return t("events.date.today");
+  if (d.getTime() === tomorrow.getTime()) return t("events.date.tomorrow");
 
-  const weekday = WEEKDAYS[d.getDay()];
-  const month = MONTHS[d.getMonth()];
+  const weekday = t(`events.weekday.${d.getDay()}`);
+  const month = t(`events.month.${d.getMonth()}`);
   return `${weekday}, ${month} ${d.getDate()}`;
 }
 
@@ -112,7 +99,7 @@ interface Props {
 
 export default function UpcomingEvents({ village }: Props) {
   const router = useRouter();
-  const { t } = useLanguage();
+  const { language, t } = useLanguage();
   const [events, setEvents] = useState<UpcomingEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState<string | null>(null);
@@ -126,7 +113,7 @@ export default function UpcomingEvents({ village }: Props) {
     setSourceFilter(null);
     setDateRange("all");
 
-    getUpcomingEvents(village || "", 30)
+    getUpcomingEvents(village || "", 30, language)
       .then((data) => {
         if (!cancelled) setEvents(data);
       })
@@ -141,7 +128,7 @@ export default function UpcomingEvents({ village }: Props) {
     return () => {
       cancelled = true;
     };
-  }, [village]);
+  }, [village, language]);
 
   if (loading) {
     return (
@@ -163,18 +150,14 @@ export default function UpcomingEvents({ village }: Props) {
 
   // Determine which categories and sources are actually present
   const presentCategories = new Set(events.map((e) => e.category));
-  const availableFilters = CATEGORIES.filter((c) => presentCategories.has(c.key));
+  const availableFilters = CATEGORY_KEYS
+    .filter((k) => presentCategories.has(k))
+    .map((k) => ({ key: k, emoji: CATEGORY_EMOJIS[k], label: t(`events.cat.${k}`) }));
 
   const presentSources = new Set(events.map((e) => e.source));
-  const SOURCE_FILTERS: { key: string; emoji: string; label: string }[] = [
-    { key: "library", emoji: "📖", label: "Library" },
-    { key: "school", emoji: "🏫", label: "Schools" },
-    { key: "village", emoji: "🏘", label: "Village" },
-    { key: "patch", emoji: "📰", label: "Patch" },
-    { key: "longisland", emoji: "🏝", label: "Long Island" },
-    { key: "eventbrite", emoji: "🎫", label: "Eventbrite" },
-  ];
-  const availableSources = SOURCE_FILTERS.filter((s) => presentSources.has(s.key));
+  const availableSources = SOURCE_FILTER_KEYS
+    .filter((s) => presentSources.has(s.key))
+    .map((s) => ({ ...s, label: t(`events.filter.${s.key}`) }));
 
   // Apply filters
   let filtered = filterByDateRange(events, dateRange);
@@ -184,7 +167,7 @@ export default function UpcomingEvents({ village }: Props) {
   // Group by date
   const grouped: Record<string, UpcomingEvent[]> = {};
   for (const event of filtered) {
-    const label = formatDateLabel(event.event_date);
+    const label = formatDateLabel(event.event_date, t);
     if (!grouped[label]) grouped[label] = [];
     grouped[label].push(event);
   }
@@ -207,7 +190,7 @@ export default function UpcomingEvents({ village }: Props) {
                 : "text-text-500 hover:bg-surface-200/80"
             }`}
           >
-            {range === "today" ? "Today" : range === "tomorrow" ? "Tomorrow" : range === "weekend" ? "Weekend" : "All"}
+            {t(`events.range.${range}`)}
           </button>
         ))}
       </div>
@@ -223,7 +206,7 @@ export default function UpcomingEvents({ village }: Props) {
                 : "bg-surface-50/80 text-text-600 border-surface-300/60 hover:border-sage/40"
             }`}
           >
-            All
+            {t("events.range.all")}
           </button>
           {availableFilters.map((cat) => (
             <button
@@ -267,7 +250,7 @@ export default function UpcomingEvents({ village }: Props) {
       {/* Events feed */}
       {filtered.length === 0 ? (
         <p className="text-xs text-text-500 text-center py-4">
-          No events in this category
+          {t("events.noEvents")}
         </p>
       ) : (
         <div className="space-y-1.5 pr-1">
@@ -281,8 +264,8 @@ export default function UpcomingEvents({ village }: Props) {
 
               <div className="space-y-1.5">
                 {dateEvents.map((event) => {
-                  const cat =
-                    CATEGORY_MAP[event.category] || CATEGORY_MAP.general;
+                  const catEmoji = CATEGORY_EMOJIS[event.category] || CATEGORY_EMOJIS.general;
+                  const catLabel = t(`events.cat.${event.category in CATEGORY_EMOJIS ? event.category : "general"}`);
                   const handleEventClick = () => {
                     localStorage.setItem("gn_event_context", JSON.stringify(event));
                     localStorage.setItem("gn_fast_mode", "true");
@@ -302,11 +285,11 @@ export default function UpcomingEvents({ village }: Props) {
                           </span>
                         )}
                         <span className="text-text-500 bg-surface-200/80 px-1.5 py-0.5 rounded-full flex items-center gap-1">
-                          <span>{cat.emoji}</span>
-                          {cat.label}
+                          <span>{catEmoji}</span>
+                          {catLabel}
                         </span>
                         <span className="ml-auto flex items-center gap-1.5 text-text-400">
-                          {SOURCE_LABELS[event.source] || event.source}
+                          {t(`events.src.${event.source}`)}
                           {event.url && (
                             <a
                               href={event.url}

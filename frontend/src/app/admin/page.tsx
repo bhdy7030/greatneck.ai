@@ -277,9 +277,9 @@ function AdminContent() {
                 <p className="text-2xl font-bold text-text-900 mt-1">{metrics.total_users}</p>
               </div>
               <div className="bg-surface-200 border border-surface-300 rounded-xl p-4">
-                <p className="text-xs text-text-500 uppercase tracking-wide">Est. Cost Today</p>
-                <p className="text-2xl font-bold text-text-900 mt-1">${metrics.estimated_cost.today_usd.toFixed(2)}</p>
-                <p className="text-[11px] text-text-500 mt-0.5">${metrics.estimated_cost.month_usd.toFixed(2)} / 30d</p>
+                <p className="text-xs text-text-500 uppercase tracking-wide">Cost Today</p>
+                <p className="text-2xl font-bold text-text-900 mt-1">${metrics.cost.today_usd.toFixed(4)}</p>
+                <p className="text-[11px] text-text-500 mt-0.5">${metrics.cost.month_usd.toFixed(4)} / 30d</p>
               </div>
             </div>
 
@@ -297,7 +297,50 @@ function AdminContent() {
               </div>
             </div>
 
-            {/* Row 3: Tier Breakdown */}
+            {/* Row 3: Token & Cost Charts */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="bg-surface-200 border border-surface-300 rounded-xl p-4">
+                <h3 className="text-xs text-text-500 uppercase tracking-wide mb-3">Tokens — 30 Days</h3>
+                <BarChart data={metrics.daily_tokens.map(d => ({ label: d.date, value: d.total_tokens }))} color="bg-blue-400" />
+              </div>
+              <div className="bg-surface-200 border border-surface-300 rounded-xl p-4">
+                <h3 className="text-xs text-text-500 uppercase tracking-wide mb-3">Cost (USD) — 30 Days</h3>
+                <BarChart data={metrics.daily_tokens.map(d => ({ label: d.date, value: Math.round(d.cost_usd * 10000) / 10000 }))} color="bg-red-400" />
+              </div>
+            </div>
+
+            {/* Row 4: Usage by Role */}
+            {metrics.usage_by_role.length > 0 && (
+              <div className="bg-surface-200 border border-surface-300 rounded-xl p-4">
+                <h3 className="text-xs text-text-500 uppercase tracking-wide mb-3">Token Usage by Role — 7 Days</h3>
+                <div className="border border-surface-300 rounded-lg overflow-hidden">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="bg-surface-300">
+                        <th className="text-left px-3 py-2 text-xs text-text-600 font-medium">Role</th>
+                        <th className="text-right px-3 py-2 text-xs text-text-600 font-medium">Calls</th>
+                        <th className="text-right px-3 py-2 text-xs text-text-600 font-medium">Tokens</th>
+                        <th className="text-right px-3 py-2 text-xs text-text-600 font-medium">Cost</th>
+                        <th className="text-right px-3 py-2 text-xs text-text-600 font-medium">Avg Latency</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {metrics.usage_by_role.map(r => (
+                        <tr key={r.role} className="border-t border-surface-300">
+                          <td className="px-3 py-2 text-text-800 font-medium">{r.role}</td>
+                          <td className="px-3 py-2 text-text-600 text-right">{r.call_count}</td>
+                          <td className="px-3 py-2 text-text-600 text-right">{r.total_tokens.toLocaleString()}</td>
+                          <td className="px-3 py-2 text-text-600 text-right">${r.cost_usd.toFixed(4)}</td>
+                          <td className="px-3 py-2 text-text-600 text-right">{r.avg_latency_ms}ms</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {/* Row 5: Tier Breakdown */}
             <div className="bg-surface-200 border border-surface-300 rounded-xl p-4">
               <h3 className="text-xs text-text-500 uppercase tracking-wide mb-3">Tier Breakdown</h3>
               <TierBar breakdown={metrics.tier_breakdown} total={metrics.total_users} />
@@ -551,7 +594,7 @@ function AdminContent() {
                           : u.tier === "free_promo" ? "bg-amber-100 text-amber-700"
                           : "bg-surface-300 text-text-500"
                       }`}>
-                        {u.tier === "pro" ? "Pro" : u.tier === "free_promo" ? `Trial (${promoDaysLeft}d)` : "Free"}
+                        {u.tier === "pro" ? "Sponsor" : u.tier === "free_promo" ? `Community+ (${promoDaysLeft}d)` : "Community"}
                       </span>
                     </div>
                     <div className="flex items-center gap-3 flex-shrink-0">
@@ -585,14 +628,14 @@ function AdminContent() {
                         onChange={(e) => handleTierChange(u.id, e.target.value as "free" | "pro")}
                         className="text-xs bg-white border border-surface-300 rounded px-1.5 py-0.5 text-text-700"
                       >
-                        <option value="free">Free</option>
-                        <option value="pro">Pro</option>
+                        <option value="free">Community</option>
+                        <option value="pro">Sponsor</option>
                       </select>
                     </div>
 
                     {u.raw_tier === "free" && (
                       <div className="flex items-center gap-1.5">
-                        <span className="text-[11px] text-text-500">Trial:</span>
+                        <span className="text-[11px] text-text-500">Community+:</span>
                         <select
                           value={promoDaysLeft > 0 ? "active" : "none"}
                           onChange={(e) => {
@@ -709,9 +752,9 @@ function TierBar({ breakdown, total }: { breakdown: { free: number; free_promo: 
   if (total === 0) return <p className="text-sm text-text-500">No users yet.</p>;
   const pct = (n: number) => Math.max((n / total) * 100, n > 0 ? 3 : 0);
   const segments = [
-    { label: "Free", count: breakdown.free, bg: "bg-surface-400" },
-    { label: "Trial", count: breakdown.free_promo, bg: "bg-amber-400" },
-    { label: "Pro", count: breakdown.pro, bg: "bg-sage" },
+    { label: "Community", count: breakdown.free, bg: "bg-surface-400" },
+    { label: "Community+", count: breakdown.free_promo, bg: "bg-amber-400" },
+    { label: "Sponsor", count: breakdown.pro, bg: "bg-sage" },
   ];
   return (
     <div>

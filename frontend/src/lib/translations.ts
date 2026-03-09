@@ -19,6 +19,87 @@ const translations: Record<string, Record<Lang, string>> = {
 
   // ── Events ──
   "events.upcoming": { en: "Upcoming Events", zh: "近期活动" },
+  "events.noEvents": { en: "No events in this category", zh: "该分类暂无活动" },
+
+  // Event categories
+  "events.cat.school": { en: "School", zh: "学校" },
+  "events.cat.student": { en: "Student", zh: "学生" },
+  "events.cat.kids": { en: "Kids", zh: "儿童" },
+  "events.cat.teens": { en: "Teens", zh: "青少年" },
+  "events.cat.family": { en: "Family", zh: "家庭" },
+  "events.cat.art": { en: "Art", zh: "艺术" },
+  "events.cat.entertainment": { en: "Entertainment", zh: "娱乐" },
+  "events.cat.food": { en: "Food", zh: "美食" },
+  "events.cat.festival": { en: "Festival", zh: "节日" },
+  "events.cat.health": { en: "Health", zh: "健康" },
+  "events.cat.education": { en: "Education", zh: "教育" },
+  "events.cat.community": { en: "Community", zh: "社区" },
+  "events.cat.general": { en: "Event", zh: "活动" },
+
+  // Event sources
+  "events.src.patch": { en: "Patch", zh: "Patch" },
+  "events.src.longisland": { en: "LI Events", zh: "长岛活动" },
+  "events.src.eventbrite": { en: "Eventbrite", zh: "Eventbrite" },
+  "events.src.islandnow": { en: "Island Now", zh: "Island Now" },
+  "events.src.library": { en: "GN Library", zh: "大颈图书馆" },
+  "events.src.school": { en: "GN Schools", zh: "大颈学校" },
+  "events.src.village": { en: "Village", zh: "村庄" },
+
+  // Source filter labels
+  "events.filter.library": { en: "Library", zh: "图书馆" },
+  "events.filter.school": { en: "Schools", zh: "学校" },
+  "events.filter.village": { en: "Village", zh: "村庄" },
+  "events.filter.patch": { en: "Patch", zh: "Patch" },
+  "events.filter.longisland": { en: "Long Island", zh: "长岛" },
+  "events.filter.eventbrite": { en: "Eventbrite", zh: "Eventbrite" },
+
+  // Date ranges
+  "events.range.all": { en: "All", zh: "全部" },
+  "events.range.today": { en: "Today", zh: "今天" },
+  "events.range.tomorrow": { en: "Tomorrow", zh: "明天" },
+  "events.range.weekend": { en: "Weekend", zh: "周末" },
+
+  // Date labels
+  "events.date.today": { en: "Today", zh: "今天" },
+  "events.date.tomorrow": { en: "Tomorrow", zh: "明天" },
+
+  // Weekdays
+  "events.weekday.0": { en: "Sun", zh: "周日" },
+  "events.weekday.1": { en: "Mon", zh: "周一" },
+  "events.weekday.2": { en: "Tue", zh: "周二" },
+  "events.weekday.3": { en: "Wed", zh: "周三" },
+  "events.weekday.4": { en: "Thu", zh: "周四" },
+  "events.weekday.5": { en: "Fri", zh: "周五" },
+  "events.weekday.6": { en: "Sat", zh: "周六" },
+
+  // Months
+  "events.month.0": { en: "Jan", zh: "1月" },
+  "events.month.1": { en: "Feb", zh: "2月" },
+  "events.month.2": { en: "Mar", zh: "3月" },
+  "events.month.3": { en: "Apr", zh: "4月" },
+  "events.month.4": { en: "May", zh: "5月" },
+  "events.month.5": { en: "Jun", zh: "6月" },
+  "events.month.6": { en: "Jul", zh: "7月" },
+  "events.month.7": { en: "Aug", zh: "8月" },
+  "events.month.8": { en: "Sep", zh: "9月" },
+  "events.month.9": { en: "Oct", zh: "10月" },
+  "events.month.10": { en: "Nov", zh: "11月" },
+  "events.month.11": { en: "Dec", zh: "12月" },
+
+  // ── Landing page animated questions ──
+  "landing.q.fence": { en: "Do I need a permit for a fence?", zh: "安装围栏需要许可证吗？" },
+  "landing.q.library": { en: "When is the next library event?", zh: "下次图书馆活动是什么时候？" },
+  "landing.q.parking": { en: "What are the parking rules overnight?", zh: "夜间停车规定是什么？" },
+  "landing.q.swim": { en: "Where can I sign my kid up for swim lessons?", zh: "哪里可以给孩子报名游泳课？" },
+  "landing.q.pothole": { en: "How do I report a pothole?", zh: "如何报告路面坑洞？" },
+  "landing.q.basement": { en: "Can I rent out my basement?", zh: "我可以出租地下室吗？" },
+  "landing.q.noise": { en: "What's the noise ordinance after 10pm?", zh: "晚上10点后的噪音条例是什么？" },
+  "landing.q.senior": { en: "Are there senior programs nearby?", zh: "附近有老年人项目吗？" },
+
+  // ── Landing page quick chips ──
+  "landing.chip.pool": { en: "How do I get a pool permit?", zh: "如何获得泳池许可证？" },
+  "landing.chip.spring": { en: "When is spring break?", zh: "春假是什么时候？" },
+  "landing.chip.library": { en: "Library activities this week?", zh: "本周图书馆有什么活动？" },
 
   // ── Chat page ──
   "chat.village": { en: "Village:", zh: "村庄：" },
@@ -67,6 +148,10 @@ const translations: Record<string, Record<Lang, string>> = {
     en: "Sign in with Google",
     zh: "使用 Google 登录",
   },
+  "sidebar.signInApple": {
+    en: "Sign in with Apple",
+    zh: "使用 Apple 登录",
+  },
   "sidebar.noConversations": {
     en: "No conversations yet",
     zh: "暂无对话",
@@ -85,6 +170,8 @@ const translations: Record<string, Record<Lang, string>> = {
 
   // ── Auth ──
   "auth.signIn": { en: "Sign in", zh: "登录" },
+  "auth.signInGoogle": { en: "Sign in with Google", zh: "使用 Google 登录" },
+  "auth.signInApple": { en: "Sign in with Apple", zh: "使用 Apple 登录" },
   "auth.signOut": { en: "Sign out", zh: "退出" },
 
   // ── Tier / Usage ──
@@ -93,8 +180,8 @@ const translations: Record<string, Record<Lang, string>> = {
     zh: "想继续提问吗？",
   },
   "tier.trialExhaustedDesc": {
-    en: "Each answer costs us real AI resources. We limit guest access so we can keep this free for the community. Get 10 more questions below, or sign in for unlimited access.",
-    zh: "每次回答都会消耗AI资源。我们限制访客使用量，以便为社区持续提供免费服务。点击下方获取10次额外提问，或登录以获得无限使用。",
+    en: "Each answer costs us real AI resources. We limit guest access so we can keep this available for the community. Get 10 more questions below, or sign in for unlimited access.",
+    zh: "每次回答都会消耗AI资源。我们限制访客使用量，以便为社区持续提供服务。点击下方获取10次额外提问，或登录以获得无限使用。",
   },
   "tier.mustSignInTitle": {
     en: "You're part of the neighborhood",
@@ -108,6 +195,14 @@ const translations: Record<string, Record<Lang, string>> = {
     en: "Keep Asking",
     zh: "继续提问",
   },
+  "tier.signInGoogle": {
+    en: "Sign in with Google",
+    zh: "使用 Google 登录",
+  },
+  "tier.signInApple": {
+    en: "Sign in with Apple",
+    zh: "使用 Apple 登录",
+  },
   "tier.signInUnlimited": {
     en: "Sign in",
     zh: "登录",
@@ -116,21 +211,21 @@ const translations: Record<string, Record<Lang, string>> = {
     en: "Maybe later",
     zh: "以后再说",
   },
-  "tier.proOnly": {
-    en: "Pro only",
-    zh: "仅限 Pro",
+  "tier.sponsorOnly": {
+    en: "Sponsor feature",
+    zh: "赞助者功能",
   },
   "tier.promoBanner": {
-    en: "Pro features active — {days} days remaining",
-    zh: "Pro 功能已激活 — 剩余 {days} 天",
+    en: "Sponsor features active — {days} days remaining",
+    zh: "赞助者功能已激活 — 剩余 {days} 天",
   },
   "tier.deepLocked": {
-    en: "Deep mode requires Pro",
-    zh: "深度模式需要 Pro",
+    en: "Deep mode is a sponsor feature",
+    zh: "深度模式为赞助者功能",
   },
   "tier.unlimitedSearchLocked": {
-    en: "Unlimited search requires Pro",
-    zh: "无限搜索需要 Pro",
+    en: "Unlimited search is a sponsor feature",
+    zh: "无限搜索为赞助者功能",
   },
 
   // ── Pipeline ──

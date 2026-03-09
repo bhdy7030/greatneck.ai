@@ -72,9 +72,9 @@ def _enforce_tier(request: "ChatRequest", user: dict | None, session_id: str | N
 
         if query_count >= limit:
             if not usage["extended_trial"]:
-                return {"code": "trial_exhausted", "message": "Free trial queries used up. Get 10 more or sign in for unlimited access."}
+                return {"code": "trial_exhausted", "message": "Guest queries used up. Get 10 more or sign in for unlimited community access."}
             else:
-                return {"code": "must_sign_in", "message": "Extended trial used up. Sign in with Google for unlimited access."}
+                return {"code": "must_sign_in", "message": "Guest queries used up. Sign in with Google for unlimited community access."}
 
         # Increment usage count
         increment_usage(session_id)
@@ -141,6 +141,9 @@ async def chat(
 ) -> ChatResponse:
     """Main chat endpoint. Routes through RouterAgent then to a specialist."""
     try:
+        # Stash session_id for metrics
+        request._session_id = x_session_id or ""
+
         # Tier enforcement
         block = _enforce_tier(request, user, x_session_id)
         if block:
@@ -211,6 +214,8 @@ async def chat_stream(
         request.conversation_id = convo["id"]
         add_message(request.conversation_id, "user", request.message, request.image_base64)
 
+    # Stash session_id on request for metrics context
+    request._session_id = x_session_id or ""
     return StreamingResponse(
         _handle_chat_stream(request, user=user),
         media_type="text/event-stream",
@@ -288,8 +293,13 @@ async def _handle_chat_stream(request: ChatRequest, user: dict | None = None) ->
     """Stream pipeline events as SSE."""
     from tools.budget import set_budget
     from llm.presets import set_fast_mode
+    from metrics.collector import set_request_context
     set_budget(mode=request.web_search_mode, limit=5)
     set_fast_mode(request.fast_mode)
+    set_request_context(
+        session_id=getattr(request, '_session_id', ''),
+        conversation_id=request.conversation_id or '',
+    )
 
     # Check event response cache — skip entire pipeline if hit
     # Only for first message (no history = user just clicked the event card)
@@ -585,8 +595,13 @@ async def _handle_chat_stream(request: ChatRequest, user: dict | None = None) ->
 async def _handle_chat(request: ChatRequest) -> ChatResponse:
     from tools.budget import set_budget
     from llm.presets import set_fast_mode
+    from metrics.collector import set_request_context
     set_budget(mode=request.web_search_mode, limit=5)
     set_fast_mode(request.fast_mode)
+    set_request_context(
+        session_id=getattr(request, '_session_id', ''),
+        conversation_id=request.conversation_id or '',
+    )
 
     context: dict[str, Any] = {
         "village": request.village,

@@ -226,8 +226,17 @@ async def ingest_events(dry_run: bool) -> dict:
     if not dry_run:
         cleanup_past_events()
 
-    logger.info(f"[events] Stored {stored}/{len(events)} events")
-    return {"source": "events", "scraped": len(events), "stored": stored}
+    # Translate new/changed events to Chinese
+    translated = 0
+    if not dry_run:
+        try:
+            from llm.translate import translate_untranslated_events
+            translated = await translate_untranslated_events()
+        except Exception as e:
+            logger.warning(f"[events] Translation failed (non-blocking): {e}")
+
+    logger.info(f"[events] Stored {stored}/{len(events)} events, translated {translated}")
+    return {"source": "events", "scraped": len(events), "stored": stored, "translated": translated}
 
 
 # ---------------------------------------------------------------------------

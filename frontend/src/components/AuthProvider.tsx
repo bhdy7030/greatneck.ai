@@ -49,8 +49,8 @@ function InAppBrowserPrompt({ onClose }: { onClose: () => void }) {
         </h3>
         <p className="text-sm text-gray-600 mb-4">
           {wechat
-            ? "微信内无法使用 Google 登录，请点击右上角 ··· 选择「在浏览器打开」"
-            : "Google sign-in is not supported in this browser. Please open this page in Safari or Chrome."}
+            ? "微信内无法登录，请点击右上角 ··· 选择「在浏览器打开」"
+            : "Sign-in is not supported in this browser. Please open this page in Safari or Chrome."}
         </p>
         <div className="bg-gray-50 rounded-xl p-3 mb-4 text-left text-sm text-gray-700">
           {wechat ? (
@@ -82,6 +82,7 @@ interface AuthContextValue {
   user: AuthUser | null;
   isLoading: boolean;
   login: () => void;
+  loginWithApple: () => void;
   logout: () => void;
   tier: string;
   features: TierFeatures | null;
@@ -100,6 +101,7 @@ const AuthContext = createContext<AuthContextValue>({
   user: null,
   isLoading: true,
   login: () => {},
+  loginWithApple: () => {},
   logout: () => {},
   tier: "anonymous",
   features: DEFAULT_FEATURES,
@@ -188,6 +190,15 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
     window.location.href = `${BASE_URL}/api/auth/google?return_to=${encodeURIComponent(returnTo)}`;
   }, []);
 
+  const loginWithApple = useCallback(() => {
+    if (isInAppBrowser()) {
+      setShowBrowserPrompt(true);
+      return;
+    }
+    const returnTo = window.location.pathname + window.location.search;
+    window.location.href = `${BASE_URL}/api/auth/apple?return_to=${encodeURIComponent(returnTo)}`;
+  }, []);
+
   const logout = useCallback(async () => {
     await logoutServer();
     setUser(null);
@@ -200,7 +211,7 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, isLoading, login, logout, tier, features, usage, refreshUsage }}
+      value={{ user, isLoading, login, loginWithApple, logout, tier, features, usage, refreshUsage }}
     >
       {children}
       {showBrowserPrompt && (

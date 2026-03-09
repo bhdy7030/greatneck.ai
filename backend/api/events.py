@@ -11,7 +11,7 @@ from fastapi import APIRouter, Header, HTTPException, Query
 from fastapi.responses import Response
 
 from config import settings
-from db import get_upcoming_events, get_event_by_id, upsert_event, cleanup_past_events
+from db import get_upcoming_events, get_event_by_id, upsert_event, cleanup_past_events, _exec_one
 
 logger = logging.getLogger(__name__)
 
@@ -23,6 +23,7 @@ async def list_events(
     village: str = Query(default="", description="Village name for scoped events"),
     limit: int = Query(default=8, ge=1, le=50),
     category: str = Query(default="", description="Filter by category"),
+    lang: str = Query(default="en", description="Language code (en or zh)"),
 ):
     """Get upcoming events with waterfall fallback (village → area → longisland)."""
     events = get_upcoming_events(
@@ -30,13 +31,45 @@ async def list_events(
         limit=limit,
         category=category or None,
     )
+    if lang == "zh":
+        for e in events:
+            if e.get("title_zh"):
+                e["title"] = e["title_zh"]
+            if e.get("description_zh"):
+                e["description"] = e["description_zh"]
+            if e.get("venue_zh"):
+                e["venue"] = e["venue_zh"]
+    # Strip _zh fields from response
+    for e in events:
+        e.pop("title_zh", None)
+        e.pop("description_zh", None)
+        e.pop("venue_zh", None)
     return events
 
 
 @router.get("/events/{event_id}/calendar")
-async def event_calendar(event_id: int):
-    """Generate an .ics calendar file for a specific event."""
-    event = get_event_by_id(event_id)
+async def event_calendar(event_id: str):
+    """Generate an .ics calendar file for a specific event.
+
+    Accepts source_id (stable hash, preferred), numeric DB id, or UUID from source URL.
+    """
+    event = None
+    # Try source_id first (stable across DB refreshes)
+    event = _exec_one(
+        "SELECT * FROM events WHERE source_id=?",
+        "SELECT * FROM events WHERE source_id=%s",
+        (event_id,),
+    )
+    if not event and event_id.isdigit():
+        # Fallback: legacy numeric DB id
+        event = get_event_by_id(int(event_id))
+    if not event:
+        # Fallback: UUID from source URL
+        event = _exec_one(
+            "SELECT * FROM events WHERE url LIKE ?",
+            "SELECT * FROM events WHERE url LIKE %s",
+            (f"%{event_id}%",),
+        )
     if not event:
         raise HTTPException(status_code=404, detail="Event not found")
 
@@ -117,4 +150,12 @@ async def refresh_events(
 
     cleanup_past_events()
 
-    return {"status": "ok", "scraped": len(events), "upserted": upserted}
+    # Translate new/changed events to Chinese
+    translated = 0
+    try:
+        from llm.translate import translate_untranslated_events
+        translated = await translate_untranslated_events()
+    except Exception as e:
+        logger.warning(f"[events:refresh] Translation failed (non-blocking): {e}")
+
+    return {"status": "ok", "scraped": len(events), "upserted": upserted, "translated": translated}

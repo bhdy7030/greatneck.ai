@@ -11,20 +11,20 @@ from rag.ingest import ingest_document, ingest_pdf
 from rag.store import KnowledgeStore
 from api.deps import require_admin
 from llm.presets import PROVIDERS, ROLE_PRESETS, load_config, save_config
-from db import get_dau, get_daily_queries, get_tier_breakdown, get_total_users, get_top_agents
+from db import (
+    get_dau, get_daily_queries, get_tier_breakdown, get_total_users,
+    get_top_agents, get_daily_token_usage, get_usage_by_role, get_usage_by_model,
+)
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
 _store = KnowledgeStore()
 
-# Average cost per query (based on ~2K input + 1K output tokens at typical rates)
-_COST_PER_QUERY_USD = 0.03
-
 
 @router.get("/metrics")
 async def get_metrics(user: dict = Depends(require_admin)) -> dict:
-    """Return DAU, query volume, tier breakdown, and cost estimates."""
+    """Return DAU, query volume, tier breakdown, and real token/cost metrics."""
     from datetime import date
 
     dau = get_dau(30)
@@ -33,30 +33,45 @@ async def get_metrics(user: dict = Depends(require_admin)) -> dict:
     total_users = get_total_users()
     top_agents = get_top_agents(7)
 
+    # Real token usage from llm_usage table
+    daily_tokens = get_daily_token_usage(30)
+    usage_by_role = get_usage_by_role(7)
+    usage_by_model = get_usage_by_model(7)
+
     today_str = date.today().isoformat()
     today_dau = next((d for d in dau if d["date"] == today_str), None)
     today_queries_row = next((d for d in daily_queries if d["date"] == today_str), None)
+    today_token_row = next((d for d in daily_tokens if d["date"] == today_str), None)
 
     today_queries = today_queries_row["count"] if today_queries_row else 0
     today_sessions = today_dau["sessions"] if today_dau else 0
     today_users = today_dau["users"] if today_dau else 0
 
-    month_queries = sum(d["count"] for d in daily_queries)
+    today_cost = today_token_row["cost_usd"] if today_token_row else 0
+    today_tokens = today_token_row["total_tokens"] if today_token_row else 0
+    month_cost = sum(d["cost_usd"] for d in daily_tokens)
+    month_tokens = sum(d["total_tokens"] for d in daily_tokens)
 
     return {
         "dau": dau,
         "daily_queries": daily_queries,
+        "daily_tokens": daily_tokens,
         "tier_breakdown": tier_breakdown,
         "total_users": total_users,
         "top_agents": top_agents,
+        "usage_by_role": usage_by_role,
+        "usage_by_model": usage_by_model,
         "today": {
             "queries": today_queries,
             "sessions": today_sessions,
             "users": today_users,
+            "tokens": today_tokens,
+            "cost_usd": round(today_cost, 4),
         },
-        "estimated_cost": {
-            "today_usd": round(today_queries * _COST_PER_QUERY_USD, 2),
-            "month_usd": round(month_queries * _COST_PER_QUERY_USD, 2),
+        "cost": {
+            "today_usd": round(today_cost, 4),
+            "month_usd": round(month_cost, 4),
+            "month_tokens": month_tokens,
         },
     }
 

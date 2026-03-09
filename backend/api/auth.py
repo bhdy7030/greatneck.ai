@@ -1,11 +1,11 @@
-"""Google OAuth authentication routes."""
+"""Google & Apple OAuth authentication routes."""
 from __future__ import annotations
 
+import time
 from datetime import datetime, timedelta, timezone
-
 from urllib.parse import urlencode
 
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Request
 from fastapi.responses import RedirectResponse
 from jose import jwt
 import httpx
@@ -13,7 +13,7 @@ from pydantic import BaseModel
 
 from config import settings
 from db import (
-    upsert_user, list_users, update_user_permissions,
+    upsert_user, upsert_user_apple, list_users, update_user_permissions,
     set_user_tier, set_promo_expiry,
     create_refresh_token, validate_refresh_token, revoke_user_refresh_tokens,
 )
@@ -24,6 +24,10 @@ router = APIRouter()
 GOOGLE_AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth"
 GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token"
 GOOGLE_USERINFO_URL = "https://www.googleapis.com/oauth2/v3/userinfo"
+
+APPLE_AUTH_URL = "https://appleid.apple.com/auth/authorize"
+APPLE_TOKEN_URL = "https://appleid.apple.com/auth/token"
+APPLE_JWKS_URL = "https://appleid.apple.com/auth/keys"
 
 
 def _create_jwt(user_id: int) -> str:
@@ -36,57 +40,8 @@ def _create_jwt(user_id: int) -> str:
     )
 
 
-@router.get("/auth/google")
-async def google_login(return_to: str = "/chat/"):
-    """Redirect to Google OAuth consent screen."""
-    params = {
-        "client_id": settings.google_client_id,
-        "redirect_uri": settings.google_redirect_uri,
-        "response_type": "code",
-        "scope": "openid email profile",
-        "access_type": "offline",
-        "prompt": "select_account",
-        "state": return_to,
-    }
-    return RedirectResponse(f"{GOOGLE_AUTH_URL}?{urlencode(params)}")
-
-
-@router.get("/auth/google/callback")
-async def google_callback(code: str, state: str = "/chat/"):
-    """Exchange auth code for user info, upsert user, mint JWT, redirect to frontend."""
-    # Exchange code for tokens
-    async with httpx.AsyncClient() as client:
-        token_resp = await client.post(
-            GOOGLE_TOKEN_URL,
-            data={
-                "code": code,
-                "client_id": settings.google_client_id,
-                "client_secret": settings.google_client_secret,
-                "redirect_uri": settings.google_redirect_uri,
-                "grant_type": "authorization_code",
-            },
-        )
-        if token_resp.status_code != 200:
-            raise HTTPException(status_code=400, detail="Failed to exchange auth code")
-        tokens = token_resp.json()
-
-        # Get user info
-        userinfo_resp = await client.get(
-            GOOGLE_USERINFO_URL,
-            headers={"Authorization": f"Bearer {tokens['access_token']}"},
-        )
-        if userinfo_resp.status_code != 200:
-            raise HTTPException(status_code=400, detail="Failed to fetch user info")
-        userinfo = userinfo_resp.json()
-
-    # Upsert user in DB
-    user = upsert_user(
-        google_id=userinfo["sub"],
-        email=userinfo.get("email", ""),
-        name=userinfo.get("name", ""),
-        avatar_url=userinfo.get("picture", ""),
-    )
-
+def _finalize_login(user: dict, return_path: str) -> RedirectResponse:
+    """Shared post-login logic: admin/pro grants, promo, mint tokens, redirect."""
     # Auto-grant admin for configured emails
     admin_list = [e.strip().lower() for e in settings.admin_emails.split(",") if e.strip()]
     if user.get("email", "").lower() in admin_list and not user.get("is_admin"):
@@ -107,11 +62,193 @@ async def google_callback(code: str, state: str = "/chat/"):
     refresh_token = create_refresh_token(user["id"])
 
     # Redirect back to the page the user started login from
-    return_path = state if state.startswith("/") else "/chat/"
-    sep = "&" if "?" in return_path else "?"
+    rp = return_path if return_path.startswith("/") else "/chat/"
+    sep = "&" if "?" in rp else "?"
     return RedirectResponse(
-        f"{settings.frontend_url}{return_path}{sep}token={access_token}&refresh={refresh_token}"
+        f"{settings.frontend_url}{rp}{sep}token={access_token}&refresh={refresh_token}",
+        status_code=303,
     )
+
+
+# ── Google OAuth ──
+
+
+@router.get("/auth/google")
+async def google_login(return_to: str = "/chat/"):
+    """Redirect to Google OAuth consent screen."""
+    params = {
+        "client_id": settings.google_client_id,
+        "redirect_uri": settings.google_redirect_uri,
+        "response_type": "code",
+        "scope": "openid email profile",
+        "access_type": "offline",
+        "prompt": "select_account",
+        "state": return_to,
+    }
+    return RedirectResponse(f"{GOOGLE_AUTH_URL}?{urlencode(params)}")
+
+
+@router.get("/auth/google/callback")
+async def google_callback(code: str, state: str = "/chat/"):
+    """Exchange auth code for user info, upsert user, mint JWT, redirect to frontend."""
+    async with httpx.AsyncClient() as client:
+        token_resp = await client.post(
+            GOOGLE_TOKEN_URL,
+            data={
+                "code": code,
+                "client_id": settings.google_client_id,
+                "client_secret": settings.google_client_secret,
+                "redirect_uri": settings.google_redirect_uri,
+                "grant_type": "authorization_code",
+            },
+        )
+        if token_resp.status_code != 200:
+            raise HTTPException(status_code=400, detail="Failed to exchange auth code")
+        tokens = token_resp.json()
+
+        userinfo_resp = await client.get(
+            GOOGLE_USERINFO_URL,
+            headers={"Authorization": f"Bearer {tokens['access_token']}"},
+        )
+        if userinfo_resp.status_code != 200:
+            raise HTTPException(status_code=400, detail="Failed to fetch user info")
+        userinfo = userinfo_resp.json()
+
+    user = upsert_user(
+        google_id=userinfo["sub"],
+        email=userinfo.get("email", ""),
+        name=userinfo.get("name", ""),
+        avatar_url=userinfo.get("picture", ""),
+    )
+
+    return _finalize_login(user, state)
+
+
+# ── Apple Sign In ──
+
+
+def _generate_apple_client_secret() -> str:
+    """Generate a short-lived ES256 JWT used as the client_secret for Apple token exchange."""
+    now = int(time.time())
+    # Handle newlines in env-var-encoded private keys
+    private_key = settings.apple_private_key.replace("\\n", "\n")
+    return jwt.encode(
+        {
+            "iss": settings.apple_team_id,
+            "iat": now,
+            "exp": now + 86400 * 180,  # 6 months max
+            "aud": "https://appleid.apple.com",
+            "sub": settings.apple_client_id,
+        },
+        private_key,
+        algorithm="ES256",
+        headers={"kid": settings.apple_key_id},
+    )
+
+
+async def _fetch_apple_jwks() -> dict:
+    """Fetch Apple's public JWKS for id_token verification."""
+    async with httpx.AsyncClient() as client:
+        resp = await client.get(APPLE_JWKS_URL)
+        resp.raise_for_status()
+        return resp.json()
+
+
+@router.get("/auth/apple")
+async def apple_login(return_to: str = "/chat/"):
+    """Redirect to Apple Sign In consent screen."""
+    params = {
+        "client_id": settings.apple_client_id,
+        "redirect_uri": settings.apple_redirect_uri,
+        "response_type": "code",
+        "scope": "name email",
+        "response_mode": "form_post",
+        "state": return_to,
+    }
+    return RedirectResponse(f"{APPLE_AUTH_URL}?{urlencode(params)}")
+
+
+@router.post("/auth/apple/callback")
+async def apple_callback(request: Request):
+    """Handle Apple's POST callback: exchange code, verify id_token, upsert user."""
+    form = await request.form()
+    code = form.get("code")
+    state = form.get("state", "/chat/")
+    if not code:
+        raise HTTPException(status_code=400, detail="Missing authorization code")
+
+    # Apple sends user info (name) as JSON only on FIRST authorization
+    user_json = form.get("user")
+    apple_name = ""
+    if user_json:
+        import json
+        try:
+            user_data = json.loads(user_json)
+            first = user_data.get("name", {}).get("firstName", "")
+            last = user_data.get("name", {}).get("lastName", "")
+            apple_name = f"{first} {last}".strip()
+        except (json.JSONDecodeError, AttributeError):
+            pass
+
+    # Exchange code for tokens
+    client_secret = _generate_apple_client_secret()
+    async with httpx.AsyncClient() as client:
+        token_resp = await client.post(
+            APPLE_TOKEN_URL,
+            data={
+                "client_id": settings.apple_client_id,
+                "client_secret": client_secret,
+                "code": code,
+                "grant_type": "authorization_code",
+                "redirect_uri": settings.apple_redirect_uri,
+            },
+        )
+        if token_resp.status_code != 200:
+            raise HTTPException(status_code=400, detail="Failed to exchange Apple auth code")
+        tokens = token_resp.json()
+
+    id_token = tokens.get("id_token")
+    if not id_token:
+        raise HTTPException(status_code=400, detail="No id_token from Apple")
+
+    # Verify id_token against Apple's JWKS
+    jwks = await _fetch_apple_jwks()
+
+    # Decode header to find the right key
+    header = jwt.get_unverified_header(id_token)
+    kid = header.get("kid")
+    apple_key = None
+    for key in jwks.get("keys", []):
+        if key["kid"] == kid:
+            apple_key = key
+            break
+    if not apple_key:
+        raise HTTPException(status_code=400, detail="Apple JWKS key not found")
+
+    # Verify and decode
+    claims = jwt.decode(
+        id_token,
+        apple_key,
+        algorithms=["RS256"],
+        audience=settings.apple_client_id,
+        issuer="https://appleid.apple.com",
+    )
+
+    apple_sub = claims["sub"]
+    email = claims.get("email", "")
+    if not email:
+        raise HTTPException(status_code=400, detail="Apple did not provide email")
+
+    user = upsert_user_apple(
+        apple_id=apple_sub,
+        email=email,
+        name=apple_name,
+    )
+
+    return _finalize_login(user, state)
+
+
+# ── User Info ──
 
 
 @router.get("/auth/me")
@@ -204,7 +341,7 @@ async def logout_user(body: RefreshRequest):
 
 
 class TierUpdateRequest(BaseModel):
-    tier: str  # "free" or "pro"
+    tier: str  # "free" (community) or "pro" (sponsor)
 
 
 @router.put("/auth/users/{user_id}/tier")
@@ -213,7 +350,7 @@ async def set_user_tier_endpoint(
     body: TierUpdateRequest,
     user: dict = Depends(require_admin),
 ):
-    """Admin: set a user's tier to 'free' or 'pro'."""
+    """Admin: set a user's tier to 'free' (community) or 'pro' (sponsor)."""
     if body.tier not in ("free", "pro"):
         raise HTTPException(status_code=400, detail="Tier must be 'free' or 'pro'")
     updated = set_user_tier(user_id, body.tier)
