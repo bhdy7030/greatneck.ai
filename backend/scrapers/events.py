@@ -996,6 +996,148 @@ async def scrape_village_meetings(limit: int = 30) -> list[ScrapedEvent]:
 
 
 # ---------------------------------------------------------------------------
+# Source 8: Great Neck Park District (CivicPlus calendar) — httpx
+# ---------------------------------------------------------------------------
+
+GNPD_CALENDAR_URL = "https://www.gnparksny.gov/calendar.aspx"
+
+# Recurring maintenance/internal/practice events to skip (noise for residents)
+_GNPD_SKIP_EXACT = {"ice maintenance", "gnfsc"}
+_GNPD_SKIP_PREFIXES = (
+    "ice maintenance", "gnfsc",
+    "bruins ", "freestyle ",
+    "open play @ playscape",  # daily recurring
+    "public session ",  # multiple daily ice sessions — RAG has the schedule
+    "skate school ",  # multiple weekly sessions — RAG has the schedule
+    "nyr ",  # NYR Rookie League / Learn-to-Play recurring weekly
+)
+# Substrings to skip anywhere in the title
+_GNPD_SKIP_CONTAINS = (
+    "spring hockey w/ besa",  # recurring weekly practice by age group
+)
+# Keep only first occurrence of recurring titled events per date
+_GNPD_DEDUP_PREFIXES = (
+    "ping pong",
+)
+
+
+async def scrape_park_district_events(limit: int = 40) -> list[ScrapedEvent]:
+    """Scrape upcoming events from Great Neck Park District CivicPlus calendar."""
+    events: list[ScrapedEvent] = []
+
+    try:
+        async with httpx.AsyncClient(
+            headers=HEADERS, timeout=TIMEOUT, follow_redirects=True,
+        ) as client:
+            resp = await client.get(GNPD_CALENDAR_URL)
+            resp.raise_for_status()
+    except Exception as e:
+        logger.warning(f"[events:parkdistrict] Failed to fetch calendar: {e}")
+        return events
+
+    soup = BeautifulSoup(resp.text, "html.parser")
+    today_str = datetime.now().strftime("%Y-%m-%d")
+
+    calendars_div = soup.find("div", class_="calendars")
+    if not calendars_div:
+        logger.warning("[events:parkdistrict] No calendars div found")
+        return events
+
+    seen_recurring: set[str] = set()  # track "prefix:date" for dedup
+
+    for cal_div in calendars_div.find_all("div", class_="calendar", recursive=False):
+        # Category from the <h2> title
+        h2 = cal_div.find("h2")
+        cal_category = h2.get_text(strip=True) if h2 else ""
+
+        for li in cal_div.find_all("li"):
+            if len(events) >= limit:
+                break
+
+            # Title from <h3>
+            h3 = li.find("h3")
+            title = h3.get_text(strip=True) if h3 else ""
+            if not title or len(title) < 3:
+                continue
+
+            # Skip recurring maintenance/practice/internal events
+            title_lower = title.lower().strip()
+            if title_lower in _GNPD_SKIP_EXACT or any(
+                title_lower.startswith(s) for s in _GNPD_SKIP_PREFIXES
+            ) or any(s in title_lower for s in _GNPD_SKIP_CONTAINS):
+                continue
+
+            # ISO datetime from hidden span
+            hidden_div = li.find("div", class_="hidden")
+            event_date = ""
+            event_time = ""
+            if hidden_div:
+                iso_span = hidden_div.find("span", class_="hidden")
+                if iso_span:
+                    iso_text = iso_span.get_text(strip=True)  # 2026-03-09T10:00:00
+                    if len(iso_text) >= 10:
+                        event_date = iso_text[:10]
+                    if "T" in iso_text:
+                        try:
+                            dt = datetime.fromisoformat(iso_text)
+                            event_time = dt.strftime("%-I:%M %p")
+                        except Exception:
+                            pass
+
+            if not event_date or event_date < today_str:
+                continue
+
+            # Dedup recurring sessions — keep only one per date
+            for prefix in _GNPD_DEDUP_PREFIXES:
+                if title_lower.startswith(prefix):
+                    key = f"{prefix}:{event_date}"
+                    if key in seen_recurring:
+                        title = ""  # mark for skip
+                        break
+                    seen_recurring.add(key)
+            if not title:
+                continue
+
+            # Venue from eventLocation div
+            venue = ""
+            loc_div = li.find("div", class_="eventLocation")
+            if loc_div:
+                venue = loc_div.get_text(strip=True).lstrip("@").strip()
+
+            # Description from <p> inside hidden div
+            description = ""
+            if hidden_div:
+                p = hidden_div.find("p")
+                if p:
+                    description = p.get_text(strip=True)[:500]
+
+            # Detail link
+            detail_link = li.find("a", href=True, string=re.compile(r"More Details", re.I))
+            url = f"https://www.gnparksny.gov{detail_link['href']}" if detail_link else GNPD_CALENDAR_URL
+
+            # Build a richer title if the calendar category adds context
+            full_title = title
+            if cal_category and cal_category.lower() not in title.lower():
+                full_title = f"{title} ({cal_category})"
+
+            events.append(ScrapedEvent(
+                title=full_title,
+                description=description,
+                event_date=event_date,
+                event_time=event_time,
+                venue=venue or "Great Neck Park District",
+                url=url,
+                category=_categorize(full_title, f"{description} {cal_category}"),
+                scope="area",
+                source="parkdistrict",
+                source_id=_make_source_id("parkdistrict", title + event_date),
+            ))
+
+    logger.info(f"[events:parkdistrict] Found {len(events)} events")
+    return events
+
+
+# ---------------------------------------------------------------------------
 # Orchestrator
 # ---------------------------------------------------------------------------
 
@@ -1008,6 +1150,7 @@ async def scrape_all_events() -> list[ScrapedEvent]:
         scrape_patch, scrape_library, scrape_school,
         scrape_village_meetings, scrape_longisland_events,
         scrape_eventbrite, scrape_island_now,
+        scrape_park_district_events,
     ):
         try:
             results = await scraper_fn()

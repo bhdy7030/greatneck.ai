@@ -44,6 +44,7 @@ const translations: Record<string, Record<Lang, string>> = {
   "events.src.library": { en: "GN Library", zh: "大颈图书馆" },
   "events.src.school": { en: "GN Schools", zh: "大颈学校" },
   "events.src.village": { en: "Village", zh: "村庄" },
+  "events.src.parkdistrict": { en: "Park District", zh: "公园管理区" },
 
   // Source filter labels
   "events.filter.library": { en: "Library", zh: "图书馆" },
@@ -52,6 +53,7 @@ const translations: Record<string, Record<Lang, string>> = {
   "events.filter.patch": { en: "Patch", zh: "Patch" },
   "events.filter.longisland": { en: "Long Island", zh: "长岛" },
   "events.filter.eventbrite": { en: "Eventbrite", zh: "Eventbrite" },
+  "events.filter.parkdistrict": { en: "Park District", zh: "公园管理区" },
 
   // Date ranges
   "events.range.all": { en: "All", zh: "全部" },
@@ -95,11 +97,19 @@ const translations: Record<string, Record<Lang, string>> = {
   "landing.q.basement": { en: "Can I rent out my basement?", zh: "我可以出租地下室吗？" },
   "landing.q.noise": { en: "What's the noise ordinance after 10pm?", zh: "晚上10点后的噪音条例是什么？" },
   "landing.q.senior": { en: "Are there senior programs nearby?", zh: "附近有老年人项目吗？" },
-
-  // ── Landing page quick chips ──
-  "landing.chip.pool": { en: "How do I get a pool permit?", zh: "如何获得泳池许可证？" },
-  "landing.chip.spring": { en: "When is spring break?", zh: "春假是什么时候？" },
-  "landing.chip.library": { en: "Library activities this week?", zh: "本周图书馆有什么活动？" },
+  "landing.q.trash": { en: "What day is trash pickup?", zh: "哪天收垃圾？" },
+  "landing.q.restaurants": { en: "Best restaurants in Great Neck?", zh: "大颈最好的餐厅有哪些？" },
+  "landing.q.school": { en: "How are the local school ratings?", zh: "当地学校评分怎么样？" },
+  "landing.q.tax": { en: "When are property taxes due?", zh: "房产税截止日期是什么时候？" },
+  "landing.q.park": { en: "Which parks have playgrounds?", zh: "哪些公园有游乐场？" },
+"landing.q.dog": { en: "Are dogs allowed in the parks?", zh: "公园里可以带狗吗？" },
+  "landing.q.pool": { en: "How do I get a pool permit?", zh: "如何获得泳池许可证？" },
+  "landing.q.weekend": { en: "What's happening this weekend?", zh: "这个周末有什么活动？" },
+  "landing.q.ice": { en: "Is the ice rink open tonight?", zh: "今晚溜冰场开放吗？" },
+  "landing.q.recycle": { en: "What can I put in recycling?", zh: "哪些东西可以回收？" },
+  "landing.q.camp": { en: "Any summer camps for kids?", zh: "有儿童夏令营吗？" },
+  "landing.q.waterpark": { en: "When does the Parkwood Pool open?", zh: "Parkwood泳池什么时候开放？" },
+  "landing.q.poolfee": { en: "How much is the pool membership fee?", zh: "泳池会员费多少钱？" },
 
   // ── Chat page ──
   "chat.village": { en: "Village:", zh: "村庄：" },

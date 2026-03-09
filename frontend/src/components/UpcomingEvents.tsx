@@ -25,6 +25,7 @@ const SOURCE_FILTER_KEYS = [
   { key: "patch", emoji: "📰" },
   { key: "longisland", emoji: "🏝" },
   { key: "eventbrite", emoji: "🎫" },
+  { key: "parkdistrict", emoji: "🌳" },
 ] as const;
 
 function parseLocalDate(dateStr: string): Date {
@@ -103,14 +104,14 @@ export default function UpcomingEvents({ village }: Props) {
   const [events, setEvents] = useState<UpcomingEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState<string | null>(null);
-  const [sourceFilter, setSourceFilter] = useState<string | null>(null);
+  const [sourceFilters, setSourceFilters] = useState<Set<string>>(new Set());
   const [dateRange, setDateRange] = useState<DateRange>("all");
 
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
     setActiveFilter(null);
-    setSourceFilter(null);
+    setSourceFilters(new Set());
     setDateRange("all");
 
     getUpcomingEvents(village || "", 30, language)
@@ -162,7 +163,7 @@ export default function UpcomingEvents({ village }: Props) {
   // Apply filters
   let filtered = filterByDateRange(events, dateRange);
   if (activeFilter) filtered = filtered.filter((e) => e.category === activeFilter);
-  if (sourceFilter) filtered = filtered.filter((e) => e.source === sourceFilter);
+  if (sourceFilters.size > 0) filtered = filtered.filter((e) => sourceFilters.has(e.source));
 
   // Group by date
   const grouped: Record<string, UpcomingEvent[]> = {};
@@ -232,11 +233,16 @@ export default function UpcomingEvents({ village }: Props) {
           {availableSources.map((src) => (
             <button
               key={src.key}
-              onClick={() =>
-                setSourceFilter(sourceFilter === src.key ? null : src.key)
-              }
+              onClick={() => {
+                setSourceFilters((prev) => {
+                  const next = new Set(prev);
+                  if (next.has(src.key)) next.delete(src.key);
+                  else next.add(src.key);
+                  return next;
+                });
+              }}
               className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${
-                sourceFilter === src.key
+                sourceFilters.has(src.key)
                   ? "bg-gold text-white border-gold"
                   : "bg-surface-50/80 text-text-600 border-surface-300/60 hover:border-gold/40"
               }`}

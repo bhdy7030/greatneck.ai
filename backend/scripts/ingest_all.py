@@ -34,13 +34,14 @@ from scrapers.ecode360 import scrape_village_codes, format_section_for_ingestion
 from scrapers.social import scrape_community, format_post_for_ingestion  # noqa: E402
 from scrapers.village_sites import scrape_village_site, village_subpage_urls  # noqa: E402
 from scrapers.events import scrape_all_events  # noqa: E402
+from scrapers.parkdistrict import scrape_park_district  # noqa: E402
 from db import init_db, upsert_event, cleanup_past_events  # noqa: E402
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
 logger = logging.getLogger(__name__)
 
 KNOWLEDGE_DIR = Path(__file__).resolve().parent.parent / "knowledge"
-VALID_SOURCES = {"codes", "sites", "community", "knowledge", "events", "all"}
+VALID_SOURCES = {"codes", "sites", "community", "knowledge", "events", "parkdistrict", "all"}
 MIN_CONTENT_LENGTH = 50
 
 
@@ -200,6 +201,31 @@ async def ingest_knowledge(dry_run: bool) -> dict:
     return {"source": "knowledge", "chunks": total_chunks}
 
 
+async def ingest_parkdistrict(dry_run: bool) -> dict:
+    """Scrape and ingest Great Neck Park District website pages."""
+    logger.info("[parkdistrict] Scraping gnparksny.gov...")
+    pages = await scrape_park_district()
+
+    total_chunks = 0
+    for page in pages:
+        if dry_run:
+            print(f"  [parkdistrict] {page.title} ({len(page.text)} chars) — {page.url}")
+            total_chunks += 1
+            continue
+
+        result = await ingest_document(
+            content=page.text,
+            source=f"Great Neck Park District — {page.title}",
+            village=None,
+            category="community",
+            url=page.url,
+        )
+        if result["status"] == "ok":
+            total_chunks += result["chunks"]
+
+    return {"source": "parkdistrict", "pages": len(pages), "chunks": total_chunks}
+
+
 async def ingest_events(dry_run: bool) -> dict:
     """Scrape and store upcoming events in SQLite events table."""
     from dataclasses import asdict
@@ -303,6 +329,9 @@ async def main():
 
     if run_all or "knowledge" in sources:
         results.append(await ingest_knowledge(args.dry_run))
+
+    if run_all or "parkdistrict" in sources:
+        results.append(await ingest_parkdistrict(args.dry_run))
 
     if run_all or "events" in sources:
         results.append(await ingest_events(args.dry_run))

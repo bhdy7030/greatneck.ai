@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import GreatNeckMap from "@/components/GreatNeckMap";
 import VillageSelector from "@/components/VillageSelector";
@@ -16,14 +16,20 @@ const ANIMATED_QUESTION_KEYS = [
   "landing.q.basement",
   "landing.q.noise",
   "landing.q.senior",
+  "landing.q.trash",
+  "landing.q.restaurants",
+  "landing.q.school",
+  "landing.q.tax",
+  "landing.q.park",
+  "landing.q.dog",
+  "landing.q.pool",
+  "landing.q.weekend",
+  "landing.q.ice",
+  "landing.q.recycle",
+  "landing.q.camp",
+  "landing.q.waterpark",
+  "landing.q.poolfee",
 ];
-
-const QUICK_CHIP_KEYS = [
-  "landing.chip.pool",
-  "landing.chip.spring",
-  "landing.chip.library",
-];
-
 
 export default function Home() {
   const router = useRouter();
@@ -34,6 +40,12 @@ export default function Home() {
   const stickyInputRef = useRef<HTMLInputElement>(null);
   const heroChatRef = useRef<HTMLDivElement>(null);
   const [chatPinned, setChatPinned] = useState(false);
+
+  // Pick 3 random chips from the animated questions pool (stable per mount)
+  const chipKeys = useMemo(() => {
+    const shuffled = [...ANIMATED_QUESTION_KEYS].sort(() => Math.random() - 0.5);
+    return shuffled.slice(0, 3);
+  }, []);
 
   // Check if village is already selected
   const [hasVillage, setHasVillage] = useState(false);
@@ -263,7 +275,7 @@ export default function Home() {
             {/* Quick chips */}
             {showChips && (
               <div className="flex flex-wrap justify-center gap-2 mt-3">
-                {QUICK_CHIP_KEYS.map((key, i) => (
+                {chipKeys.map((key, i) => (
                   <button
                     key={key}
                     onClick={() => navigateToChat(t(key))}

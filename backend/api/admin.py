@@ -277,3 +277,24 @@ async def delete_source(village: str, user: dict = Depends(require_admin)) -> di
         return {"status": "deleted", "village": village}
     except Exception as e:
         raise HTTPException(status_code=404, detail=f"Collection not found: {e}")
+
+
+@router.post("/ingest/parkdistrict")
+async def ingest_parkdistrict(user: dict = Depends(require_admin)) -> dict:
+    """Admin: scrape Great Neck Park District website and ingest into RAG."""
+    from scrapers.parkdistrict import scrape_park_district
+
+    pages = await scrape_park_district()
+    total_chunks = 0
+    for page in pages:
+        result = await ingest_document(
+            content=page.text,
+            source=f"Great Neck Park District — {page.title}",
+            village=None,
+            category="community",
+            url=page.url,
+        )
+        if result["status"] == "ok":
+            total_chunks += result["chunks"]
+
+    return {"status": "ok", "pages": len(pages), "chunks": total_chunks}

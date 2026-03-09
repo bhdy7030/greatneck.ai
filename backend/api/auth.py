@@ -225,13 +225,14 @@ async def apple_callback(request: Request):
     if not apple_key:
         raise HTTPException(status_code=400, detail="Apple JWKS key not found")
 
-    # Verify and decode
+    # Verify and decode (skip at_hash check — we don't need the access_token)
     claims = jwt.decode(
         id_token,
         apple_key,
         algorithms=["RS256"],
         audience=settings.apple_client_id,
         issuer="https://appleid.apple.com",
+        options={"verify_at_hash": False},
     )
 
     apple_sub = claims["sub"]
