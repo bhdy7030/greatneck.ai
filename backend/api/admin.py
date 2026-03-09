@@ -4,7 +4,7 @@ from __future__ import annotations
 import logging
 from typing import Annotated, Optional
 
-from fastapi import APIRouter, Depends, File, Form, UploadFile, HTTPException
+from fastapi import APIRouter, Depends, File, Form, Header, UploadFile, HTTPException
 from pydantic import BaseModel
 
 from rag.ingest import ingest_document, ingest_pdf
@@ -298,3 +298,60 @@ async def ingest_parkdistrict(user: dict = Depends(require_admin)) -> dict:
             total_chunks += result["chunks"]
 
     return {"status": "ok", "pages": len(pages), "chunks": total_chunks}
+
+
+@router.post("/ingest/refresh")
+async def refresh_rag(
+    x_cron_secret: str = Header(default="", alias="X-Cron-Secret"),
+):
+    """Cron: re-scrape and ingest RAG sources (community, parkdistrict, sites)."""
+    from config import settings
+
+    if not settings.cron_secret:
+        raise HTTPException(status_code=503, detail="Cron secret not configured")
+    if x_cron_secret != settings.cron_secret:
+        raise HTTPException(status_code=403, detail="Invalid cron secret")
+
+    from scrapers.parkdistrict import scrape_park_district
+    from scrapers.social import scrape_community, format_post_for_ingestion
+
+    results = {}
+
+    # Park District pages
+    try:
+        pages = await scrape_park_district()
+        chunks = 0
+        for page in pages:
+            r = await ingest_document(
+                content=page.text,
+                source=f"Great Neck Park District — {page.title}",
+                village=None, category="community", url=page.url,
+            )
+            if r["status"] == "ok":
+                chunks += r["chunks"]
+        results["parkdistrict"] = {"pages": len(pages), "chunks": chunks}
+    except Exception as e:
+        logger.error(f"[ingest:refresh] parkdistrict failed: {e}")
+        results["parkdistrict"] = {"error": str(e)}
+
+    # Community social (Reddit, Yelp, news)
+    try:
+        posts = await scrape_community()
+        ingested = 0
+        for post in posts:
+            content = format_post_for_ingestion(post)
+            if len(content) < 50:
+                continue
+            r = await ingest_document(
+                content=content,
+                source=post.source_type or "Community",
+                village=None, category="community", url=post.url,
+            )
+            if r["status"] == "ok":
+                ingested += 1
+        results["community"] = {"posts": len(posts), "ingested": ingested}
+    except Exception as e:
+        logger.error(f"[ingest:refresh] community failed: {e}")
+        results["community"] = {"error": str(e)}
+
+    return {"status": "ok", "results": results}
