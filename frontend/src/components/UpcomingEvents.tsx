@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getUpcomingEvents, type UpcomingEvent } from "@/lib/api";
 import { useLanguage } from "@/components/LanguageProvider";
@@ -138,8 +138,6 @@ export default function UpcomingEvents({ village }: Props) {
   const [activeFilter, setActiveFilter] = useState<string | null>(null);
   const [sourceFilters, setSourceFilters] = useState<Set<string>>(new Set());
   const [dateRange, setDateRange] = useState<DateRange>("all");
-  const nowRef = useRef<HTMLDivElement>(null);
-  const didScroll = useRef(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -165,40 +163,6 @@ export default function UpcomingEvents({ village }: Props) {
     };
   }, [village, language]);
 
-  // Auto-scroll to "Now" indicator once the events section enters the viewport
-  useEffect(() => {
-    if (loading || events.length === 0 || didScroll.current || !nowRef.current) return;
-    const el = nowRef.current;
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        // Fires when the now-line's parent section scrolls into view
-        if (entry.isIntersecting) return; // already visible, no need to scroll
-        didScroll.current = true;
-        observer.disconnect();
-        el.scrollIntoView({ behavior: "smooth", block: "center" });
-      },
-      { threshold: 0 }
-    );
-    // Observe a parent container — scroll only after user reaches the events area
-    const eventsSection = el.closest("[data-events-feed]");
-    if (eventsSection) {
-      const sectionObserver = new IntersectionObserver(
-        ([entry]) => {
-          if (!entry.isIntersecting || didScroll.current) return;
-          didScroll.current = true;
-          sectionObserver.disconnect();
-          setTimeout(() => {
-            el.scrollIntoView({ behavior: "smooth", block: "center" });
-          }, 300);
-        },
-        { threshold: 0.1 }
-      );
-      sectionObserver.observe(eventsSection);
-      return () => sectionObserver.disconnect();
-    }
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [loading, events]);
 
   if (loading) {
     return (
@@ -255,7 +219,7 @@ export default function UpcomingEvents({ village }: Props) {
   }
 
   return (
-    <div className="w-full max-w-2xl mx-auto mt-3 animate-fadeSlideUp" data-events-feed>
+    <div className="w-full max-w-2xl mx-auto mt-3 animate-fadeSlideUp">
       <h3 className="text-xs font-semibold text-text-500 uppercase tracking-wider mb-2 px-1">
         {t("events.upcoming")}
       </h3>
@@ -385,7 +349,7 @@ export default function UpcomingEvents({ village }: Props) {
                   return (
                     <div key={`${event.source}-${event.id}`}>
                       {showNowLine && (
-                        <div ref={nowRef} className="flex items-center gap-2 py-1.5 px-1">
+                        <div className="flex items-center gap-2 py-1.5 px-1">
                           <div className="w-2 h-2 rounded-full bg-red-400 shadow-sm shadow-red-400/50" />
                           <div className="flex-1 h-px bg-red-400/40" />
                           <span className="text-[10px] font-medium text-red-400 uppercase tracking-wider">
