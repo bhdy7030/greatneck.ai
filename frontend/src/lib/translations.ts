@@ -20,6 +20,7 @@ const translations: Record<string, Record<Lang, string>> = {
   // ── Events ──
   "events.upcoming": { en: "Upcoming Events", zh: "近期活动" },
   "events.noEvents": { en: "No events in this category", zh: "该分类暂无活动" },
+  "events.now": { en: "Now", zh: "现在" },
 
   // Event categories
   "events.cat.school": { en: "School", zh: "学校" },
@@ -28,7 +29,7 @@ const translations: Record<string, Record<Lang, string>> = {
   "events.cat.teens": { en: "Teens", zh: "青少年" },
   "events.cat.family": { en: "Family", zh: "家庭" },
   "events.cat.art": { en: "Art", zh: "艺术" },
-  "events.cat.entertainment": { en: "Entertainment", zh: "娱乐" },
+  "events.cat.entertainment": { en: "Art & Entertainment", zh: "艺术与娱乐" },
   "events.cat.food": { en: "Food", zh: "美食" },
   "events.cat.festival": { en: "Festival", zh: "节日" },
   "events.cat.health": { en: "Health", zh: "健康" },
@@ -54,6 +55,7 @@ const translations: Record<string, Record<Lang, string>> = {
   "events.filter.longisland": { en: "Long Island", zh: "长岛" },
   "events.filter.eventbrite": { en: "Eventbrite", zh: "Eventbrite" },
   "events.filter.parkdistrict": { en: "Park District", zh: "公园管理区" },
+  "events.filter.other": { en: "Other", zh: "其他" },
 
   // Date ranges
   "events.range.all": { en: "All", zh: "全部" },
