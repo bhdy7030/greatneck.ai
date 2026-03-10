@@ -278,17 +278,27 @@ async def _crawl_single(url: str) -> str:
 # Source 1: Patch.com Great Neck Calendar (Crawl4AI)
 # ---------------------------------------------------------------------------
 
-async def scrape_patch(limit: int = 20) -> list[ScrapedEvent]:
-    """Scrape upcoming events from Patch.com Great Neck calendar via Crawl4AI."""
+async def scrape_patch(limit: int = 40) -> list[ScrapedEvent]:
+    """Scrape upcoming events from Patch.com Great Neck calendar via Crawl4AI.
+    Crawls today through next Sunday to capture the full week ahead.
+    """
     events: list[ScrapedEvent] = []
-    url = "https://patch.com/new-york/greatneck/calendar"
 
-    markdown = await _crawl_single(url)
+    today = datetime.now()
+    today_str = today.strftime("%Y-%m-%d")
+    # Build list of date-specific URLs: today through next Sunday
+    days_until_sunday = (6 - today.weekday()) % 7 or 7  # at least 1 day ahead
+    urls = []
+    for offset in range(days_until_sunday + 1):
+        d = today + timedelta(days=offset)
+        urls.append(f"https://patch.com/new-york/greatneck/calendar?date={d.strftime('%Y-%m-%d')}")
+
+    pages = await _crawl_pages(urls)
+    # Merge all pages' markdown
+    markdown = "\n".join(md for md in pages.values() if md)
     if not markdown:
         logger.warning("[events:patch] No content from Crawl4AI")
         return events
-
-    today_str = datetime.now().strftime("%Y-%m-%d")
 
     # Patch markdown renders calendar events as list items:
     #   * [**Title**](https://patch.com/.../calendar/event/YYYYMMDD/...) 7:00 pm
@@ -653,7 +663,7 @@ LIBCAL_AJAX_URL = "https://greatnecklibrary.libcal.com/ajax/calendar/list"
 LIBCAL_CAL_ID = "20029"
 
 
-async def scrape_library(limit: int = 20) -> list[ScrapedEvent]:
+async def scrape_library(limit: int = 40) -> list[ScrapedEvent]:
     """Scrape upcoming events from Great Neck Library via LibCal AJAX API."""
     events: list[ScrapedEvent] = []
 
@@ -663,9 +673,14 @@ async def scrape_library(limit: int = 20) -> list[ScrapedEvent]:
             timeout=TIMEOUT,
             follow_redirects=True,
         ) as client:
+            # Fetch today through next Sunday to cover the week ahead
+            today = datetime.now()
+            days_until_sunday = (6 - today.weekday()) % 7 or 7
+            end_date = today + timedelta(days=days_until_sunday)
             resp = await client.get(LIBCAL_AJAX_URL, params={
                 "c": LIBCAL_CAL_ID,
-                "date": datetime.now().strftime("%Y-%m-%d"),
+                "date": today.strftime("%Y-%m-%d"),
+                "end": end_date.strftime("%Y-%m-%d"),
             })
             resp.raise_for_status()
             data = resp.json()
