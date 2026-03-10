@@ -3,18 +3,18 @@ type Lang = "en" | "zh";
 const translations: Record<string, Record<Lang, string>> = {
   // ── Landing page ──
   "welcome.location": { en: "Long Island, New York", zh: "纽约长岛" },
-  "welcome.title": { en: "our neighborhood, answered", zh: "我们的社区，有问必答" },
+  "welcome.title": { en: "our neighborhood, answered", zh: "家门口的事，问我就对了" },
   "welcome.subtitle": {
     en: "codes, permits, events & more.",
-    zh: "法规、许可、活动与更多。",
+    zh: "法规、许可、活动，一问便知。",
   },
   "welcome.selectVillage": {
     en: "Select your village to get started",
-    zh: "选择您的村庄以开始",
+    zh: "选择你的社区开始提问",
   },
   "welcome.disclaimer": {
     en: "Information provided is for reference only. Always verify with official village resources for legal or permit-related matters.",
-    zh: "所提供的信息仅供参考。有关法律或许可证相关事宜，请以官方村庄资源为准。",
+    zh: "以上信息仅供参考，涉及法律或许可事宜请以官方资料为准。",
   },
 
   // ── Events ──
@@ -114,16 +114,16 @@ const translations: Record<string, Record<Lang, string>> = {
   "landing.q.poolfee": { en: "How much is the pool membership fee?", zh: "泳池会员费多少钱？" },
 
   // ── Chat page ──
-  "chat.village": { en: "Village:", zh: "村庄：" },
+  "chat.village": { en: "Village:", zh: "社区：" },
   "chat.searchWeb": { en: "Search web:", zh: "网络搜索：" },
   "chat.webOff": { en: "Off", zh: "关闭" },
   "chat.webLimited": { en: "5 max", zh: "最多5条" },
   "chat.webUnlimited": { en: "No limit", zh: "无限制" },
-  "chat.changeVillage": { en: "Change village", zh: "更换村庄" },
-  "chat.howCanIHelp": { en: "How can I help?", zh: "有什么可以帮您？" },
+  "chat.changeVillage": { en: "Change village", zh: "换个社区" },
+  "chat.howCanIHelp": { en: "How can I help?", zh: "有什么想问的？" },
   "chat.emptySub": {
     en: "Ask about village codes, permit requirements, garbage schedules, snow removal rules, or anything about {village}.",
-    zh: "询问有关{village}的村庄法规、许可证要求、垃圾收集时间、除雪规定或其他任何问题。",
+    zh: "关于{village}的法规、许可、垃圾回收、除雪规定……什么都可以问。",
   },
   "chat.q1": {
     en: "What are the garbage pickup days?",
@@ -154,7 +154,7 @@ const translations: Record<string, Record<Lang, string>> = {
   "sidebar.newChat": { en: "New Chat", zh: "新对话" },
   "sidebar.signInPrompt": {
     en: "Sign in to save your conversations",
-    zh: "登录以保存您的对话记录",
+    zh: "登录后可以保存对话记录",
   },
   "sidebar.signInGoogle": {
     en: "Sign in with Google",
@@ -194,19 +194,19 @@ const translations: Record<string, Record<Lang, string>> = {
   // ── Tier / Usage ──
   "tier.trialExhaustedTitle": {
     en: "Want to keep going?",
-    zh: "想继续提问吗？",
+    zh: "还想继续问？",
   },
   "tier.trialExhaustedDesc": {
     en: "Each answer costs us real AI resources. We limit guest access so we can keep this available for the community. Get 10 more questions below, or sign in for unlimited access.",
-    zh: "每次回答都会消耗AI资源。我们限制访客使用量，以便为社区持续提供服务。点击下方获取10次额外提问，或登录以获得无限使用。",
+    zh: "每次回答都会消耗AI资源，为了让大家都能用，访客有提问次数限制。点下方可以多问10个，或者登录直接无限畅聊。",
   },
   "tier.mustSignInTitle": {
     en: "You're part of the neighborhood",
-    zh: "您是社区的一员",
+    zh: "你已经是咱社区的人了",
   },
   "tier.mustSignInDesc": {
     en: "Sign in to keep asking questions, save your conversations, and get the most out of your community assistant. It only takes a second.",
-    zh: "登录以继续提问、保存对话记录，并充分利用您的社区助手。只需一秒钟。",
+    zh: "登录就能继续提问、保存对话记录，一秒钟的事。",
   },
   "tier.getMoreQueries": {
     en: "Keep Asking",
@@ -234,15 +234,15 @@ const translations: Record<string, Record<Lang, string>> = {
   },
   "tier.promoBanner": {
     en: "Sponsor features active — {days} days remaining",
-    zh: "赞助者功能已激活 — 剩余 {days} 天",
+    zh: "赞助者功能已开启，还剩 {days} 天",
   },
   "tier.deepLocked": {
     en: "Deep mode is a sponsor feature",
-    zh: "深度模式为赞助者功能",
+    zh: "深度模式是赞助者专属功能",
   },
   "tier.unlimitedSearchLocked": {
     en: "Unlimited search is a sponsor feature",
-    zh: "无限搜索为赞助者功能",
+    zh: "无限搜索是赞助者专属功能",
   },
 
   // ── Email draft ──
