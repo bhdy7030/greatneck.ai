@@ -41,7 +41,7 @@ def _get_pg_pool():
         with _pg_pool_lock:
             if _pg_pool is None:
                 from psycopg2.pool import ThreadedConnectionPool
-                _pg_pool = ThreadedConnectionPool(2, 5, _DATABASE_URL)
+                _pg_pool = ThreadedConnectionPool(5, 20, _DATABASE_URL)
     return _pg_pool
 
 

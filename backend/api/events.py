@@ -12,6 +12,7 @@ from fastapi.responses import Response
 
 from config import settings
 from db import get_upcoming_events, get_event_by_id, upsert_event, cleanup_past_events, _exec_one
+from api.aio import run_sync
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +27,8 @@ async def list_events(
     lang: str = Query(default="en", description="Language code (en or zh)"),
 ):
     """Get upcoming events with waterfall fallback (village → area → longisland)."""
-    events = get_upcoming_events(
+    events = await run_sync(
+        get_upcoming_events,
         village=village or None,
         limit=limit,
         category=category or None,
@@ -55,17 +57,19 @@ async def event_calendar(event_id: str):
     """
     event = None
     # Try source_id first (stable across DB refreshes)
-    event = _exec_one(
+    event = await run_sync(
+        _exec_one,
         "SELECT * FROM events WHERE source_id=?",
         "SELECT * FROM events WHERE source_id=%s",
         (event_id,),
     )
     if not event and event_id.isdigit():
         # Fallback: legacy numeric DB id
-        event = get_event_by_id(int(event_id))
+        event = await run_sync(get_event_by_id, int(event_id))
     if not event:
         # Fallback: UUID from source URL
-        event = _exec_one(
+        event = await run_sync(
+            _exec_one,
             "SELECT * FROM events WHERE url LIKE ?",
             "SELECT * FROM events WHERE url LIKE %s",
             (f"%{event_id}%",),
@@ -143,12 +147,12 @@ async def refresh_events(
     upserted = 0
     for event in events:
         try:
-            upsert_event(asdict(event))
+            await run_sync(upsert_event, asdict(event))
             upserted += 1
         except Exception as e:
             logger.warning(f"[events:refresh] Failed to upsert '{event.title}': {e}")
 
-    cleanup_past_events()
+    await run_sync(cleanup_past_events)
 
     # Translate new/changed events to Chinese
     translated = 0

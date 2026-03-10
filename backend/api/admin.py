@@ -15,6 +15,7 @@ from db import (
     get_dau, get_daily_queries, get_tier_breakdown, get_total_users,
     get_top_agents, get_daily_token_usage, get_usage_by_role, get_usage_by_model,
 )
+from api.aio import run_sync
 
 logger = logging.getLogger(__name__)
 
@@ -27,16 +28,16 @@ async def get_metrics(user: dict = Depends(require_admin)) -> dict:
     """Return DAU, query volume, tier breakdown, and real token/cost metrics."""
     from datetime import date
 
-    dau = get_dau(30)
-    daily_queries = get_daily_queries(30)
-    tier_breakdown = get_tier_breakdown()
-    total_users = get_total_users()
-    top_agents = get_top_agents(7)
+    dau = await run_sync(get_dau, 30)
+    daily_queries = await run_sync(get_daily_queries, 30)
+    tier_breakdown = await run_sync(get_tier_breakdown)
+    total_users = await run_sync(get_total_users)
+    top_agents = await run_sync(get_top_agents, 7)
 
     # Real token usage from llm_usage table
-    daily_tokens = get_daily_token_usage(30)
-    usage_by_role = get_usage_by_role(7)
-    usage_by_model = get_usage_by_model(7)
+    daily_tokens = await run_sync(get_daily_token_usage, 30)
+    usage_by_role = await run_sync(get_usage_by_role, 7)
+    usage_by_model = await run_sync(get_usage_by_model, 7)
 
     today_str = date.today().isoformat()
     today_dau = next((d for d in dau if d["date"] == today_str), None)
@@ -86,6 +87,21 @@ def _resolve_models(provider: str) -> dict[str, str]:
 
 
 # --- Model configuration ---
+
+
+@router.get("/cache/stats")
+async def cache_stats(user: dict = Depends(require_admin)) -> dict:
+    """Return hit/miss stats for all cache layers."""
+    from cache import all_stats
+    return {"caches": all_stats()}
+
+
+@router.post("/cache/clear")
+async def cache_clear(user: dict = Depends(require_admin)) -> dict:
+    """Clear all caches (e.g., after knowledge re-ingestion)."""
+    from cache import clear_all
+    await run_sync(clear_all)
+    return {"ok": True}
 
 
 @router.get("/models")
@@ -234,11 +250,11 @@ async def upload_document_json(request: IngestRequest, user: dict = Depends(requ
 @router.get("/sources")
 async def list_sources(user: dict = Depends(require_admin)) -> list[dict]:
     """List all knowledge store collections with document counts."""
-    collections = _store.list_collections()
+    collections = await run_sync(_store.list_collections)
     result = []
     for name in collections:
         village_key = name if name != "shared" else None
-        stats = _store.get_stats(village=village_key)
+        stats = await run_sync(_store.get_stats, village=village_key)
         result.append({
             "name": name,
             "village": name,
@@ -253,12 +269,13 @@ async def list_sources(user: dict = Depends(require_admin)) -> list[dict]:
 @router.get("/stats")
 async def knowledge_stats(user: dict = Depends(require_admin)) -> dict:
     """Get overall knowledge base statistics."""
-    collections = _store.list_collections()
+    collections = await run_sync(_store.list_collections)
     per_collection = {}
     total = 0
     for name in collections:
         village_key = name if name != "shared" else None
-        count = _store.get_stats(village=village_key)["document_count"]
+        stats = await run_sync(_store.get_stats, village=village_key)
+        count = stats["document_count"]
         per_collection[name] = count
         total += count
     return {

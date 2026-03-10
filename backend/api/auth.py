@@ -18,6 +18,7 @@ from db import (
     create_refresh_token, validate_refresh_token, revoke_user_refresh_tokens,
 )
 from api.deps import get_current_user, require_admin
+from api.aio import run_sync
 
 router = APIRouter()
 
@@ -40,26 +41,26 @@ def _create_jwt(user_id: int) -> str:
     )
 
 
-def _finalize_login(user: dict, return_path: str) -> RedirectResponse:
+async def _finalize_login(user: dict, return_path: str) -> RedirectResponse:
     """Shared post-login logic: admin/pro grants, promo, mint tokens, redirect."""
     # Auto-grant admin for configured emails
     admin_list = [e.strip().lower() for e in settings.admin_emails.split(",") if e.strip()]
     if user.get("email", "").lower() in admin_list and not user.get("is_admin"):
-        user = update_user_permissions(user["id"], is_admin=1) or user
+        user = await run_sync(update_user_permissions, user["id"], is_admin=1) or user
 
     # Auto-grant pro tier for configured emails
     pro_list = [e.strip().lower() for e in settings.pro_emails.split(",") if e.strip()]
     if user.get("email", "").lower() in pro_list and user.get("tier") != "pro":
-        user = set_user_tier(user["id"], "pro") or user
+        user = await run_sync(set_user_tier, user["id"], "pro") or user
 
     # Set promo expiry for new free users (no promo set yet, not pro)
     if user.get("tier", "free") == "free" and not user.get("promo_expires_at") and settings.free_promo_days > 0:
         promo_exp = (datetime.now(timezone.utc) + timedelta(days=settings.free_promo_days)).isoformat()
-        user = set_promo_expiry(user["id"], promo_exp) or user
+        user = await run_sync(set_promo_expiry, user["id"], promo_exp) or user
 
     # Mint tokens
     access_token = _create_jwt(user["id"])
-    refresh_token = create_refresh_token(user["id"])
+    refresh_token = await run_sync(create_refresh_token, user["id"])
 
     # Redirect back to the page the user started login from
     rp = return_path if return_path.startswith("/") else "/chat/"
@@ -114,14 +115,15 @@ async def google_callback(code: str, state: str = "/chat/"):
             raise HTTPException(status_code=400, detail="Failed to fetch user info")
         userinfo = userinfo_resp.json()
 
-    user = upsert_user(
+    user = await run_sync(
+        upsert_user,
         google_id=userinfo["sub"],
         email=userinfo.get("email", ""),
         name=userinfo.get("name", ""),
         avatar_url=userinfo.get("picture", ""),
     )
 
-    return _finalize_login(user, state)
+    return await _finalize_login(user, state)
 
 
 # ── Apple Sign In ──
@@ -240,13 +242,14 @@ async def apple_callback(request: Request):
     if not email:
         raise HTTPException(status_code=400, detail="Apple did not provide email")
 
-    user = upsert_user_apple(
+    user = await run_sync(
+        upsert_user_apple,
         apple_id=apple_sub,
         email=email,
         name=apple_name,
     )
 
-    return _finalize_login(user, state)
+    return await _finalize_login(user, state)
 
 
 # ── User Info ──
@@ -273,7 +276,7 @@ async def get_me(user: dict = Depends(get_current_user)):
 async def get_users(user: dict = Depends(require_admin)):
     """List all users (admin only)."""
     from api.tier import resolve_tier
-    users = list_users()
+    users = await run_sync(list_users)
     return [
         {
             "id": u["id"],
@@ -298,7 +301,8 @@ async def set_user_permissions(
     user: dict = Depends(require_admin),
 ):
     """Update a user's permission flags (admin only)."""
-    updated = update_user_permissions(
+    updated = await run_sync(
+        update_user_permissions,
         user_id,
         is_admin=body.get("is_admin"),
         can_debug=body.get("can_debug"),
@@ -324,7 +328,7 @@ class RefreshRequest(BaseModel):
 @router.post("/auth/refresh")
 async def refresh_access_token(body: RefreshRequest):
     """Exchange a valid refresh token for a new access JWT."""
-    user = validate_refresh_token(body.refresh_token)
+    user = await run_sync(validate_refresh_token, body.refresh_token)
     if not user:
         raise HTTPException(status_code=401, detail="Invalid or expired refresh token")
     access_token = _create_jwt(user["id"])
@@ -334,9 +338,9 @@ async def refresh_access_token(body: RefreshRequest):
 @router.post("/auth/logout")
 async def logout_user(body: RefreshRequest):
     """Revoke all refresh tokens for the user."""
-    user = validate_refresh_token(body.refresh_token)
+    user = await run_sync(validate_refresh_token, body.refresh_token)
     if user:
-        revoke_user_refresh_tokens(user["id"])
+        await run_sync(revoke_user_refresh_tokens, user["id"])
     return {"ok": True}
 
 
@@ -356,7 +360,7 @@ async def set_user_tier_endpoint(
     """Admin: set a user's tier to 'free' (community) or 'pro' (sponsor)."""
     if body.tier not in ("free", "pro"):
         raise HTTPException(status_code=400, detail="Tier must be 'free' or 'pro'")
-    updated = set_user_tier(user_id, body.tier)
+    updated = await run_sync(set_user_tier, user_id, body.tier)
     if not updated:
         raise HTTPException(status_code=404, detail="User not found")
     return {"id": updated["id"], "email": updated["email"], "tier": updated.get("tier", "free")}
@@ -374,10 +378,10 @@ async def set_user_promo_endpoint(
 ):
     """Admin: set or extend a user's promo trial period."""
     if body.days <= 0:
-        updated = set_promo_expiry(user_id, None)
+        updated = await run_sync(set_promo_expiry, user_id, None)
     else:
         promo_exp = (datetime.now(timezone.utc) + timedelta(days=body.days)).isoformat()
-        updated = set_promo_expiry(user_id, promo_exp)
+        updated = await run_sync(set_promo_expiry, user_id, promo_exp)
     if not updated:
         raise HTTPException(status_code=404, detail="User not found")
     return {"id": updated["id"], "email": updated["email"], "promo_expires_at": updated.get("promo_expires_at")}

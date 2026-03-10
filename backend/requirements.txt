@@ -16,3 +16,4 @@ google-auth>=2.29.0
 google-auth-oauthlib>=1.2.0
 crawl4ai>=0.8.0
 psycopg2-binary>=2.9.9
+redis>=5.0.0

@@ -5,6 +5,7 @@ from fastapi import Depends, Header, HTTPException
 from jose import jwt, JWTError
 from config import settings
 from db import get_user_by_id
+from api.aio import run_sync
 
 
 async def get_current_user(authorization: str = Header(...)) -> dict:
@@ -15,7 +16,7 @@ async def get_current_user(authorization: str = Header(...)) -> dict:
         user_id = payload.get("sub")
         if user_id is None:
             raise HTTPException(status_code=401, detail="Invalid token")
-        user = get_user_by_id(int(user_id))
+        user = await run_sync(get_user_by_id, int(user_id))
         if user is None:
             raise HTTPException(status_code=401, detail="User not found")
         return user
@@ -49,6 +50,6 @@ async def get_optional_user(authorization: str | None = Header(default=None)) ->
         user_id = payload.get("sub")
         if user_id is None:
             return None
-        return get_user_by_id(int(user_id))
+        return await run_sync(get_user_by_id, int(user_id))
     except JWTError:
         return None

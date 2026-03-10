@@ -18,6 +18,7 @@ from db import (
     link_invite_to_user,
 )
 from api.deps import get_current_user, get_optional_user, require_admin
+from api.aio import run_sync
 
 router = APIRouter(prefix="/invite", tags=["invite"])
 
@@ -61,7 +62,7 @@ async def invite_status(
 @router.post("/verify")
 async def verify_code(body: CodeRequest):
     """Check if a code is valid (doesn't consume it)."""
-    invite = get_invite_by_code(body.code.strip().upper())
+    invite = await run_sync(get_invite_by_code, body.code.strip().upper())
     if not invite:
         raise HTTPException(status_code=404, detail="Invalid invite code")
     if invite.get("redeemed_at"):
@@ -76,20 +77,20 @@ async def redeem_code(
 ):
     """Redeem an invite code, linking it to a session and optional user."""
     code = body.code.strip().upper()
-    invite = get_invite_by_code(code)
+    invite = await run_sync(get_invite_by_code, code)
     if not invite:
         raise HTTPException(status_code=404, detail="Invalid invite code")
     if invite.get("redeemed_at"):
         raise HTTPException(status_code=410, detail="Invite code already used")
 
     user_id = user["id"] if user else None
-    result = redeem_invite(code, body.session_id, user_id)
+    result = await run_sync(redeem_invite, code, body.session_id, user_id)
     if not result:
         raise HTTPException(status_code=410, detail="Invite code already used")
 
     # If user is logged in, also mark them as invited
     if user:
-        mark_user_invited(user["id"])
+        await run_sync(mark_user_invited, user["id"])
 
     return {"ok": True, "code": code}
 
@@ -100,11 +101,11 @@ async def link_code(
     user: dict = Depends(get_current_user),
 ):
     """Link a session's redeemed invite to the logged-in user account."""
-    linked = link_invite_to_user(body.session_id, user["id"])
+    linked = await run_sync(link_invite_to_user, body.session_id, user["id"])
     if not linked:
         # No unlinked invite for this session — just mark user as invited anyway
         # (they may have signed in on a device where they already had access)
-        mark_user_invited(user["id"])
+        await run_sync(mark_user_invited, user["id"])
     return {"ok": True}
 
 
@@ -112,14 +113,14 @@ async def link_code(
 async def generate_code(user: dict = Depends(get_current_user)):
     """Generate a new invite code. Non-admins limited to invite_limit_per_user."""
     if not user.get("is_admin"):
-        count = count_invites_by_user(user["id"])
+        count = await run_sync(count_invites_by_user, user["id"])
         if count >= settings.invite_limit_per_user:
             raise HTTPException(
                 status_code=403,
                 detail=f"Invite limit reached ({settings.invite_limit_per_user})",
             )
     code = _generate_code()
-    invite = create_invite(code, user["id"])
+    invite = await run_sync(create_invite, code, user["id"])
     return {
         "code": invite["code"],
         "created_at": invite.get("created_at"),
@@ -129,7 +130,7 @@ async def generate_code(user: dict = Depends(get_current_user)):
 @router.get("/mine")
 async def my_invites(user: dict = Depends(get_current_user)):
     """List the current user's invites and remaining count."""
-    invites = list_invites_by_user(user["id"])
+    invites = await run_sync(list_invites_by_user, user["id"])
     count = len(invites)
     is_admin = bool(user.get("is_admin"))
     limit = None if is_admin else settings.invite_limit_per_user
@@ -153,7 +154,7 @@ async def my_invites(user: dict = Depends(get_current_user)):
 @router.get("/all")
 async def all_invites(user: dict = Depends(require_admin)):
     """Admin: list all invites with creator/redeemer details."""
-    invites = list_all_invites()
+    invites = await run_sync(list_all_invites)
     return [
         {
             "id": inv["id"],

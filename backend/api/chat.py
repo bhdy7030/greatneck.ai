@@ -5,7 +5,6 @@ import asyncio
 import json as _json
 import logging
 import re
-import time
 from typing import Any, AsyncGenerator
 
 from fastapi import APIRouter, Depends, Header, Request
@@ -26,6 +25,7 @@ from knowledge.registry import lookup_and_format as registry_lookup
 from config import settings
 from api.deps import get_optional_user
 from api.tier import resolve_tier, get_tier_features
+from api.aio import run_sync
 from db import (
     add_message,
     get_messages,
@@ -42,7 +42,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
-def _enforce_tier(request: "ChatRequest", user: dict | None, session_id: str | None) -> dict | None:
+async def _enforce_tier(request: "ChatRequest", user: dict | None, session_id: str | None) -> dict | None:
     """Apply tier-based limits. Returns an error dict if blocked, None if allowed.
 
     Also mutates request to server-enforce fast_mode and web_search_mode.
@@ -61,7 +61,7 @@ def _enforce_tier(request: "ChatRequest", user: dict | None, session_id: str | N
         if not session_id:
             return {"code": "missing_session", "message": "Session ID required"}
 
-        usage = get_or_create_usage(session_id)
+        usage = await run_sync(get_or_create_usage, session_id)
         query_count = usage["query_count"]
         initial = settings.anon_initial_queries
         extended = settings.anon_extended_queries
@@ -78,11 +78,11 @@ def _enforce_tier(request: "ChatRequest", user: dict | None, session_id: str | N
                 return {"code": "must_sign_in", "message": "Guest queries used up. Sign in with Google for unlimited community access."}
 
         # Increment usage count
-        increment_usage(session_id)
+        await run_sync(increment_usage, session_id)
     elif user and session_id:
         # Track usage for logged-in users too (analytics)
-        usage = get_or_create_usage(session_id, user_id=user["id"])
-        increment_usage(session_id)
+        await run_sync(get_or_create_usage, session_id, user_id=user["id"])
+        await run_sync(increment_usage, session_id)
 
     return None
 
@@ -120,20 +120,20 @@ class ChatResponse(BaseModel):
     conversation_id: str | None = None
 
 
-def _load_db_history(conversation_id: str) -> list[dict]:
+async def _load_db_history(conversation_id: str) -> list[dict]:
     """Load chat history from DB for a conversation."""
-    msgs = get_messages(conversation_id)
+    msgs = await run_sync(get_messages, conversation_id)
     return [{"role": m["role"], "content": m["content"]} for m in msgs]
 
 
-def _auto_title(conversation_id: str, message: str):
+async def _auto_title(conversation_id: str, message: str):
     """Set conversation title from first user message."""
-    convo = get_conversation(conversation_id)
+    convo = await run_sync(get_conversation, conversation_id)
     if convo and convo["title"] == "New conversation":
         title = message[:50].strip()
         if len(message) > 50:
             title += "..."
-        update_conversation_title(conversation_id, title)
+        await run_sync(update_conversation_title, conversation_id, title)
 
 
 @router.post("/chat", response_model=ChatResponse)
@@ -148,29 +148,30 @@ async def chat(
         request._session_id = x_session_id or ""
 
         # Tier enforcement
-        block = _enforce_tier(request, user, x_session_id)
+        block = await _enforce_tier(request, user, x_session_id)
         if block:
             return ChatResponse(response=block["message"], sources=[], agent_used="tier_gate")
 
         # If authenticated with conversation_id, load history from DB
         if user and request.conversation_id:
-            convo = get_conversation(request.conversation_id)
+            convo = await run_sync(get_conversation, request.conversation_id)
             if convo and convo["user_id"] == user["id"]:
-                request.history = _load_db_history(request.conversation_id)
-                add_message(request.conversation_id, "user", request.message, request.image_base64)
-                _auto_title(request.conversation_id, request.message)
+                request.history = await _load_db_history(request.conversation_id)
+                await run_sync(add_message, request.conversation_id, "user", request.message, request.image_base64)
+                await _auto_title(request.conversation_id, request.message)
         elif user and not request.conversation_id:
             # Auto-create conversation
-            convo = create_conversation(user["id"], request.village, request.message[:50] or "New conversation")
+            convo = await run_sync(create_conversation, user["id"], request.village, request.message[:50] or "New conversation")
             request.conversation_id = convo["id"]
-            add_message(request.conversation_id, "user", request.message, request.image_base64)
+            await run_sync(add_message, request.conversation_id, "user", request.message, request.image_base64)
 
         result = await _handle_chat(request)
         result.conversation_id = request.conversation_id
 
         # Save assistant response
         if user and request.conversation_id:
-            add_message(
+            await run_sync(
+                add_message,
                 request.conversation_id, "assistant", result.response,
                 sources=result.sources if result.sources else None,
                 agent_used=result.agent_used,
@@ -195,7 +196,7 @@ async def chat_stream(
 ):
     """Streaming chat endpoint. Emits SSE events for each pipeline step."""
     # Tier enforcement
-    block = _enforce_tier(request, user, x_session_id)
+    block = await _enforce_tier(request, user, x_session_id)
     if block:
         async def _blocked_stream():
             yield _sse_event("error", {"message": block["message"], "code": block["code"]})
@@ -207,15 +208,15 @@ async def chat_stream(
 
     # If authenticated with conversation_id, load history from DB and save user message
     if user and request.conversation_id:
-        convo = get_conversation(request.conversation_id)
+        convo = await run_sync(get_conversation, request.conversation_id)
         if convo and convo["user_id"] == user["id"]:
-            request.history = _load_db_history(request.conversation_id)
-            add_message(request.conversation_id, "user", request.message, request.image_base64)
-            _auto_title(request.conversation_id, request.message)
+            request.history = await _load_db_history(request.conversation_id)
+            await run_sync(add_message, request.conversation_id, "user", request.message, request.image_base64)
+            await _auto_title(request.conversation_id, request.message)
     elif user and not request.conversation_id:
-        convo = create_conversation(user["id"], request.village, request.message[:50] or "New conversation")
+        convo = await run_sync(create_conversation, user["id"], request.village, request.message[:50] or "New conversation")
         request.conversation_id = convo["id"]
-        add_message(request.conversation_id, "user", request.message, request.image_base64)
+        await run_sync(add_message, request.conversation_id, "user", request.message, request.image_base64)
 
     # Stash session_id on request for metrics context
     request._session_id = x_session_id or ""
@@ -250,46 +251,8 @@ def _friendly_error(e: Exception) -> str:
     return "Something went wrong. Please try again in a moment."
 
 
-# ── Event response cache ──
-# When users click event cards, every click generates the identical query.
-# Cache the first LLM response (summary) keyed by event ID to avoid
-# redundant pipeline runs. TTL = 6 hours (events don't change).
-_EVENT_CACHE: dict[tuple[int, str], tuple[float, dict]] = {}  # (event_id, lang) → (timestamp, response_data)
-_EVENT_CACHE_TTL = 6 * 3600  # 6 hours
-
-_EVENT_ID_RE = re.compile(r"Event ID:\s*(\d+)")
 
 
-def _get_cached_event_response(message: str, language: str) -> dict | None:
-    """Check if this is an event detail query with a cached response."""
-    m = _EVENT_ID_RE.search(message)
-    if not m:
-        return None
-    key = (int(m.group(1)), language)
-    entry = _EVENT_CACHE.get(key)
-    if not entry:
-        return None
-    ts, data = entry
-    if time.time() - ts > _EVENT_CACHE_TTL:
-        del _EVENT_CACHE[key]
-        return None
-    return data
-
-
-def _cache_event_response(message: str, language: str, response: str, sources: list, agent_used: str):
-    """Cache the response for an event detail query."""
-    m = _EVENT_ID_RE.search(message)
-    if not m:
-        return
-    # Only cache the first response (summary), not follow-ups
-    if "Tell me about this event:" not in message:
-        return
-    key = (int(m.group(1)), language)
-    _EVENT_CACHE[key] = (time.time(), {
-        "response": response,
-        "sources": sources,
-        "agent_used": agent_used,
-    })
 
 
 async def _handle_chat_stream(request: ChatRequest, user: dict | None = None) -> AsyncGenerator[str, None]:
@@ -304,15 +267,18 @@ async def _handle_chat_stream(request: ChatRequest, user: dict | None = None) ->
         conversation_id=request.conversation_id or '',
     )
 
-    # Check event response cache — skip entire pipeline if hit
-    # Only for first message (no history = user just clicked the event card)
-    if not request.history:
-        cached = _get_cached_event_response(request.message, request.language)
+    # ── Cache checks (first message only, no image) ──
+    _is_cacheable = not request.history and not request.image_base64
+
+    if _is_cacheable:
+        # 1) Event response cache (exact match by event ID, Redis-backed)
+        from cache.events import get_cached_event_response
+        cached = await run_sync(get_cached_event_response, request.message, request.language)
         if cached:
-            # Save to conversation DB if logged in
             if user and request.conversation_id:
-                add_message(request.conversation_id, "user", request.message)
-                add_message(
+                await run_sync(add_message, request.conversation_id, "user", request.message)
+                await run_sync(
+                    add_message,
                     request.conversation_id, "assistant", cached["response"],
                     sources=cached["sources"] if cached["sources"] else None,
                     agent_used=cached["agent_used"],
@@ -323,6 +289,28 @@ async def _handle_chat_stream(request: ChatRequest, user: dict | None = None) ->
                 "response": cached["response"],
                 "sources": cached["sources"],
                 "agent_used": cached["agent_used"],
+                "conversation_id": request.conversation_id,
+            })
+            return
+
+        # 2) Semantic response cache (paraphrase-aware, ChromaDB + Redis)
+        from cache import semantic as semantic_cache
+        sem_cached = await run_sync(
+            semantic_cache.get, request.message, request.village, request.language,
+            fast_mode=request.fast_mode, web_search_mode=request.web_search_mode,
+        )
+        if sem_cached:
+            if user and request.conversation_id:
+                await run_sync(
+                    add_message,
+                    request.conversation_id, "assistant", sem_cached["response"],
+                    sources=sem_cached.get("sources") or None,
+                    agent_used=sem_cached.get("agent_used", "cached"),
+                )
+            yield _sse_event("step", {"stage": "router", "status": "done", "label": "Understood"})
+            yield _sse_event("step", {"stage": "specialist", "status": "done", "label": "Found answer"})
+            yield _sse_event("response", {
+                **sem_cached,
                 "conversation_id": request.conversation_id,
             })
             return
@@ -395,7 +383,8 @@ async def _handle_chat_stream(request: ChatRequest, user: dict | None = None) ->
 
             # Save to DB
             if user and request.conversation_id:
-                add_message(
+                await run_sync(
+                    add_message,
                     request.conversation_id, "assistant", combined,
                     sources=sources if sources else None,
                     agent_used=used,
@@ -440,7 +429,7 @@ async def _handle_chat_stream(request: ChatRequest, user: dict | None = None) ->
         if agent_name == "off_topic":
             off_topic_resp = _build_off_topic_response()
             if user and request.conversation_id:
-                add_message(request.conversation_id, "assistant", off_topic_resp, agent_used="router")
+                await run_sync(add_message, request.conversation_id, "assistant", off_topic_resp, agent_used="router")
             yield _sse_event("response", {
                 "response": off_topic_resp,
                 "sources": [],
@@ -459,8 +448,8 @@ async def _handle_chat_stream(request: ChatRequest, user: dict | None = None) ->
         # (permits, jurisdiction hierarchy, etc.) is always available
         from rag.store import KnowledgeStore
         _rag_store = KnowledgeStore()
-        rag_results = _rag_store.search(refined_query, village=request.village or None, n_results=3)
-        shared_results = _rag_store.search(refined_query, village=None, n_results=3)
+        rag_results = await run_sync(_rag_store.search, refined_query, village=request.village or None, n_results=3)
+        shared_results = await run_sync(_rag_store.search, refined_query, village=None, n_results=3)
         all_rag = rag_results + shared_results
         # Filter by relevance
         all_rag = [r for r in all_rag if (r.get("distance") or 0) <= 1.2]
@@ -631,7 +620,7 @@ async def _handle_chat_stream(request: ChatRequest, user: dict | None = None) ->
             if verdict.decision == "insufficient":
                 insufficient_resp = _build_insufficient_response(request.message, request.village)
                 if user and request.conversation_id:
-                    add_message(request.conversation_id, "assistant", insufficient_resp, agent_used=agent_name)
+                    await run_sync(add_message, request.conversation_id, "assistant", insufficient_resp, agent_used=agent_name)
                 yield _sse_event("response", {
                     "response": insufficient_resp,
                     "sources": [],
@@ -645,14 +634,25 @@ async def _handle_chat_stream(request: ChatRequest, user: dict | None = None) ->
 
         # Save assistant response to DB
         if user and request.conversation_id:
-            add_message(
+            await run_sync(
+                add_message,
                 request.conversation_id, "assistant", agent_response.content,
                 sources=sources if sources else None,
                 agent_used=agent_name,
             )
 
-        # Cache event detail responses for subsequent clicks
-        _cache_event_response(request.message, request.language, agent_response.content, sources, agent_name)
+        # Cache event detail responses for subsequent clicks (Redis-backed)
+        from cache.events import cache_event_response
+        await run_sync(cache_event_response, request.message, request.language, agent_response.content, sources, agent_name)
+
+        # Store in semantic cache for future paraphrase hits
+        if _is_cacheable:
+            from cache import semantic as semantic_cache
+            _sem_data = {"response": agent_response.content, "sources": sources, "agent_used": agent_name}
+            await run_sync(
+                semantic_cache.put, request.message, request.village, request.language, _sem_data,
+                fast_mode=request.fast_mode, web_search_mode=request.web_search_mode,
+            )
 
         yield _sse_event("response", {
             "response": agent_response.content,
@@ -676,6 +676,21 @@ async def _handle_chat(request: ChatRequest) -> ChatResponse:
         session_id=getattr(request, '_session_id', ''),
         conversation_id=request.conversation_id or '',
     )
+
+    # Semantic cache check (first message only, no image)
+    _is_cacheable = not request.history and not request.image_base64
+    if _is_cacheable:
+        from cache import semantic as semantic_cache
+        sem_cached = await run_sync(
+            semantic_cache.get, request.message, request.village, request.language,
+            fast_mode=request.fast_mode, web_search_mode=request.web_search_mode,
+        )
+        if sem_cached:
+            return ChatResponse(
+                response=sem_cached["response"],
+                sources=sem_cached.get("sources", []),
+                agent_used=sem_cached.get("agent_used", "cached"),
+            )
 
     context: dict[str, Any] = {
         "village": request.village,
@@ -733,6 +748,7 @@ async def _handle_chat(request: ChatRequest) -> ChatResponse:
     # Standard text-only flow: Router → Planner → Specialist → Critic
     debug: dict[str, Any] = {}
 
+    # Router
     routing = await _router_agent.run(request.message, context=context)
     agent_name = routing.get("agent", "general")
     refined_query = routing.get("refined_query", request.message)
@@ -855,18 +871,29 @@ async def _handle_chat(request: ChatRequest) -> ChatResponse:
                 pipeline_debug=debug,
             )
 
-    return ChatResponse(
+    result = ChatResponse(
         response=agent_response.content,
         sources=_extract_sources(agent_response),
         agent_used=agent_name,
         pipeline_debug=debug,
     )
 
+    # Store in semantic cache
+    if _is_cacheable:
+        from cache import semantic as semantic_cache
+        _sem_data = {"response": result.response, "sources": result.sources, "agent_used": result.agent_used}
+        await run_sync(
+            semantic_cache.put, request.message, request.village, request.language, _sem_data,
+            fast_mode=request.fast_mode, web_search_mode=request.web_search_mode,
+        )
+
+    return result
+
 
 @router.post("/chat/extend-trial")
 async def extend_trial(x_session_id: str = Header(...)):
     """One-click extended trial for anonymous users."""
-    success = claim_extended_trial(x_session_id)
+    success = await run_sync(claim_extended_trial, x_session_id)
     if not success:
         return {"ok": False, "message": "Already extended or session not found"}
     return {"ok": True, "message": "Extended trial activated"}
@@ -897,7 +924,7 @@ async def get_usage(
             result["promo_expires_at"] = user["promo_expires_at"]
 
     if session_id:
-        usage = get_or_create_usage(session_id, user_id=user["id"] if user else None)
+        usage = await run_sync(get_or_create_usage, session_id, user_id=user["id"] if user else None)
         result["queries_used"] = usage["query_count"]
 
         if tier == "anonymous":

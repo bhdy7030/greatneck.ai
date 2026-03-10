@@ -52,6 +52,16 @@ def get_tools_for_agent(tool_names: list[str]) -> list[Tool]:
 
 async def execute_tool(name: str, arguments: dict[str, Any]) -> str:
     """Execute a tool by name with given arguments. Returns string result."""
+    from cache import tool_cache, make_key, CACHEABLE_TOOLS
+
+    # Check tool result cache for deterministic tools
+    use_cache = name in CACHEABLE_TOOLS
+    if use_cache:
+        cache_key = make_key("tool", name, arguments)
+        cached = tool_cache.get(cache_key)
+        if cached is not None:
+            return cached
+
     t = _TOOLS.get(name)
     if not t:
         return json.dumps({"error": f"Unknown tool: {name}"})
@@ -60,8 +70,13 @@ async def execute_tool(name: str, arguments: dict[str, Any]) -> str:
         if inspect.isawaitable(result):
             result = await result
         if isinstance(result, str):
+            if use_cache:
+                tool_cache.set(cache_key, result)
             return result
-        return json.dumps(result, default=str)
+        dumped = json.dumps(result, default=str)
+        if use_cache:
+            tool_cache.set(cache_key, dumped)
+        return dumped
     except Exception as e:
         return json.dumps({"error": str(e)})
 

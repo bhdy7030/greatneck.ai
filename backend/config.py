@@ -77,6 +77,10 @@ class Settings(BaseSettings):
     # Database (empty = SQLite fallback, set = PostgreSQL)
     database_url: str = ""
 
+    # Redis (any provider — Upstash, GCP Memorystore, local Docker, etc.)
+    redis_url: str = ""  # e.g. redis://localhost:6379 or rediss://default:token@host:6379
+    redis_prefix: str = ""  # e.g. "dev:" or "prod:" — isolates environments sharing one Redis
+
     # Invite system
     invite_required: bool = True          # env INVITE_REQUIRED=false to disable
     invite_limit_per_user: int = 5        # max invites per non-admin

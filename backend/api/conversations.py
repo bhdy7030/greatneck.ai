@@ -5,6 +5,7 @@ from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 
 from api.deps import get_current_user
+from api.aio import run_sync
 from db import (
     create_conversation,
     list_conversations,
@@ -28,7 +29,7 @@ class RenameConversationRequest(BaseModel):
 @router.get("/conversations")
 async def list_convos(user: dict = Depends(get_current_user)):
     """List all conversations for the current user."""
-    convos = list_conversations(user["id"])
+    convos = await run_sync(list_conversations, user["id"])
     return [
         {
             "id": c["id"],
@@ -45,17 +46,17 @@ async def list_convos(user: dict = Depends(get_current_user)):
 @router.post("/conversations")
 async def create_convo(body: CreateConversationRequest, user: dict = Depends(get_current_user)):
     """Create a new conversation."""
-    convo = create_conversation(user["id"], body.village)
+    convo = await run_sync(create_conversation, user["id"], body.village)
     return convo
 
 
 @router.get("/conversations/{conversation_id}")
 async def get_convo(conversation_id: str, user: dict = Depends(get_current_user)):
     """Get a conversation with its messages. Ownership check."""
-    convo = get_conversation(conversation_id)
+    convo = await run_sync(get_conversation, conversation_id)
     if not convo or convo["user_id"] != user["id"]:
         raise HTTPException(status_code=404, detail="Conversation not found")
-    messages = get_messages(conversation_id)
+    messages = await run_sync(get_messages, conversation_id)
     return {
         **convo,
         "messages": [
@@ -80,18 +81,18 @@ async def rename_convo(
     user: dict = Depends(get_current_user),
 ):
     """Rename a conversation."""
-    convo = get_conversation(conversation_id)
+    convo = await run_sync(get_conversation, conversation_id)
     if not convo or convo["user_id"] != user["id"]:
         raise HTTPException(status_code=404, detail="Conversation not found")
-    update_conversation_title(conversation_id, body.title)
+    await run_sync(update_conversation_title, conversation_id, body.title)
     return {"ok": True}
 
 
 @router.delete("/conversations/{conversation_id}")
 async def delete_convo(conversation_id: str, user: dict = Depends(get_current_user)):
     """Delete a conversation (CASCADE removes messages)."""
-    convo = get_conversation(conversation_id)
+    convo = await run_sync(get_conversation, conversation_id)
     if not convo or convo["user_id"] != user["id"]:
         raise HTTPException(status_code=404, detail="Conversation not found")
-    delete_conversation(conversation_id)
+    await run_sync(delete_conversation, conversation_id)
     return {"ok": True}

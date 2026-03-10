@@ -45,8 +45,9 @@ if $DO_BACKEND; then
   gcloud run deploy askmura-backend \
     --image "$IMAGE_BASE/backend" \
     --region "$REGION" --quiet \
-    --update-secrets="APPLE_CLIENT_ID=APPLE_CLIENT_ID:latest,APPLE_TEAM_ID=APPLE_TEAM_ID:latest,APPLE_KEY_ID=APPLE_KEY_ID:latest,APPLE_PRIVATE_KEY=APPLE_PRIVATE_KEY:latest" \
-    --update-env-vars="APPLE_REDIRECT_URI=https://greatneck.ai/api/auth/apple/callback"
+    --memory 1Gi \
+    --update-secrets="APPLE_CLIENT_ID=APPLE_CLIENT_ID:latest,APPLE_TEAM_ID=APPLE_TEAM_ID:latest,APPLE_KEY_ID=APPLE_KEY_ID:latest,APPLE_PRIVATE_KEY=APPLE_PRIVATE_KEY:latest,REDIS_URL=REDIS_URL:latest" \
+    --update-env-vars="APPLE_REDIRECT_URI=https://greatneck.ai/api/auth/apple/callback,REDIS_PREFIX=prod:"
   echo "  ✓ Backend updated"
 fi
 

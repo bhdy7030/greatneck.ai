@@ -117,7 +117,8 @@ class MetricsCollector:
 
         try:
             from db import batch_insert_usage
-            batch_insert_usage(batch)
+            from api.aio import run_sync
+            await run_sync(batch_insert_usage, batch)
         except Exception:
             logger.exception("Failed to flush %d metrics records", len(batch))
             # Put them back for retry (prepend to front)
