@@ -267,8 +267,9 @@ async def _handle_chat_stream(request: ChatRequest, user: dict | None = None) ->
         conversation_id=request.conversation_id or '',
     )
 
-    # ── Cache checks (first message only, no image) ──
-    _is_cacheable = not request.history and not request.image_base64
+    # ── Cache: skip for images; allow even with history (standalone questions
+    # like "What are the zoning rules?" are cacheable regardless of context) ──
+    _is_cacheable = not request.image_base64
 
     if _is_cacheable:
         # 1) Event response cache (exact match by event ID, Redis-backed)
@@ -677,8 +678,8 @@ async def _handle_chat(request: ChatRequest) -> ChatResponse:
         conversation_id=request.conversation_id or '',
     )
 
-    # Semantic cache check (first message only, no image)
-    _is_cacheable = not request.history and not request.image_base64
+    # Semantic cache check (skip for images only)
+    _is_cacheable = not request.image_base64
     if _is_cacheable:
         from cache import semantic as semantic_cache
         sem_cached = await run_sync(

@@ -23,7 +23,7 @@ import uuid
 
 logger = logging.getLogger(__name__)
 
-COLLECTION_NAME = "_response_cache"
+COLLECTION_NAME = "response-cache"
 # Cosine distance threshold: 0 = identical, 0.12 ≈ 0.88 similarity
 SIMILARITY_THRESHOLD = 0.12
 CACHE_TTL = 6 * 3600  # 6 hours
@@ -148,13 +148,19 @@ def put(
     web_search_mode: str = "limited",
 ):
     """Cache a pipeline response for future semantic matches."""
+    doc_id = str(uuid.uuid4())
+
+    # Store response data in Redis first (always succeeds if Redis is up)
+    from cache.redis_client import redis_set
+    redis_set(f"{_REDIS_PREFIX}{doc_id}", response_data, ttl=CACHE_TTL)
+
+    # Store embedding in ChromaDB for semantic lookup
     try:
         collection = _get_collection()
 
         if collection.count() >= MAX_ENTRIES:
             _evict(collection)
 
-        doc_id = str(uuid.uuid4())
         collection.add(
             documents=[query],
             metadatas=[{
@@ -166,17 +172,13 @@ def put(
             }],
             ids=[doc_id],
         )
-
-        # Store response data in Redis with TTL
-        from cache.redis_client import redis_set
-        redis_set(f"{_REDIS_PREFIX}{doc_id}", response_data, ttl=CACHE_TTL)
-
-        logger.info(
-            "Semantic cache STORE (village=%s, lang=%s, fast=%s, ws=%s, q=%.60s)",
-            village, language, fast_mode, web_search_mode, query,
-        )
     except Exception:
-        logger.exception("Semantic cache put error")
+        logger.exception("Semantic cache ChromaDB error (Redis data still stored)")
+
+    logger.info(
+        "Semantic cache STORE (village=%s, lang=%s, fast=%s, ws=%s, q=%.60s)",
+        village, language, fast_mode, web_search_mode, query,
+    )
 
 
 def _evict(collection, count: int = 50):
