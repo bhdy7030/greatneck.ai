@@ -13,6 +13,17 @@ export default function HeaderAuth() {
   const [showInviteManager, setShowInviteManager] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
+  // Nudge: show dot badge after 3+ chat sessions
+  const [showNudge, setShowNudge] = useState(false);
+  useEffect(() => {
+    if (!user) return;
+    const count = parseInt(localStorage.getItem("gn_chat_count") || "0", 10);
+    const nudgeSeen = localStorage.getItem("gn_invite_nudge_seen");
+    if (count >= 3 && !nudgeSeen) {
+      setShowNudge(true);
+    }
+  }, [user]);
+
   // Close menu on outside click
   useEffect(() => {
     if (!showMenu) return;
@@ -74,17 +85,6 @@ export default function HeaderAuth() {
       </div>
     );
   }
-
-  // Nudge: show dot badge after 3+ chat sessions
-  const [showNudge, setShowNudge] = useState(false);
-  useEffect(() => {
-    if (!user) return;
-    const count = parseInt(localStorage.getItem("gn_chat_count") || "0", 10);
-    const nudgeSeen = localStorage.getItem("gn_invite_nudge_seen");
-    if (count >= 3 && !nudgeSeen) {
-      setShowNudge(true);
-    }
-  }, [user]);
 
   function handleOpenInvites() {
     setShowMenu(false);
