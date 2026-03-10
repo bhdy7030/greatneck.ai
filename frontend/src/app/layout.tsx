@@ -71,7 +71,7 @@ export default function RootLayout({
         />
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var t=localStorage.getItem("gn_theme");if(t&&["light","classic","ocean","hamptons","coral","nord","sage"].includes(t)){document.documentElement.setAttribute("data-theme",t)}else{document.documentElement.setAttribute("data-theme","hamptons")}}catch(e){document.documentElement.setAttribute("data-theme","hamptons")}})()`,
+            __html: `(function(){document.documentElement.setAttribute("data-theme","nord")})()`,
           }}
         />
       </head>
@@ -103,7 +103,7 @@ export default function RootLayout({
                 <nav className="flex items-center gap-2 md:gap-4">
                   <NavLinks />
                   <LanguageToggle />
-                  <ThemeToggle />
+                  {/* <ThemeToggle /> */}
                   <HeaderAuth />
                 </nav>
               </div>
