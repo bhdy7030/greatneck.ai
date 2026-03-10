@@ -6,6 +6,20 @@ import GreatNeckMap from "@/components/GreatNeckMap";
 import VillageSelector from "@/components/VillageSelector";
 import UpcomingEvents, { DateRangeTabs, type DateRange } from "@/components/UpcomingEvents";
 import { useLanguage } from "@/components/LanguageProvider";
+import { getGuides, getWalletGuides, type Guide } from "@/lib/api";
+
+const LANDING_ICONS: Record<string, string> = {
+  home: "\u{1F3E0}",
+  snowflake: "\u{2744}\u{FE0F}",
+  flower: "\u{1F338}",
+  sun: "\u{2600}\u{FE0F}",
+  leaf: "\u{1F342}",
+  star: "\u{2B50}",
+  briefcase: "\u{1F4BC}",
+  heart: "\u{2764}\u{FE0F}",
+  book: "\u{1F4D6}",
+  tools: "\u{1F6E0}\u{FE0F}",
+};
 
 const ANIMATED_QUESTION_KEYS = [
   "landing.q.fence",
@@ -58,6 +72,11 @@ export default function Home() {
   const [animatedPlaceholder, setAnimatedPlaceholder] = useState("");
   const [inputFocused, setInputFocused] = useState(false);
 
+  // Playbooks for landing section
+  const [landingGuides, setLandingGuides] = useState<Guide[]>([]);
+  const [walletGuidesLanding, setWalletGuidesLanding] = useState<Guide[]>([]);
+  const [playbookTab, setPlaybookTab] = useState<"mine" | "explore">("explore");
+
   // Hero title typing animation
   const [heroTitle, setHeroTitle] = useState("");
   const [showSubtitle, setShowSubtitle] = useState(false);
@@ -73,7 +92,15 @@ export default function Home() {
       setShowChatBox(true);
       setShowChips(true);
     }
-  }, []);
+    // Fetch playbooks for landing section
+    getGuides(stored, language).then((guides) => {
+      setLandingGuides(guides.slice(0, 6));
+    }).catch(() => {});
+    getWalletGuides(stored, language).then((guides) => {
+      setWalletGuidesLanding(guides.slice(0, 6));
+      if (guides.length > 0) setPlaybookTab("mine");
+    }).catch(() => {});
+  }, [language]);
 
   // Title typing animation — starts on mount, restarts on language change
   useEffect(() => {
@@ -287,6 +314,91 @@ export default function Home() {
                     {t(key)}
                   </button>
                 ))}
+              </div>
+            )}
+
+            {/* Playbooks — inline below chat box */}
+            {(landingGuides.length > 0 || walletGuidesLanding.length > 0) && showChatBox && (
+              <div className="mt-4 w-full animate-fadeSlideUp">
+                {/* Header with tabs */}
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-1 bg-surface-200/60 backdrop-blur-sm rounded-lg p-0.5">
+                    {walletGuidesLanding.length > 0 && (
+                      <button
+                        onClick={() => setPlaybookTab("mine")}
+                        className={`text-[10px] font-medium px-2.5 py-1 rounded-md transition-colors ${
+                          playbookTab === "mine"
+                            ? "bg-surface-50 text-text-900 shadow-sm"
+                            : "text-text-500 hover:text-text-700"
+                        }`}
+                      >
+                        {t("guides.tab.wallet")}
+                      </button>
+                    )}
+                    <button
+                      onClick={() => setPlaybookTab("explore")}
+                      className={`text-[10px] font-medium px-2.5 py-1 rounded-md transition-colors ${
+                        playbookTab === "explore"
+                          ? "bg-surface-50 text-text-900 shadow-sm"
+                          : "text-text-500 hover:text-text-700"
+                      }`}
+                    >
+                      {t("guides.tab.browse")}
+                    </button>
+                  </div>
+                  <a
+                    href="/guides/"
+                    className="text-[10px] text-sage hover:text-sage-dark transition-colors"
+                  >
+                    {t("landing.playbooks.seeAll")} &rarr;
+                  </a>
+                </div>
+                {/* Cards row */}
+                <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+                  {(playbookTab === "mine" && walletGuidesLanding.length > 0
+                    ? walletGuidesLanding
+                    : landingGuides
+                  ).map((guide) => {
+                    const emoji = LANDING_ICONS[guide.icon] || "\u{1F4CB}";
+                    return (
+                      <a
+                        key={guide.id}
+                        href="/guides/"
+                        className="flex-shrink-0 w-[90px] rounded-xl overflow-hidden cursor-pointer hover:scale-[1.03] transition-transform"
+                      >
+                        <div
+                          className="h-[60px] flex items-center justify-center"
+                          style={{
+                            background: `linear-gradient(160deg, ${guide.color}dd 0%, ${guide.color}99 100%)`,
+                          }}
+                        >
+                          <span className="text-xl">{emoji}</span>
+                        </div>
+                        <div className="bg-surface-50/80 backdrop-blur-sm px-1.5 py-1">
+                          <p className="text-[9px] font-semibold text-text-800 leading-tight line-clamp-2">
+                            {guide.title}
+                          </p>
+                        </div>
+                      </a>
+                    );
+                  })}
+                  {/* Create card */}
+                  <a
+                    href="/guides/create"
+                    className="flex-shrink-0 w-[90px] rounded-xl overflow-hidden cursor-pointer hover:scale-[1.03] transition-transform border border-dashed border-sage/30"
+                  >
+                    <div className="h-[60px] flex items-center justify-center bg-sage/5">
+                      <svg className="w-5 h-5 text-sage" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                      </svg>
+                    </div>
+                    <div className="bg-surface-50/80 backdrop-blur-sm px-1.5 py-1">
+                      <p className="text-[9px] font-semibold text-sage leading-tight line-clamp-2">
+                        {t("landing.playbooks.create")}
+                      </p>
+                    </div>
+                  </a>
+                </div>
               </div>
             )}
           </div>

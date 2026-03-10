@@ -1,0 +1,274 @@
+id: "new-mover"
+type: "onboarding"
+title:
+  en: "New Mover Checklist"
+  zh: "新搬家清单"
+description:
+  en: "Everything you need to set up your new home in Great Neck"
+  zh: "在大颈安家所需的一切"
+icon: "home"
+color: "#6B8F71"
+active: true
+
+steps:
+  - id: "utilities-electric"
+    title: { en: "Set up electricity (PSEG LI)", zh: "开通电力 (PSEG LI)" }
+    description: { en: "Contact PSEG LI to start electric service at your new address.", zh: "联系PSEG LI开通新地址电力服务。" }
+    details:
+      en: |
+        - Call 1-800-490-0025 or visit psegliny.com
+        - Have your address and move-in date ready
+        - Takes 1-2 business days to activate
+      zh: |
+        - 拨打 1-800-490-0025 或访问 psegliny.com
+        - 准备好地址和入住日期
+        - 1-2个工作日内开通
+    links:
+      - label: { en: "PSEG LI Website", zh: "PSEG LI 官网" }
+        url: "https://www.psegliny.com"
+    category: "utilities"
+    priority: "high"
+    applies_to: "all"
+    chat_prompt:
+      en: "How do I set up electricity with PSEG LI in Great Neck?"
+      zh: "在大颈如何开通PSEG LI电力？"
+
+  - id: "utilities-gas"
+    title: { en: "Set up gas (National Grid)", zh: "开通天然气 (National Grid)" }
+    description: { en: "Contact National Grid for gas service.", zh: "联系National Grid开通燃气服务。" }
+    details:
+      en: |
+        - Call 1-718-643-4050 or visit nationalgridus.com
+        - Schedule a meter reading appointment
+        - A technician visit may be required
+      zh: |
+        - 拨打 1-718-643-4050 或访问 nationalgridus.com
+        - 预约抄表
+        - 可能需要技术人员上门
+    links:
+      - label: { en: "National Grid", zh: "National Grid" }
+        url: "https://www.nationalgridus.com"
+    category: "utilities"
+    priority: "high"
+    applies_to: "all"
+    chat_prompt:
+      en: "How do I set up gas service with National Grid in Great Neck?"
+      zh: "在大颈如何开通National Grid天然气？"
+
+  - id: "utilities-water"
+    title: { en: "Water service (Great Neck Water Authority)", zh: "开通自来水" }
+    description: { en: "Set up water service with the Great Neck Water Authority.", zh: "联系大颈水务局开通自来水。" }
+    details:
+      en: |
+        - Call 516-482-0210
+        - Located at 50 Community Dr, Great Neck
+        - Bring your closing documents or lease
+      zh: |
+        - 拨打 516-482-0210
+        - 地址：50 Community Dr, Great Neck
+        - 携带购房或租赁文件
+    links:
+      - label: { en: "GN Water Authority", zh: "大颈水务局" }
+        url: "https://www.greatneckwater.org"
+    category: "utilities"
+    priority: "high"
+    applies_to: "all"
+    chat_prompt:
+      en: "How do I set up water service in Great Neck?"
+      zh: "在大颈如何开通自来水？"
+
+  - id: "utilities-internet"
+    title: { en: "Set up internet & cable", zh: "开通网络和有线电视" }
+    description: { en: "Choose an internet provider and set up service.", zh: "选择网络供应商并开通服务。" }
+    details:
+      en: |
+        - Optimum (Altice) is the primary cable/internet provider
+        - Verizon FiOS available in some areas
+        - Call Optimum at 1-866-200-7273
+      zh: |
+        - Optimum (Altice) 是主要的有线/网络供应商
+        - 部分区域可使用Verizon FiOS
+        - 拨打 Optimum：1-866-200-7273
+    links:
+      - label: { en: "Optimum", zh: "Optimum" }
+        url: "https://www.optimum.com"
+    category: "utilities"
+    priority: "high"
+    applies_to: "all"
+    chat_prompt:
+      en: "What internet providers are available in Great Neck?"
+      zh: "大颈有哪些网络供应商？"
+
+  - id: "parking-lirr"
+    title: { en: "Get LIRR parking permit", zh: "办理LIRR停车许可" }
+    description: { en: "Apply for a commuter parking permit at the Great Neck LIRR station.", zh: "申请大颈LIRR站的通勤停车许可。" }
+    details:
+      en: |
+        - Contact your village clerk's office for permit application
+        - Waitlists may apply — apply as soon as possible
+        - Bring proof of residency and vehicle registration
+      zh: |
+        - 联系村书记办公室申请许可
+        - 可能有等候名单，尽早申请
+        - 携带居住证明和车辆登记
+    links: []
+    category: "transportation"
+    priority: "high"
+    applies_to: "all"
+    chat_prompt:
+      en: "How do I get a LIRR parking permit in Great Neck?"
+      zh: "在大颈如何获得LIRR停车许可？"
+
+  - id: "school-registration"
+    title: { en: "Register for school district", zh: "学区注册" }
+    description: { en: "Register your children in the Great Neck School District.", zh: "为孩子注册大颈学区。" }
+    details:
+      en: |
+        - Great Neck Union Free School District serves all villages
+        - Registration office at 345 Lakeville Rd
+        - Bring birth certificate, immunization records, proof of address
+        - Call 516-441-4001
+      zh: |
+        - 大颈联合学区覆盖所有村庄
+        - 注册办公室：345 Lakeville Rd
+        - 携带出生证明、疫苗记录、地址证明
+        - 电话：516-441-4001
+    links:
+      - label: { en: "GN School District", zh: "大颈学区" }
+        url: "https://www.greatneck.k12.ny.us"
+    category: "family"
+    priority: "medium"
+    applies_to: "all"
+    chat_prompt:
+      en: "How do I register my child for school in Great Neck?"
+      zh: "如何在大颈为孩子办理学校注册？"
+
+  - id: "park-district"
+    title: { en: "Get Park District pass", zh: "办理公园管理区通行证" }
+    description: { en: "Register with the Great Neck Park District for pool, sports, and activities.", zh: "注册大颈公园管理区，使用游泳池、运动及活动设施。" }
+    details:
+      en: |
+        - Main office at 130 Arrandale Ave
+        - Bring photo ID and proof of residency
+        - Membership gives access to pools, athletic fields, programs
+        - Call 516-487-2975
+      zh: |
+        - 办公室：130 Arrandale Ave
+        - 携带带照片的身份证明和居住证明
+        - 会员可使用泳池、运动场和各类项目
+        - 电话：516-487-2975
+    links:
+      - label: { en: "GN Park District", zh: "大颈公园管理区" }
+        url: "https://www.greatneckparkdistrict.com"
+    category: "recreation"
+    priority: "medium"
+    applies_to: "all"
+    chat_prompt:
+      en: "How do I get a Great Neck Park District membership?"
+      zh: "如何获得大颈公园管理区会员资格？"
+
+  - id: "garbage-schedule"
+    title: { en: "Learn garbage & recycling schedule", zh: "了解垃圾和回收日程" }
+    description: { en: "Find out your trash pickup days and recycling rules.", zh: "了解垃圾收集日和回收规定。" }
+    details:
+      en: |
+        - Varies by village — check with your village clerk
+        - Recycling is typically every other week
+        - Bulk pickup may require scheduling
+      zh: |
+        - 各村不同，请咨询村书记办公室
+        - 回收通常每两周一次
+        - 大件物品可能需要预约
+    links: []
+    category: "daily-life"
+    priority: "medium"
+    applies_to: "all"
+    chat_prompt:
+      en: "What is the garbage pickup schedule in Great Neck?"
+      zh: "大颈的垃圾收集日程是什么？"
+
+  - id: "sprinkler-test"
+    title: { en: "Schedule sprinkler water test", zh: "预约洒水系统水质检测" }
+    description: { en: "Required annual backflow prevention test for sprinkler systems.", zh: "洒水系统需年度回流防止装置测试。" }
+    details:
+      en: |
+        - Required by Nassau County for all irrigation systems
+        - Must be tested by a licensed tester annually
+        - Results filed with the Water Authority
+      zh: |
+        - 拿骚县要求所有灌溉系统年检
+        - 必须由持证检测员年度检测
+        - 结果提交水务局存档
+    links: []
+    category: "home"
+    priority: "low"
+    applies_to: "all"
+    chat_prompt:
+      en: "Do I need a sprinkler backflow test in Great Neck?"
+      zh: "大颈需要洒水系统回流检测吗？"
+
+  - id: "surveillance"
+    title: { en: "Set up home security / surveillance", zh: "安装家庭安防/监控" }
+    description: { en: "Consider security cameras and alarm systems for your new home.", zh: "考虑为新家安装安防摄像头和报警系统。" }
+    details:
+      en: |
+        - Great Neck villages have low crime but security is recommended
+        - Register your camera with local police (some villages offer this)
+        - Popular options: Ring, Nest, ADT
+      zh: |
+        - 大颈犯罪率低但建议安装安防
+        - 部分村庄可向警方登记摄像头
+        - 热门选择：Ring、Nest、ADT
+    links: []
+    category: "home"
+    priority: "low"
+    applies_to: "all"
+    chat_prompt:
+      en: "What should I know about home security in Great Neck?"
+      zh: "大颈的家庭安防需要了解什么？"
+
+  - id: "change-address"
+    title: { en: "Update address everywhere", zh: "更新所有地址" }
+    description: { en: "Change your address with USPS, DMV, banks, and subscriptions.", zh: "在邮局、车管所、银行及各类订阅中更新地址。" }
+    details:
+      en: |
+        - USPS change of address at usps.com ($1.10 fee)
+        - Update NY DMV at dmv.ny.gov
+        - Notify banks, insurance, employers
+        - Update voter registration
+      zh: |
+        - 在 usps.com 办理邮件转寄（$1.10）
+        - 在 dmv.ny.gov 更新车管所信息
+        - 通知银行、保险、雇主
+        - 更新选民登记
+    links:
+      - label: { en: "USPS Change of Address", zh: "USPS地址变更" }
+        url: "https://moversguide.usps.com"
+      - label: { en: "NY DMV", zh: "纽约车管所" }
+        url: "https://dmv.ny.gov"
+    category: "admin"
+    priority: "high"
+    applies_to: "all"
+    chat_prompt:
+      en: "What do I need to update when I move to Great Neck?"
+      zh: "搬到大颈后需要更新哪些信息？"
+
+  - id: "small-projects"
+    title: { en: "Check permit requirements for home projects", zh: "查看家装项目许可要求" }
+    description: { en: "Before starting any renovation, check if you need a building permit.", zh: "开始任何装修前，确认是否需要建筑许可。" }
+    details:
+      en: |
+        - Fences, decks, sheds, pools typically require permits
+        - Contact your village building department
+        - Some minor work (painting, flooring) does not need permits
+      zh: |
+        - 围栏、露台、棚屋、泳池通常需要许可
+        - 联系村庄建设部门
+        - 部分小型工程（刷漆、铺地板）不需许可
+    links: []
+    category: "home"
+    priority: "medium"
+    applies_to: "all"
+    chat_prompt:
+      en: "What home projects require a permit in Great Neck?"
+      zh: "大颈哪些家装项目需要许可证？"

@@ -301,6 +301,80 @@ const translations: Record<string, Record<Lang, string>> = {
   },
   "pipeline.foundResults": { en: "found results", zh: "找到结果" },
   "pipeline.noResults": { en: "no results", zh: "无结果" },
+
+  // ── Playbooks (攻略) ──
+  "guides.title": { en: "My Playbooks", zh: "我的攻略" },
+  "guides.subtitle": { en: "Your step-by-step plans for life in Great Neck", zh: "大颈生活，一步一步搞定" },
+  "guides.tab.wallet": { en: "Mine", zh: "我的" },
+  "guides.tab.browse": { en: "Explore", zh: "发现" },
+  "guides.empty": { en: "No playbooks yet", zh: "还没有攻略" },
+  "guides.browseCta": { en: "Find one that fits your life →", zh: "看看有什么适合你的 →" },
+  "guides.steps": { en: "steps", zh: "步" },
+  "guides.priority": { en: "Do this first", zh: "先做这个" },
+  "guides.reminder": { en: "Reminder set", zh: "已设提醒" },
+  "guides.undo": { en: "Undo", zh: "撤销" },
+  "guides.save": { en: "Save", zh: "保存" },
+  "guides.notePlaceholder": { en: "Jot something down...", zh: "随手记一下..." },
+  "guides.tapHint": { en: "Tap any step to learn more", zh: "点一步看详情" },
+  "guides.backToWallet": { en: "Back to my playbooks", zh: "返回我的攻略" },
+  "guides.removeFromWallet": { en: "Remove this playbook", zh: "移除这个攻略" },
+  "guides.backHome": { en: "← Back to home", zh: "← 返回首页" },
+  "guides.teaserTitle": { en: "Playbooks", zh: "攻略" },
+  "guides.viewAll": { en: "See all", zh: "查看全部" },
+  "nav.guides": { en: "Playbooks", zh: "攻略" },
+
+  // Status control
+  "guides.status.todo": { en: "To Do", zh: "待办" },
+  "guides.status.inProgress": { en: "Working on it", zh: "进行中" },
+  "guides.status.done": { en: "Done", zh: "完成" },
+  "guides.status.skipped": { en: "Not for me", zh: "不适用" },
+
+  // Secondary actions
+  "guides.action.remind": { en: "Remind", zh: "提醒" },
+  "guides.action.note": { en: "Note", zh: "备注" },
+  "guides.action.askAI": { en: "Ask AI", zh: "问 AI" },
+
+  // Peek sheet
+  "guides.peek.addToMine": { en: "Add to Mine", zh: "加入我的" },
+  "guides.peek.alreadySaved": { en: "Already saved", zh: "已保存" },
+  "guides.peek.moreSteps": { en: "more steps", zh: "更多步骤" },
+  "guides.peek.stepsPreview": { en: "What's inside", zh: "内容预览" },
+
+  // Inline chat
+  "guides.chat.title": { en: "Quick Answer", zh: "快速回答" },
+  "guides.chat.loading": { en: "Thinking...", zh: "思考中..." },
+  "guides.chat.error": { en: "Couldn't load answer. Tap to retry.", zh: "未能加载，点击重试" },
+  "guides.chat.continue": { en: "Continue in full chat →", zh: "去对话详聊 →" },
+  "guides.chat.placeholder": { en: "Ask a quick question about this step...", zh: "关于这一步有什么问题？" },
+  "guides.chat.inputPlaceholder": { en: "Type a question...", zh: "输入问题..." },
+  "guides.chat.backToPlaybook": { en: "Back to playbook", zh: "返回攻略" },
+
+  // Custom playbooks (create / edit / fork)
+  "guides.create": { en: "Create Playbook", zh: "创建攻略" },
+  "guides.create.prompt": { en: "What playbook do you want to create?", zh: "你想创建什么攻略？" },
+  "guides.create.placeholder": { en: "Describe your goal...", zh: "描述你的目标..." },
+  "guides.create.generating": { en: "Creating your playbook...", zh: "正在创建你的攻略..." },
+  "guides.create.refine": { en: "Want to change something?", zh: "想修改什么？" },
+  "guides.create.refine.placeholder": { en: "e.g. Add a step about finding a contractor", zh: "例如：添加一个关于找承包商的步骤" },
+  "guides.create.save": { en: "Save to My Playbooks", zh: "保存到我的攻略" },
+  "guides.create.startOver": { en: "Start Over", zh: "重新开始" },
+  "guides.edit": { en: "Edit", zh: "编辑" },
+  "guides.edit.addStep": { en: "Add Step", zh: "添加步骤" },
+  "guides.edit.deleteStep": { en: "Delete Step", zh: "删除步骤" },
+  "guides.edit.saved": { en: "Saved", zh: "已保存" },
+  "guides.edit.done": { en: "Done", zh: "完成" },
+  "guides.fork": { en: "Make it mine", zh: "复制到我的" },
+  "guides.fork.description": { en: "Create your own editable copy", zh: "创建你自己的可编辑副本" },
+  "guides.custom": { en: "Custom", zh: "自定义" },
+  "guides.community": { en: "Community", zh: "社区" },
+  "guides.publish": { en: "Publish", zh: "发布" },
+  "guides.delete": { en: "Delete", zh: "删除" },
+  "guides.delete.confirm": { en: "Delete this playbook?", zh: "删除这个攻略？" },
+
+  // Landing page playbooks section
+  "landing.playbooks.title": { en: "Your Playbooks", zh: "你的攻略" },
+  "landing.playbooks.seeAll": { en: "See all playbooks", zh: "查看所有攻略" },
+  "landing.playbooks.create": { en: "Create your own", zh: "创建你自己的" },
 };
 
 export default translations;

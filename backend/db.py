@@ -297,6 +297,32 @@ CREATE TABLE IF NOT EXISTS invites (
 );
 CREATE INDEX IF NOT EXISTS idx_invites_code ON invites(code);
 CREATE INDEX IF NOT EXISTS idx_invites_created_by ON invites(created_by);
+
+CREATE TABLE IF NOT EXISTS guide_saves (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id),
+    session_id TEXT,
+    guide_id TEXT NOT NULL,
+    saved_at TIMESTAMP DEFAULT NOW(),
+    UNIQUE(user_id, guide_id),
+    UNIQUE(session_id, guide_id)
+);
+
+CREATE TABLE IF NOT EXISTS guide_step_status (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id),
+    session_id TEXT,
+    guide_id TEXT NOT NULL,
+    step_id TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'todo',
+    remind_at TIMESTAMP,
+    note TEXT,
+    updated_at TIMESTAMP DEFAULT NOW(),
+    UNIQUE(user_id, guide_id, step_id),
+    UNIQUE(session_id, guide_id, step_id)
+);
+CREATE INDEX IF NOT EXISTS idx_gss_remind ON guide_step_status(remind_at)
+    WHERE remind_at IS NOT NULL;
 """
 
 _SQLITE_SCHEMA = """
@@ -411,6 +437,31 @@ CREATE TABLE IF NOT EXISTS invites (
 );
 CREATE INDEX IF NOT EXISTS idx_invites_code ON invites(code);
 CREATE INDEX IF NOT EXISTS idx_invites_created_by ON invites(created_by);
+
+CREATE TABLE IF NOT EXISTS guide_saves (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER REFERENCES users(id),
+    session_id TEXT,
+    guide_id TEXT NOT NULL,
+    saved_at TEXT DEFAULT (datetime('now')),
+    UNIQUE(user_id, guide_id),
+    UNIQUE(session_id, guide_id)
+);
+
+CREATE TABLE IF NOT EXISTS guide_step_status (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER REFERENCES users(id),
+    session_id TEXT,
+    guide_id TEXT NOT NULL,
+    step_id TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'todo',
+    remind_at TEXT,
+    note TEXT,
+    updated_at TEXT DEFAULT (datetime('now')),
+    UNIQUE(user_id, guide_id, step_id),
+    UNIQUE(session_id, guide_id, step_id)
+);
+CREATE INDEX IF NOT EXISTS idx_gss_remind ON guide_step_status(remind_at);
 """
 
 
@@ -513,6 +564,120 @@ def _migrate_invites():
         conn.commit()
 
 
+def _migrate_guides():
+    """Add guide_saves and guide_step_status tables if missing."""
+    if _is_pg():
+        with _PgConnWrapper() as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    CREATE TABLE IF NOT EXISTS guide_saves (
+                        id SERIAL PRIMARY KEY,
+                        user_id INTEGER REFERENCES users(id),
+                        session_id TEXT,
+                        guide_id TEXT NOT NULL,
+                        saved_at TIMESTAMP DEFAULT NOW(),
+                        UNIQUE(user_id, guide_id),
+                        UNIQUE(session_id, guide_id)
+                    )
+                """)
+                cur.execute("""
+                    CREATE TABLE IF NOT EXISTS guide_step_status (
+                        id SERIAL PRIMARY KEY,
+                        user_id INTEGER REFERENCES users(id),
+                        session_id TEXT,
+                        guide_id TEXT NOT NULL,
+                        step_id TEXT NOT NULL,
+                        status TEXT NOT NULL DEFAULT 'todo',
+                        remind_at TIMESTAMP,
+                        note TEXT,
+                        updated_at TIMESTAMP DEFAULT NOW(),
+                        UNIQUE(user_id, guide_id, step_id),
+                        UNIQUE(session_id, guide_id, step_id)
+                    )
+                """)
+                cur.execute("""
+                    CREATE INDEX IF NOT EXISTS idx_gss_remind ON guide_step_status(remind_at)
+                    WHERE remind_at IS NOT NULL
+                """)
+                conn.commit()
+    else:
+        conn = _get_sqlite_conn()
+        tables = {row[0] for row in conn.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()}
+        if "guide_saves" not in tables:
+            conn.execute("""
+                CREATE TABLE guide_saves (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    user_id INTEGER REFERENCES users(id),
+                    session_id TEXT,
+                    guide_id TEXT NOT NULL,
+                    saved_at TEXT DEFAULT (datetime('now')),
+                    UNIQUE(user_id, guide_id),
+                    UNIQUE(session_id, guide_id)
+                )
+            """)
+        if "guide_step_status" not in tables:
+            conn.execute("""
+                CREATE TABLE guide_step_status (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    user_id INTEGER REFERENCES users(id),
+                    session_id TEXT,
+                    guide_id TEXT NOT NULL,
+                    step_id TEXT NOT NULL,
+                    status TEXT NOT NULL DEFAULT 'todo',
+                    remind_at TEXT,
+                    note TEXT,
+                    updated_at TEXT DEFAULT (datetime('now')),
+                    UNIQUE(user_id, guide_id, step_id),
+                    UNIQUE(session_id, guide_id, step_id)
+                )
+            """)
+            conn.execute("CREATE INDEX IF NOT EXISTS idx_gss_remind ON guide_step_status(remind_at)")
+        conn.commit()
+
+
+def _migrate_user_guides():
+    """Add user_guides table if missing."""
+    try:
+        if _is_pg():
+            with _PgConnWrapper() as conn:
+                with conn.cursor() as cur:
+                    cur.execute("""
+                        CREATE TABLE IF NOT EXISTS user_guides (
+                            id TEXT PRIMARY KEY,
+                            user_id INTEGER REFERENCES users(id),
+                            session_id TEXT,
+                            guide_data JSONB NOT NULL,
+                            source_guide_id TEXT,
+                            is_published BOOLEAN NOT NULL DEFAULT FALSE,
+                            is_draft BOOLEAN NOT NULL DEFAULT TRUE,
+                            created_at TIMESTAMP DEFAULT NOW(),
+                            updated_at TIMESTAMP DEFAULT NOW()
+                        )
+                    """)
+                    conn.commit()
+        else:
+            conn = _get_sqlite_conn()
+            tables = {row[0] for row in conn.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()}
+            if "user_guides" not in tables:
+                conn.execute("""
+                    CREATE TABLE user_guides (
+                        id TEXT PRIMARY KEY,
+                        user_id INTEGER,
+                        session_id TEXT,
+                        guide_data TEXT NOT NULL,
+                        source_guide_id TEXT,
+                        is_published INTEGER NOT NULL DEFAULT 0,
+                        is_draft INTEGER NOT NULL DEFAULT 1,
+                        created_at TEXT DEFAULT (datetime('now')),
+                        updated_at TEXT DEFAULT (datetime('now'))
+                    )
+                """)
+            conn.commit()
+    except Exception:
+        import logging
+        logging.getLogger(__name__).exception("_migrate_user_guides failed")
+
+
 def init_db():
     """Create tables if they don't exist."""
     if _is_pg():
@@ -523,6 +688,8 @@ def init_db():
         _migrate_events_zh()
         _migrate_apple_id()
         _migrate_invites()
+        _migrate_guides()
+        _migrate_user_guides()
         return
 
     # SQLite path (existing logic)
@@ -550,6 +717,8 @@ def init_db():
         return
     conn.commit()
     _migrate_invites()
+    _migrate_guides()
+    _migrate_user_guides()
 
 
 # ── Users ───────────────────────────────────────────────────────
@@ -1376,3 +1545,323 @@ def link_invite_to_user(session_id: str, user_id: int) -> bool:
     )
     mark_user_invited(user_id)
     return True
+
+
+# ── Guides ─────────────────────────────────────────────────────
+
+
+def get_saved_guide_ids(user_id: int | None, session_id: str | None) -> list[str]:
+    """Return list of guide_ids saved by the user/session."""
+    if user_id:
+        rows = _exec(
+            "SELECT guide_id FROM guide_saves WHERE user_id=?",
+            "SELECT guide_id FROM guide_saves WHERE user_id=%s",
+            (user_id,),
+        )
+    elif session_id:
+        rows = _exec(
+            "SELECT guide_id FROM guide_saves WHERE session_id=?",
+            "SELECT guide_id FROM guide_saves WHERE session_id=%s",
+            (session_id,),
+        )
+    else:
+        return []
+    return [r["guide_id"] for r in rows]
+
+
+def save_guide(user_id: int | None, session_id: str | None, guide_id: str):
+    """Save a guide to the user's wallet."""
+    if user_id:
+        _exec_modify(
+            "INSERT OR IGNORE INTO guide_saves (user_id, guide_id) VALUES (?, ?)",
+            "INSERT INTO guide_saves (user_id, guide_id) VALUES (%s, %s) ON CONFLICT DO NOTHING",
+            (user_id, guide_id),
+        )
+    elif session_id:
+        _exec_modify(
+            "INSERT OR IGNORE INTO guide_saves (session_id, guide_id) VALUES (?, ?)",
+            "INSERT INTO guide_saves (session_id, guide_id) VALUES (%s, %s) ON CONFLICT DO NOTHING",
+            (session_id, guide_id),
+        )
+
+
+def unsave_guide(user_id: int | None, session_id: str | None, guide_id: str):
+    """Remove a guide from the user's wallet."""
+    if user_id:
+        _exec_modify(
+            "DELETE FROM guide_saves WHERE user_id=? AND guide_id=?",
+            "DELETE FROM guide_saves WHERE user_id=%s AND guide_id=%s",
+            (user_id, guide_id),
+        )
+    elif session_id:
+        _exec_modify(
+            "DELETE FROM guide_saves WHERE session_id=? AND guide_id=?",
+            "DELETE FROM guide_saves WHERE session_id=%s AND guide_id=%s",
+            (session_id, guide_id),
+        )
+
+
+def get_step_statuses(user_id: int | None, session_id: str | None, guide_id: str) -> list[dict]:
+    """Return all step status rows for a guide."""
+    if user_id:
+        return _exec(
+            "SELECT step_id, status, remind_at, note, updated_at FROM guide_step_status WHERE user_id=? AND guide_id=?",
+            "SELECT step_id, status, remind_at, note, updated_at FROM guide_step_status WHERE user_id=%s AND guide_id=%s",
+            (user_id, guide_id),
+        )
+    elif session_id:
+        return _exec(
+            "SELECT step_id, status, remind_at, note, updated_at FROM guide_step_status WHERE session_id=? AND guide_id=?",
+            "SELECT step_id, status, remind_at, note, updated_at FROM guide_step_status WHERE session_id=%s AND guide_id=%s",
+            (session_id, guide_id),
+        )
+    return []
+
+
+def get_all_step_statuses(user_id: int | None, session_id: str | None) -> list[dict]:
+    """Return all step statuses across all guides."""
+    if user_id:
+        return _exec(
+            "SELECT guide_id, step_id, status, remind_at, note, updated_at FROM guide_step_status WHERE user_id=?",
+            "SELECT guide_id, step_id, status, remind_at, note, updated_at FROM guide_step_status WHERE user_id=%s",
+            (user_id,),
+        )
+    elif session_id:
+        return _exec(
+            "SELECT guide_id, step_id, status, remind_at, note, updated_at FROM guide_step_status WHERE session_id=?",
+            "SELECT guide_id, step_id, status, remind_at, note, updated_at FROM guide_step_status WHERE session_id=%s",
+            (session_id,),
+        )
+    return []
+
+
+def update_step_status(
+    user_id: int | None,
+    session_id: str | None,
+    guide_id: str,
+    step_id: str,
+    status: str = "todo",
+    remind_at: str | None = None,
+    note: str | None = None,
+):
+    """Upsert step status for a guide step."""
+    now = datetime.now(_ET).isoformat()
+    if user_id:
+        _exec_modify(
+            """INSERT INTO guide_step_status (user_id, guide_id, step_id, status, remind_at, note, updated_at)
+               VALUES (?, ?, ?, ?, ?, ?, ?)
+               ON CONFLICT(user_id, guide_id, step_id) DO UPDATE SET
+                 status=excluded.status, remind_at=excluded.remind_at,
+                 note=COALESCE(excluded.note, guide_step_status.note),
+                 updated_at=excluded.updated_at""",
+            """INSERT INTO guide_step_status (user_id, guide_id, step_id, status, remind_at, note, updated_at)
+               VALUES (%s, %s, %s, %s, %s, %s, %s)
+               ON CONFLICT(user_id, guide_id, step_id) DO UPDATE SET
+                 status=EXCLUDED.status, remind_at=EXCLUDED.remind_at,
+                 note=COALESCE(EXCLUDED.note, guide_step_status.note),
+                 updated_at=EXCLUDED.updated_at""",
+            (user_id, guide_id, step_id, status, remind_at, note, now),
+        )
+    elif session_id:
+        _exec_modify(
+            """INSERT INTO guide_step_status (session_id, guide_id, step_id, status, remind_at, note, updated_at)
+               VALUES (?, ?, ?, ?, ?, ?, ?)
+               ON CONFLICT(session_id, guide_id, step_id) DO UPDATE SET
+                 status=excluded.status, remind_at=excluded.remind_at,
+                 note=COALESCE(excluded.note, guide_step_status.note),
+                 updated_at=excluded.updated_at""",
+            """INSERT INTO guide_step_status (session_id, guide_id, step_id, status, remind_at, note, updated_at)
+               VALUES (%s, %s, %s, %s, %s, %s, %s)
+               ON CONFLICT(session_id, guide_id, step_id) DO UPDATE SET
+                 status=EXCLUDED.status, remind_at=EXCLUDED.remind_at,
+                 note=COALESCE(EXCLUDED.note, guide_step_status.note),
+                 updated_at=EXCLUDED.updated_at""",
+            (session_id, guide_id, step_id, status, remind_at, note, now),
+        )
+
+
+def get_due_reminders(user_id: int | None, session_id: str | None) -> list[dict]:
+    """Return steps where remind_at is in the past (due reminders)."""
+    now = datetime.now(_ET).isoformat()
+    if user_id:
+        return _exec(
+            "SELECT guide_id, step_id, status, remind_at, note FROM guide_step_status WHERE user_id=? AND remind_at IS NOT NULL AND remind_at<=?",
+            "SELECT guide_id, step_id, status, remind_at, note FROM guide_step_status WHERE user_id=%s AND remind_at IS NOT NULL AND remind_at<=%s",
+            (user_id, now),
+        )
+    elif session_id:
+        return _exec(
+            "SELECT guide_id, step_id, status, remind_at, note FROM guide_step_status WHERE session_id=? AND remind_at IS NOT NULL AND remind_at<=?",
+            "SELECT guide_id, step_id, status, remind_at, note FROM guide_step_status WHERE session_id=%s AND remind_at IS NOT NULL AND remind_at<=%s",
+            (session_id, now),
+        )
+    return []
+
+
+def migrate_guide_data(session_id: str, user_id: int):
+    """Move anonymous guide data to authenticated user on sign-in."""
+    # Move saves
+    _exec_modify(
+        """UPDATE guide_saves SET user_id=?, session_id=NULL
+           WHERE session_id=? AND guide_id NOT IN (SELECT guide_id FROM guide_saves WHERE user_id=?)""",
+        """UPDATE guide_saves SET user_id=%s, session_id=NULL
+           WHERE session_id=%s AND guide_id NOT IN (SELECT guide_id FROM guide_saves WHERE user_id=%s)""",
+        (user_id, session_id, user_id),
+    )
+    # Clean up duplicate session saves
+    _exec_modify(
+        "DELETE FROM guide_saves WHERE session_id=?",
+        "DELETE FROM guide_saves WHERE session_id=%s",
+        (session_id,),
+    )
+    # Move step statuses
+    _exec_modify(
+        """UPDATE guide_step_status SET user_id=?, session_id=NULL
+           WHERE session_id=? AND (guide_id, step_id) NOT IN
+             (SELECT guide_id, step_id FROM guide_step_status WHERE user_id=?)""",
+        """UPDATE guide_step_status SET user_id=%s, session_id=NULL
+           WHERE session_id=%s AND (guide_id, step_id) NOT IN
+             (SELECT guide_id, step_id FROM guide_step_status WHERE user_id=%s)""",
+        (user_id, session_id, user_id),
+    )
+    _exec_modify(
+        "DELETE FROM guide_step_status WHERE session_id=?",
+        "DELETE FROM guide_step_status WHERE session_id=%s",
+        (session_id,),
+    )
+
+
+# ── User Guides (custom playbooks) ──────────────────────────────
+
+
+def create_user_guide(user_id, session_id, guide_data, source_guide_id=None):
+    """Create a new user guide. Returns the guide id."""
+    guide_id = f"ug-{uuid.uuid4()}"
+    guide_json = json.dumps(guide_data) if isinstance(guide_data, dict) else guide_data
+    _exec_modify(
+        "INSERT INTO user_guides (id, user_id, session_id, guide_data, source_guide_id) VALUES (?, ?, ?, ?, ?)",
+        "INSERT INTO user_guides (id, user_id, session_id, guide_data, source_guide_id) VALUES (%s, %s, %s, %s, %s)",
+        (guide_id, user_id, session_id, guide_json, source_guide_id),
+    )
+    return guide_id
+
+
+def get_user_guide(guide_id):
+    """Get a single user guide by ID."""
+    row = _exec_one(
+        "SELECT * FROM user_guides WHERE id=?",
+        "SELECT * FROM user_guides WHERE id=%s",
+        (guide_id,),
+    )
+    if row and isinstance(row.get("guide_data"), str):
+        row["guide_data"] = json.loads(row["guide_data"])
+    return row
+
+
+def get_user_guides_for_owner(user_id=None, session_id=None):
+    """Get all guides owned by a user or session."""
+    if user_id:
+        rows = _exec(
+            "SELECT * FROM user_guides WHERE user_id=? ORDER BY updated_at DESC",
+            "SELECT * FROM user_guides WHERE user_id=%s ORDER BY updated_at DESC",
+            (user_id,),
+        )
+    elif session_id:
+        rows = _exec(
+            "SELECT * FROM user_guides WHERE session_id=? AND user_id IS NULL ORDER BY updated_at DESC",
+            "SELECT * FROM user_guides WHERE session_id=%s AND user_id IS NULL ORDER BY updated_at DESC",
+            (session_id,),
+        )
+    else:
+        return []
+    for r in rows:
+        if isinstance(r.get("guide_data"), str):
+            r["guide_data"] = json.loads(r["guide_data"])
+    return rows
+
+
+def update_user_guide(guide_id, user_id, session_id, guide_data):
+    """Update guide_data for an owned guide. Returns True if updated."""
+    guide_json = json.dumps(guide_data) if isinstance(guide_data, dict) else guide_data
+    if user_id:
+        _exec_modify(
+            "UPDATE user_guides SET guide_data=?, updated_at=datetime('now'), is_draft=0 WHERE id=? AND user_id=?",
+            "UPDATE user_guides SET guide_data=%s, updated_at=NOW(), is_draft=FALSE WHERE id=%s AND user_id=%s",
+            (guide_json, guide_id, user_id),
+        )
+    elif session_id:
+        _exec_modify(
+            "UPDATE user_guides SET guide_data=?, updated_at=datetime('now'), is_draft=0 WHERE id=? AND session_id=? AND user_id IS NULL",
+            "UPDATE user_guides SET guide_data=%s, updated_at=NOW(), is_draft=FALSE WHERE id=%s AND session_id=%s AND user_id IS NULL",
+            (guide_json, guide_id, session_id),
+        )
+    else:
+        return False
+    return True
+
+
+def delete_user_guide(guide_id, user_id=None, session_id=None):
+    """Delete an owned guide and cleanup related saves/step_status."""
+    if user_id:
+        _exec_modify(
+            "DELETE FROM user_guides WHERE id=? AND user_id=?",
+            "DELETE FROM user_guides WHERE id=%s AND user_id=%s",
+            (guide_id, user_id),
+        )
+        _exec_modify(
+            "DELETE FROM guide_saves WHERE guide_id=? AND user_id=?",
+            "DELETE FROM guide_saves WHERE guide_id=%s AND user_id=%s",
+            (guide_id, user_id),
+        )
+        _exec_modify(
+            "DELETE FROM guide_step_status WHERE guide_id=? AND user_id=?",
+            "DELETE FROM guide_step_status WHERE guide_id=%s AND user_id=%s",
+            (guide_id, user_id),
+        )
+    elif session_id:
+        _exec_modify(
+            "DELETE FROM user_guides WHERE id=? AND session_id=? AND user_id IS NULL",
+            "DELETE FROM user_guides WHERE id=%s AND session_id=%s AND user_id IS NULL",
+            (guide_id, session_id),
+        )
+        _exec_modify(
+            "DELETE FROM guide_saves WHERE guide_id=? AND session_id=?",
+            "DELETE FROM guide_saves WHERE guide_id=%s AND session_id=%s",
+            (guide_id, session_id),
+        )
+        _exec_modify(
+            "DELETE FROM guide_step_status WHERE guide_id=? AND session_id=?",
+            "DELETE FROM guide_step_status WHERE guide_id=%s AND session_id=%s",
+            (guide_id, session_id),
+        )
+
+
+def set_user_guide_published(guide_id, user_id, is_published):
+    """Toggle published status. Requires user_id (login required)."""
+    _exec_modify(
+        "UPDATE user_guides SET is_published=?, is_draft=0, updated_at=datetime('now') WHERE id=? AND user_id=?",
+        "UPDATE user_guides SET is_published=%s, is_draft=FALSE, updated_at=NOW() WHERE id=%s AND user_id=%s",
+        (int(is_published) if not _is_pg() else is_published, guide_id, user_id),
+    )
+
+
+def get_published_user_guides():
+    """Get all published user guides for the catalog."""
+    rows = _exec(
+        "SELECT * FROM user_guides WHERE is_published=1",
+        "SELECT * FROM user_guides WHERE is_published=TRUE",
+        (),
+    )
+    for r in rows:
+        if isinstance(r.get("guide_data"), str):
+            r["guide_data"] = json.loads(r["guide_data"])
+    return rows
+
+
+def migrate_user_guide_data(session_id, user_id):
+    """Move anonymous guides to a logged-in user on sign-in."""
+    _exec_modify(
+        "UPDATE user_guides SET user_id=?, session_id=NULL WHERE session_id=? AND user_id IS NULL",
+        "UPDATE user_guides SET user_id=%s, session_id=NULL WHERE session_id=%s AND user_id IS NULL",
+        (user_id, session_id),
+    )

@@ -803,3 +803,227 @@ export async function updateUserPromo(
   });
   if (!res.ok) throw new Error(`Failed to update promo: ${res.status}`);
 }
+
+// ── Guides API ──
+
+export type StepStatus = "todo" | "in_progress" | "done" | "skipped";
+
+export interface GuideStep {
+  id: string;
+  title: string;
+  description: string;
+  details: string;
+  links: { label: string; url: string }[];
+  category: string;
+  priority: "high" | "medium" | "low";
+  status: StepStatus;
+  remind_at: string | null;
+  note: string;
+  chat_prompt: string;
+}
+
+export interface Guide {
+  id: string;
+  type: "onboarding" | "seasonal";
+  title: string;
+  description: string;
+  icon: string;
+  color: string;
+  season_label: string | null;
+  steps: GuideStep[];
+  done_count: number;
+  total_count: number;
+  saved: boolean;
+  is_custom?: boolean;
+  is_community?: boolean;
+}
+
+export async function getGuides(
+  village: string = "",
+  lang: string = "en"
+): Promise<Guide[]> {
+  const params = new URLSearchParams();
+  if (village) params.set("village", village);
+  if (lang) params.set("lang", lang);
+  const res = await fetch(`${BASE_URL}/api/guides?${params}`, {
+    headers: { ...authHeaders(), ...sessionHeaders() },
+  });
+  if (!res.ok) throw new Error(`Failed to fetch guides: ${res.status}`);
+  return res.json();
+}
+
+export async function getWalletGuides(
+  village: string = "",
+  lang: string = "en"
+): Promise<Guide[]> {
+  const params = new URLSearchParams();
+  if (village) params.set("village", village);
+  if (lang) params.set("lang", lang);
+  const res = await fetch(`${BASE_URL}/api/guides/wallet?${params}`, {
+    headers: { ...authHeaders(), ...sessionHeaders() },
+  });
+  if (!res.ok) throw new Error(`Failed to fetch wallet: ${res.status}`);
+  return res.json();
+}
+
+export async function saveGuide(guideId: string): Promise<void> {
+  await fetchWithRefresh(`${BASE_URL}/api/guides/save`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...authHeaders(), ...sessionHeaders() },
+    body: JSON.stringify({ guide_id: guideId }),
+  });
+}
+
+export async function unsaveGuide(guideId: string): Promise<void> {
+  await fetchWithRefresh(`${BASE_URL}/api/guides/unsave`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...authHeaders(), ...sessionHeaders() },
+    body: JSON.stringify({ guide_id: guideId }),
+  });
+}
+
+export async function updateStepStatus(
+  guideId: string,
+  stepId: string,
+  update: { status: StepStatus; remind_at?: string | null; note?: string | null }
+): Promise<void> {
+  await fetchWithRefresh(`${BASE_URL}/api/guides/step`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...authHeaders(), ...sessionHeaders() },
+    body: JSON.stringify({ guide_id: guideId, step_id: stepId, ...update }),
+  });
+}
+
+export async function getReminders(): Promise<
+  { guide_id: string; step_id: string; status: string; remind_at: string; note: string }[]
+> {
+  const res = await fetch(`${BASE_URL}/api/guides/reminders`, {
+    headers: { ...authHeaders(), ...sessionHeaders() },
+  });
+  if (!res.ok) throw new Error(`Failed to fetch reminders: ${res.status}`);
+  return res.json();
+}
+
+// ── User Guides (Custom Playbooks) API ──
+
+export interface BilingualText {
+  en: string;
+  zh: string;
+}
+
+export interface RawGuideStep {
+  id: string;
+  title: BilingualText;
+  description: BilingualText;
+  details: BilingualText;
+  links: { label: BilingualText; url: string }[];
+  category: string;
+  priority: string;
+  chat_prompt: BilingualText;
+}
+
+export interface RawGuideData {
+  id?: string;
+  type?: string;
+  title: BilingualText;
+  description: BilingualText;
+  icon: string;
+  color: string;
+  steps: RawGuideStep[];
+}
+
+export interface UserGuide {
+  id: string;
+  user_id: number | null;
+  session_id: string | null;
+  guide_data: RawGuideData;
+  source_guide_id: string | null;
+  is_published: boolean;
+  is_draft: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface WizardResponse {
+  guide: RawGuideData;
+  wizard_messages: { role: string; content: string }[];
+}
+
+export async function getUserGuides(): Promise<UserGuide[]> {
+  const res = await fetchWithRefresh(`${BASE_URL}/api/guides/user`, {
+    headers: { ...authHeaders(), ...sessionHeaders() },
+  });
+  if (!res.ok) throw new Error("Failed to fetch user guides");
+  return res.json();
+}
+
+export async function getUserGuide(id: string): Promise<UserGuide> {
+  const res = await fetchWithRefresh(`${BASE_URL}/api/guides/user/${id}`, {
+    headers: { ...authHeaders(), ...sessionHeaders() },
+  });
+  if (!res.ok) throw new Error("Failed to fetch user guide");
+  return res.json();
+}
+
+export async function saveUserGuide(id: string | null, guideData: RawGuideData): Promise<{ id: string }> {
+  const res = await fetchWithRefresh(`${BASE_URL}/api/guides/user`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...authHeaders(), ...sessionHeaders() },
+    body: JSON.stringify({ id, guide_data: guideData }),
+  });
+  if (!res.ok) throw new Error("Failed to save user guide");
+  return res.json();
+}
+
+export async function deleteUserGuide(id: string): Promise<void> {
+  const res = await fetchWithRefresh(`${BASE_URL}/api/guides/user/${id}`, {
+    method: "DELETE",
+    headers: { ...authHeaders(), ...sessionHeaders() },
+  });
+  if (!res.ok) throw new Error("Failed to delete user guide");
+}
+
+export async function forkGuide(guideId: string): Promise<{ id: string }> {
+  const res = await fetchWithRefresh(`${BASE_URL}/api/guides/fork`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...authHeaders(), ...sessionHeaders() },
+    body: JSON.stringify({ guide_id: guideId }),
+  });
+  if (!res.ok) throw new Error("Failed to fork guide");
+  return res.json();
+}
+
+export async function publishUserGuide(id: string, is_published: boolean): Promise<void> {
+  const res = await fetchWithRefresh(`${BASE_URL}/api/guides/user/${id}/publish`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...authHeaders() },
+    body: JSON.stringify({ is_published }),
+  });
+  if (!res.ok) throw new Error("Failed to publish guide");
+}
+
+export async function generateGuide(description: string, village: string, lang: string): Promise<WizardResponse> {
+  const res = await fetchWithRefresh(`${BASE_URL}/api/guides/generate`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...authHeaders() },
+    body: JSON.stringify({ description, village, lang }),
+  });
+  if (!res.ok) throw new Error("Failed to generate guide");
+  return res.json();
+}
+
+export async function refineGuide(
+  instruction: string,
+  current_guide: RawGuideData,
+  messages: { role: string; content: string }[],
+  village: string,
+  lang: string
+): Promise<WizardResponse> {
+  const res = await fetchWithRefresh(`${BASE_URL}/api/guides/generate/refine`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...authHeaders() },
+    body: JSON.stringify({ instruction, current_guide: current_guide, messages, village, lang }),
+  });
+  if (!res.ok) throw new Error("Failed to refine guide");
+  return res.json();
+}

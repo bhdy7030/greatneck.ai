@@ -1,0 +1,170 @@
+id: "spring-maintenance"
+type: "seasonal"
+title:
+  en: "Spring Home Maintenance"
+  zh: "春季房屋维护"
+description:
+  en: "Get your home and yard ready for spring"
+  zh: "为春天准备好房屋和庭院"
+icon: "flower"
+color: "#8BC34A"
+active: true
+
+season:
+  months: [3, 4]
+  label: { en: "Spring Maintenance", zh: "春季维护" }
+
+steps:
+  - id: "lawn-care"
+    title: { en: "Start lawn care program", zh: "开始草坪护理" }
+    description: { en: "Rake, seed bare spots, and apply spring fertilizer.", zh: "耙草、补种裸露区域、施春肥。" }
+    details:
+      en: |
+        - Rake to remove dead grass and debris
+        - Overseed thin or bare areas
+        - Apply pre-emergent crabgrass preventer
+        - First mow when grass reaches 3-4 inches
+      zh: |
+        - 耙除枯草和杂物
+        - 在稀疏或裸露区域补种
+        - 施用防杂草预防剂
+        - 草长到3-4英寸时首次修剪
+    links: []
+    category: "outdoor"
+    priority: "medium"
+    applies_to: "all"
+    chat_prompt: { en: "What lawn care should I do in spring in Great Neck?", zh: "大颈春天应该怎么护理草坪？" }
+
+  - id: "landscaping-permits"
+    title: { en: "Check landscaping permit needs", zh: "检查景观许可需求" }
+    description: { en: "Some tree removal and major landscaping requires village permits.", zh: "部分树木移除和大型景观工程需要村庄许可。" }
+    details:
+      en: |
+        - Tree removal often requires a permit (especially for trees over 6" diameter)
+        - Fence installation requires a permit in all villages
+        - Check with your village building department before starting
+      zh: |
+        - 移除树木通常需要许可（特别是直径超过6英寸的树）
+        - 所有村庄安装围栏都需要许可
+        - 开工前咨询村庄建设部门
+    links: []
+    category: "permits"
+    priority: "high"
+    applies_to: "all"
+    chat_prompt: { en: "Do I need a permit for tree removal in Great Neck?", zh: "大颈移除树木需要许可吗？" }
+
+  - id: "ac-tuneup"
+    title: { en: "Schedule AC tune-up", zh: "预约空调保养" }
+    description: { en: "Service your air conditioning before summer heat.", zh: "在夏季炎热前保养空调。" }
+    details:
+      en: |
+        - Schedule HVAC maintenance in April before demand peaks
+        - Replace or clean air filters
+        - Clear debris from outdoor condenser unit
+      zh: |
+        - 4月在需求高峰前预约暖通保养
+        - 更换或清洁空气滤芯
+        - 清除室外冷凝器上的杂物
+    links: []
+    category: "home"
+    priority: "medium"
+    applies_to: "all"
+    chat_prompt: { en: "When should I service my AC in Great Neck?", zh: "大颈什么时候应该保养空调？" }
+
+  - id: "spring-gutters"
+    title: { en: "Clean gutters (spring round)", zh: "清理水槽（春季）" }
+    description: { en: "Remove winter debris from gutters and check for damage.", zh: "清除水槽中的冬季杂物并检查损坏。" }
+    details:
+      en: |
+        - Winter ice can damage gutters and downspouts
+        - Check for loose brackets and proper drainage
+        - Ensure downspouts direct water away from foundation
+      zh: |
+        - 冬季冰冻可能损坏水槽和排水管
+        - 检查松动的支架和排水是否正常
+        - 确保排水管将水引离地基
+    links: []
+    category: "home"
+    priority: "medium"
+    applies_to: "all"
+    chat_prompt: { en: "How should I maintain my gutters in spring?", zh: "春天应该如何维护水槽？" }
+
+  - id: "spring-cleaning"
+    title: { en: "Deep clean and declutter", zh: "大扫除和整理" }
+    description: { en: "Spring cleaning — inside and out.", zh: "春季大扫除——室内外。" }
+    details:
+      en: |
+        - Wash windows inside and out
+        - Power wash siding, deck, and driveway
+        - Declutter garage and donate unused items
+        - Check attic and basement for moisture issues
+      zh: |
+        - 里外擦洗窗户
+        - 高压清洗外墙、露台和车道
+        - 整理车库，捐赠不用的物品
+        - 检查阁楼和地下室是否有潮湿问题
+    links: []
+    category: "home"
+    priority: "low"
+    applies_to: "all"
+    chat_prompt: { en: "Any spring cleaning tips for Great Neck homeowners?", zh: "大颈房主的春季大扫除建议？" }
+
+  - id: "check-roof"
+    title: { en: "Inspect roof for winter damage", zh: "检查屋顶冬季损坏" }
+    description: { en: "Look for missing shingles, leaks, and ice damage.", zh: "检查缺失的瓦片、漏水和冰冻损坏。" }
+    details:
+      en: |
+        - Binoculars work for a ground-level inspection
+        - Look for missing, cracked, or curled shingles
+        - Check flashing around chimneys and vents
+        - Hire a professional for a thorough inspection
+      zh: |
+        - 可用望远镜从地面检查
+        - 查找缺失、裂开或卷曲的瓦片
+        - 检查烟囱和通风口周围的挡水板
+        - 聘请专业人员进行全面检查
+    links: []
+    category: "home"
+    priority: "medium"
+    applies_to: "all"
+    chat_prompt: { en: "How do I check my roof after winter?", zh: "冬天过后如何检查屋顶？" }
+
+  - id: "outdoor-furniture"
+    title: { en: "Set up outdoor furniture", zh: "布置户外家具" }
+    description: { en: "Clean and set up patio furniture for the season.", zh: "清洁并布置露台家具。" }
+    details:
+      en: |
+        - Clean cushions and frames
+        - Check for rust or weather damage
+        - Apply protectant to wood furniture
+        - Set up grill and check propane
+      zh: |
+        - 清洁坐垫和框架
+        - 检查是否有锈蚀或天气损坏
+        - 木质家具涂抹保护剂
+        - 安装烧烤架并检查丙烷
+    links: []
+    category: "outdoor"
+    priority: "low"
+    applies_to: "all"
+    chat_prompt: { en: "Tips for outdoor furniture maintenance?", zh: "户外家具维护建议？" }
+
+  - id: "garden-prep"
+    title: { en: "Prepare garden beds", zh: "准备花坛" }
+    description: { en: "Turn soil, add compost, and plan spring plantings.", zh: "翻土、加堆肥、规划春季种植。" }
+    details:
+      en: |
+        - Turn soil once ground thaws
+        - Add compost or aged manure
+        - Plan plantings based on USDA Zone 7a (Great Neck)
+        - Start seeds indoors for summer vegetables
+      zh: |
+        - 地面解冻后翻土
+        - 添加堆肥或陈年肥料
+        - 根据USDA 7a区（大颈）规划种植
+        - 室内播种夏季蔬菜
+    links: []
+    category: "outdoor"
+    priority: "low"
+    applies_to: "all"
+    chat_prompt: { en: "When can I start planting in Great Neck?", zh: "大颈什么时候可以开始种植？" }

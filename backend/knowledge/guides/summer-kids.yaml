@@ -1,0 +1,178 @@
+id: "summer-kids"
+type: "seasonal"
+title:
+  en: "Summer Kids & Activities"
+  zh: "暑期儿童活动"
+description:
+  en: "Camps, pools, and programs for the family"
+  zh: "夏令营、泳池和家庭活动"
+icon: "sun"
+color: "#FF9800"
+active: true
+
+season:
+  months: [5, 6]
+  label: { en: "Summer Planning", zh: "暑期规划" }
+
+steps:
+  - id: "camp-registration"
+    title: { en: "Register for summer camps", zh: "报名夏令营" }
+    description: { en: "Sign up early — popular camps fill fast.", zh: "尽早报名——热门夏令营名额有限。" }
+    details:
+      en: |
+        - Great Neck Park District runs day camps
+        - Private camps available throughout Long Island
+        - Registration typically opens in February/March
+        - Some camps offer early-bird discounts
+      zh: |
+        - 大颈公园管理区运营日间夏令营
+        - 长岛各地有私立夏令营
+        - 注册通常2-3月开放
+        - 部分夏令营有早鸟优惠
+    links:
+      - label: { en: "GN Park District Camps", zh: "大颈公园管理区夏令营" }
+        url: "https://www.greatneckparkdistrict.com"
+    category: "kids"
+    priority: "high"
+    applies_to: "all"
+    chat_prompt: { en: "What summer camps are available in Great Neck?", zh: "大颈有哪些夏令营？" }
+
+  - id: "pool-pass"
+    title: { en: "Get pool membership", zh: "办理泳池会员" }
+    description: { en: "Register for the Great Neck Park District pools.", zh: "注册大颈公园管理区游泳池。" }
+    details:
+      en: |
+        - Parkwood Pool and Steppingstone Park are popular
+        - Resident rates significantly lower than non-resident
+        - Family memberships available
+        - Pools typically open Memorial Day weekend
+      zh: |
+        - Parkwood Pool和Steppingstone Park很受欢迎
+        - 居民价格远低于非居民
+        - 提供家庭会员
+        - 泳池通常在阵亡将士纪念日周末开放
+    links:
+      - label: { en: "Parkwood Pool", zh: "Parkwood泳池" }
+        url: "https://www.greatneckparkdistrict.com"
+    category: "recreation"
+    priority: "high"
+    applies_to: "all"
+    chat_prompt: { en: "How do I get a pool pass in Great Neck?", zh: "大颈如何办理泳池通行证？" }
+
+  - id: "swim-lessons"
+    title: { en: "Sign up for swim lessons", zh: "报名游泳课" }
+    description: { en: "Enroll children in swim lessons at Park District pools.", zh: "为孩子在公园管理区泳池报名游泳课。" }
+    details:
+      en: |
+        - Lessons for all ages and skill levels
+        - Registration opens in spring
+        - Group and private lessons available
+        - Red Cross certified instructors
+      zh: |
+        - 各年龄段和水平都有课程
+        - 春季开放注册
+        - 团体课和私教课可选
+        - 红十字认证教练
+    links: []
+    category: "kids"
+    priority: "medium"
+    applies_to: "all"
+    chat_prompt: { en: "Where can my kids take swim lessons in Great Neck?", zh: "大颈哪里可以让孩子学游泳？" }
+
+  - id: "library-programs"
+    title: { en: "Check library summer reading", zh: "查看图书馆暑期阅读" }
+    description: { en: "Great Neck Library runs a summer reading program with prizes.", zh: "大颈图书馆有暑期阅读计划，完成可获奖品。" }
+    details:
+      en: |
+        - Free summer reading program for all ages
+        - Earn prizes for reading milestones
+        - Weekly events and storytimes
+        - Registration starts in June
+      zh: |
+        - 各年龄段免费暑期阅读计划
+        - 达到阅读里程碑可获奖品
+        - 每周活动和故事时间
+        - 6月开始注册
+    links:
+      - label: { en: "Great Neck Library", zh: "大颈图书馆" }
+        url: "https://www.greatnecklibrary.org"
+    category: "education"
+    priority: "medium"
+    applies_to: "all"
+    chat_prompt: { en: "What summer programs does Great Neck Library offer?", zh: "大颈图书馆有哪些暑期项目？" }
+
+  - id: "park-activities"
+    title: { en: "Explore park programs", zh: "了解公园活动" }
+    description: { en: "Sports leagues, fitness classes, and outdoor activities.", zh: "体育联赛、健身课程和户外活动。" }
+    details:
+      en: |
+        - Tennis, basketball, soccer leagues
+        - Yoga, Zumba, and fitness classes
+        - Playground programs for younger kids
+        - Check Park District website for full schedule
+      zh: |
+        - 网球、篮球、足球联赛
+        - 瑜伽、尊巴和健身课
+        - 低龄儿童游乐场活动
+        - 查看公园管理区网站了解完整日程
+    links: []
+    category: "recreation"
+    priority: "low"
+    applies_to: "all"
+    chat_prompt: { en: "What park programs are available this summer in Great Neck?", zh: "大颈今年夏天有哪些公园活动？" }
+
+  - id: "daycare-summer"
+    title: { en: "Arrange summer childcare", zh: "安排暑期托管" }
+    description: { en: "Plan childcare coverage for the summer break.", zh: "为暑假做好托管安排。" }
+    details:
+      en: |
+        - Extended day programs at some camps
+        - Before/after camp care options
+        - Local babysitter networks and apps (Care.com, Sittercity)
+      zh: |
+        - 部分夏令营有延时服务
+        - 夏令营前后托管选项
+        - 本地保姆网络和应用（Care.com、Sittercity）
+    links: []
+    category: "kids"
+    priority: "medium"
+    applies_to: "all"
+    chat_prompt: { en: "What childcare options are there in Great Neck for summer?", zh: "大颈暑期有哪些托管选择？" }
+
+  - id: "sports-leagues"
+    title: { en: "Register for sports leagues", zh: "报名体育联赛" }
+    description: { en: "Youth sports leagues for the summer season.", zh: "暑期青少年体育联赛。" }
+    details:
+      en: |
+        - Great Neck Youth Sports Association
+        - Soccer, baseball, lacrosse, and more
+        - Registration often opens months in advance
+      zh: |
+        - 大颈青年体育协会
+        - 足球、棒球、长曲棍球等
+        - 注册通常提前数月开放
+    links: []
+    category: "kids"
+    priority: "medium"
+    applies_to: "all"
+    chat_prompt: { en: "What youth sports are available in Great Neck?", zh: "大颈有哪些青少年运动项目？" }
+
+  - id: "summer-events"
+    title: { en: "Check summer community events", zh: "查看暑期社区活动" }
+    description: { en: "Concerts, festivals, and outdoor movies.", zh: "音乐会、节日和露天电影。" }
+    details:
+      en: |
+        - Summer concert series at Steppingstone Park
+        - Fourth of July celebrations
+        - Community barbecues and picnics
+        - Check greatneck.ai events page for listings
+      zh: |
+        - Steppingstone Park夏季音乐会系列
+        - 国庆节庆祝活动
+        - 社区烧烤和野餐
+        - 查看greatneck.ai活动页面了解详情
+    links: []
+    category: "community"
+    priority: "low"
+    applies_to: "all"
+    chat_prompt: { en: "What community events happen in Great Neck this summer?", zh: "大颈今年夏天有什么社区活动？" }

@@ -1,0 +1,134 @@
+id: "fall-prep"
+type: "seasonal"
+title:
+  en: "Fall Prep"
+  zh: "秋季准备"
+description:
+  en: "Back to school and getting ready for winter"
+  zh: "返校和冬季准备"
+icon: "leaf"
+color: "#E67E22"
+active: true
+
+season:
+  months: [8, 9]
+  label: { en: "Fall Prep", zh: "秋季准备" }
+
+steps:
+  - id: "back-to-school"
+    title: { en: "Back-to-school prep", zh: "返校准备" }
+    description: { en: "Get ready for the new school year.", zh: "为新学年做准备。" }
+    details:
+      en: |
+        - Check school supply lists on GNPS website
+        - Update emergency contact info with the school
+        - Review bus routes and schedules
+        - Schedule physicals and immunizations if needed
+      zh: |
+        - 在GNPS网站查看学校用品清单
+        - 在学校更新紧急联系人信息
+        - 查看校车路线和时间表
+        - 如需要，预约体检和疫苗接种
+    links:
+      - label: { en: "GN School District", zh: "大颈学区" }
+        url: "https://www.greatneck.k12.ny.us"
+    category: "family"
+    priority: "high"
+    applies_to: "all"
+    chat_prompt: { en: "When does school start in Great Neck?", zh: "大颈什么时候开学？" }
+
+  - id: "leaf-removal"
+    title: { en: "Plan leaf removal", zh: "规划落叶清理" }
+    description: { en: "Know your village's leaf collection schedule and rules.", zh: "了解村庄的落叶收集时间和规定。" }
+    details:
+      en: |
+        - Most villages have curbside leaf pickup in fall
+        - Check your village's schedule for dates
+        - Leaves usually must be in paper bags or at curb (no plastic bags)
+        - Composting is encouraged
+      zh: |
+        - 大多数村庄秋季有路边落叶收集
+        - 查看村庄日程了解具体日期
+        - 落叶通常要放在纸袋中或路边（不要塑料袋）
+        - 鼓励堆肥
+    links: []
+    category: "outdoor"
+    priority: "medium"
+    applies_to: "all"
+    chat_prompt: { en: "When is leaf pickup in Great Neck?", zh: "大颈什么时候收集落叶？" }
+
+  - id: "heating-tuneup"
+    title: { en: "Schedule heating tune-up", zh: "预约供暖保养" }
+    description: { en: "Service your furnace/boiler before heating season.", zh: "在供暖季前保养暖炉/锅炉。" }
+    details:
+      en: |
+        - September is ideal for scheduling
+        - Replace air filters
+        - Test thermostat
+        - Consider a maintenance contract for annual service
+      zh: |
+        - 9月是预约保养的理想时间
+        - 更换空气滤芯
+        - 测试恒温器
+        - 考虑年度维护合同
+    links: []
+    category: "home"
+    priority: "high"
+    applies_to: "all"
+    chat_prompt: { en: "When should I service my furnace before winter?", zh: "冬天前什么时候应该保养暖炉？" }
+
+  - id: "winterize-ac"
+    title: { en: "Winterize AC units", zh: "冬季化空调" }
+    description: { en: "Cover or store window AC units before winter.", zh: "冬天前覆盖或收纳窗式空调。" }
+    details:
+      en: |
+        - Remove window units or cover with AC cover
+        - Cover outdoor central AC condenser
+        - This prevents ice damage and extends unit life
+      zh: |
+        - 拆除窗式空调或用罩子覆盖
+        - 覆盖室外中央空调冷凝器
+        - 防止冰冻损坏并延长使用寿命
+    links: []
+    category: "home"
+    priority: "low"
+    applies_to: "all"
+    chat_prompt: { en: "Should I cover my AC unit for winter?", zh: "冬天需要给空调盖罩子吗？" }
+
+  - id: "check-insulation"
+    title: { en: "Check home insulation", zh: "检查房屋保温" }
+    description: { en: "Ensure attic and walls are properly insulated for winter.", zh: "确保阁楼和墙壁有足够保温。" }
+    details:
+      en: |
+        - Check attic insulation depth (should be 10-14 inches)
+        - Seal gaps around windows and doors with weatherstripping
+        - Consider a home energy audit (PSEG LI offers programs)
+      zh: |
+        - 检查阁楼保温层厚度（应为10-14英寸）
+        - 用密封条封堵窗户和门的缝隙
+        - 考虑家庭能源审计（PSEG LI有相关项目）
+    links: []
+    category: "home"
+    priority: "medium"
+    applies_to: "all"
+    chat_prompt: { en: "How can I improve my home's insulation?", zh: "如何改善房屋保温？" }
+
+  - id: "fall-events"
+    title: { en: "Check fall community events", zh: "查看秋季社区活动" }
+    description: { en: "Harvest festivals, trunk-or-treat, and local events.", zh: "丰收节、万圣节活动和本地活动。" }
+    details:
+      en: |
+        - Halloween events and trunk-or-treat in villages
+        - Fall festivals at local parks
+        - Library autumn programs
+        - Check greatneck.ai events for listings
+      zh: |
+        - 各村庄万圣节活动和车尾糖果活动
+        - 本地公园秋季节庆
+        - 图书馆秋季项目
+        - 查看greatneck.ai活动页面了解详情
+    links: []
+    category: "community"
+    priority: "low"
+    applies_to: "all"
+    chat_prompt: { en: "What fall events are happening in Great Neck?", zh: "大颈有什么秋季活动？" }

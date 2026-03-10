@@ -1,0 +1,184 @@
+id: "winter-prep"
+type: "seasonal"
+title:
+  en: "Winter Freeze Prep"
+  zh: "入冬准备"
+description:
+  en: "Protect your home before the freeze hits"
+  zh: "寒冬来临前保护好你的家"
+icon: "snowflake"
+color: "#4A90D9"
+active: true
+
+season:
+  months: [10, 11]
+  label: { en: "Before Winter Freeze", zh: "入冬准备" }
+
+steps:
+  - id: "winterize-sprinklers"
+    title: { en: "Winterize sprinkler system", zh: "冬季化洒水系统" }
+    description: { en: "Blow out sprinkler lines to prevent freezing and pipe damage.", zh: "排空洒水管线防止冻裂。" }
+    details:
+      en: |
+        - Schedule a blowout with your landscaper or irrigation company
+        - Typically done in October before first freeze
+        - Costs $50-100 for standard residential systems
+      zh: |
+        - 联系景观公司或灌溉公司预约排水
+        - 通常在10月首次霜冻前完成
+        - 标准住宅系统费用$50-100
+    links: []
+    category: "outdoor"
+    priority: "high"
+    applies_to: "all"
+    chat_prompt:
+      en: "When should I winterize my sprinklers in Great Neck?"
+      zh: "大颈什么时候应该冬季化洒水系统？"
+
+  - id: "check-heating"
+    title: { en: "Service heating system", zh: "检修供暖系统" }
+    description: { en: "Schedule annual furnace or boiler maintenance.", zh: "预约年度暖炉或锅炉维护。" }
+    details:
+      en: |
+        - Schedule before cold weather arrives
+        - Replace air filters
+        - Check thermostat batteries
+        - Consider a carbon monoxide detector check
+      zh: |
+        - 在寒冷天气到来前预约
+        - 更换空气滤芯
+        - 检查恒温器电池
+        - 考虑检查一氧化碳探测器
+    links: []
+    category: "home"
+    priority: "high"
+    applies_to: "all"
+    chat_prompt:
+      en: "How should I prepare my heating system for winter?"
+      zh: "如何为冬天准备供暖系统？"
+
+  - id: "insulate-pipes"
+    title: { en: "Insulate exposed pipes", zh: "为裸露管道保温" }
+    description: { en: "Prevent frozen pipes by insulating exposed plumbing.", zh: "为裸露管道做保温以防冻裂。" }
+    details:
+      en: |
+        - Focus on basement, crawl space, and exterior wall pipes
+        - Use foam pipe insulation from any hardware store
+        - Know where your main water shut-off valve is
+      zh: |
+        - 重点关注地下室、爬行空间和外墙管道
+        - 使用五金店的泡沫管道保温材料
+        - 了解主水阀位置
+    links: []
+    category: "home"
+    priority: "high"
+    applies_to: "all"
+    chat_prompt:
+      en: "How do I prevent frozen pipes in my Great Neck home?"
+      zh: "如何防止大颈家中管道冻裂？"
+
+  - id: "snow-removal"
+    title: { en: "Know snow removal rules", zh: "了解除雪规定" }
+    description: { en: "Understand your village's sidewalk and driveway snow clearing requirements.", zh: "了解村庄人行道和车道的除雪要求。" }
+    details:
+      en: |
+        - Most villages require clearing sidewalks within 24 hours after snow stops
+        - Do NOT push snow into the street
+        - Clear fire hydrants near your property
+        - Penalties for non-compliance vary by village
+      zh: |
+        - 大多数村庄要求雪停后24小时内清理人行道
+        - 不要将雪推到马路上
+        - 清理房屋附近的消防栓
+        - 违规处罚因村庄而异
+    links: []
+    category: "outdoor"
+    priority: "high"
+    applies_to: "all"
+    chat_prompt:
+      en: "What are the snow removal rules in Great Neck?"
+      zh: "大颈的除雪规定是什么？"
+
+  - id: "stock-salt"
+    title: { en: "Stock up on ice melt / salt", zh: "储备融冰剂/盐" }
+    description: { en: "Buy ice melt before the first storm when supplies run low.", zh: "在首次风暴前购买融冰剂。" }
+    details:
+      en: |
+        - Available at Home Depot, Lowe's, and local hardware stores
+        - Pet-safe options available (important for dog owners)
+        - Keep a bag in your car trunk for emergencies
+      zh: |
+        - Home Depot、Lowe's和本地五金店有售
+        - 有宠物安全型可选（养狗家庭注意）
+        - 车后备箱放一袋以备急用
+    links: []
+    category: "outdoor"
+    priority: "medium"
+    applies_to: "all"
+    chat_prompt:
+      en: "Where can I buy ice melt in Great Neck?"
+      zh: "大颈哪里可以买到融冰剂？"
+
+  - id: "smoke-detectors"
+    title: { en: "Test smoke & CO detectors", zh: "检测烟雾和CO探测器" }
+    description: { en: "Test all smoke and carbon monoxide detectors; replace batteries.", zh: "测试所有烟雾和一氧化碳探测器，更换电池。" }
+    details:
+      en: |
+        - Replace batteries in all detectors
+        - Test each detector using the test button
+        - Replace detectors older than 10 years
+        - Required by NY state law on every floor and near bedrooms
+      zh: |
+        - 更换所有探测器电池
+        - 用测试按钮测试每个探测器
+        - 更换超过10年的探测器
+        - 纽约州法律要求每层楼和卧室附近都安装
+    links: []
+    category: "safety"
+    priority: "high"
+    applies_to: "all"
+    chat_prompt:
+      en: "What are the smoke detector requirements in Great Neck?"
+      zh: "大颈的烟雾探测器要求是什么？"
+
+  - id: "clean-gutters"
+    title: { en: "Clean gutters and downspouts", zh: "清理水槽和排水管" }
+    description: { en: "Remove leaves and debris before winter rains and ice.", zh: "在冬季降雨和结冰前清除树叶和杂物。" }
+    details:
+      en: |
+        - Clogged gutters cause ice dams and water damage
+        - Clean after leaves have mostly fallen (late November)
+        - Consider gutter guards if surrounded by trees
+      zh: |
+        - 堵塞的水槽会导致冰坝和水损坏
+        - 树叶基本落完后清理（11月底）
+        - 如果周围树多可考虑安装水槽防护罩
+    links: []
+    category: "home"
+    priority: "medium"
+    applies_to: "all"
+    chat_prompt:
+      en: "When should I clean my gutters before winter?"
+      zh: "冬天前什么时候应该清理水槽？"
+
+  - id: "emergency-kit"
+    title: { en: "Prepare winter emergency kit", zh: "准备冬季应急包" }
+    description: { en: "Assemble supplies for potential power outages and storms.", zh: "准备应对停电和风暴的物资。" }
+    details:
+      en: |
+        - Flashlights, batteries, portable phone charger
+        - Bottled water (1 gallon per person per day for 3 days)
+        - Non-perishable food and manual can opener
+        - Blankets, first aid kit, medications
+      zh: |
+        - 手电筒、电池、便携充电器
+        - 瓶装水（每人每天1加仑，备3天）
+        - 不易变质的食品和手动开罐器
+        - 毛毯、急救包、常用药品
+    links: []
+    category: "safety"
+    priority: "medium"
+    applies_to: "all"
+    chat_prompt:
+      en: "What should be in a winter emergency kit?"
+      zh: "冬季应急包应该准备什么？"

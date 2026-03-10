@@ -90,6 +90,30 @@ const markdownComponents = {
         // Fall through to normal code rendering if parse fails
       }
     }
+    // Render guide-checklist blocks as interactive checklist
+    if (className === "language-guide-checklist") {
+      try {
+        const data = JSON.parse(String(children).trim());
+        const steps = (data.steps || data).map((s: Record<string, unknown>, i: number) => ({
+          id: (s.id as string) || `step-${i}`,
+          title: (s.title as string) || "",
+          description: (s.description as string) || "",
+          details: (s.details as string) || "",
+          links: (s.links as { label: string; url: string }[]) || [],
+          category: (s.category as string) || "",
+          priority: (s.priority as string) || "medium",
+          status: "todo" as const,
+          remind_at: null,
+          note: "",
+          chat_prompt: (s.chat_prompt as string) || "",
+        }));
+        // Lazy import to avoid circular deps
+        const GuideChecklist = require("./GuideChecklist").default;
+        return <GuideChecklist guideId={data.guide_id || "inline"} steps={steps} />;
+      } catch {
+        // Fall through to normal code rendering if parse fails
+      }
+    }
     // Render email-draft blocks as copyable email card
     if (className === "language-email-draft") {
       try {
