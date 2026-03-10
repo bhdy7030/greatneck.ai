@@ -189,7 +189,7 @@ export default function UpcomingEvents({ village, dateRange, setDateRange, onCou
     setSourceFilters(new Set());
     setDateRange("all");
 
-    getUpcomingEvents(village || "", 30, language)
+    getUpcomingEvents(village || "", 80, language)
       .then((data) => {
         if (!cancelled) setEvents(data);
       })

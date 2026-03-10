@@ -22,7 +22,7 @@ router = APIRouter()
 @router.get("/events")
 async def list_events(
     village: str = Query(default="", description="Village name for scoped events"),
-    limit: int = Query(default=8, ge=1, le=50),
+    limit: int = Query(default=8, ge=1, le=100),
     category: str = Query(default="", description="Filter by category"),
     lang: str = Query(default="en", description="Language code (en or zh)"),
 ):
