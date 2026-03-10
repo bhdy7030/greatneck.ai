@@ -51,14 +51,14 @@ async def translate_untranslated_events() -> int:
 
     logger.info(f"[translate] Translating {len(rows)} events...")
 
-    # Build input payload
+    # Build input payload — truncate descriptions to keep token usage manageable
     events_for_llm = [
-        {"id": r["id"], "title": r["title"], "description": r["description"] or "", "venue": r["venue"] or ""}
+        {"id": r["id"], "title": r["title"], "description": (r["description"] or "")[:150], "venue": r["venue"] or ""}
         for r in rows
     ]
 
-    # Batch into chunks of 15 to stay within token limits
-    BATCH_SIZE = 15
+    # Batch into chunks of 10 to stay within token limits
+    BATCH_SIZE = 10
     updated = 0
 
     for i in range(0, len(events_for_llm), BATCH_SIZE):
@@ -71,7 +71,7 @@ async def translate_untranslated_events() -> int:
                 ],
                 role="translation",
                 temperature=0.1,
-                max_tokens=4096,
+                max_tokens=8192,
             )
 
             # Parse — strip markdown fences if present
