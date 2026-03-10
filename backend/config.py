@@ -77,6 +77,10 @@ class Settings(BaseSettings):
     # Database (empty = SQLite fallback, set = PostgreSQL)
     database_url: str = ""
 
+    # Invite system
+    invite_required: bool = True          # env INVITE_REQUIRED=false to disable
+    invite_limit_per_user: int = 5        # max invites per non-admin
+
     # Events
     eventbrite_api_key: str = ""
     cron_secret: str = ""

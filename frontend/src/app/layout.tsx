@@ -6,6 +6,7 @@ import { LanguageProvider } from "@/components/LanguageProvider";
 import ThemeToggle from "@/components/ThemeToggle";
 import LanguageToggle from "@/components/LanguageToggle";
 import AuthProvider from "@/components/AuthProvider";
+import InviteGate from "@/components/InviteGate";
 import HeaderAuth from "@/components/HeaderAuth";
 import NavLinks from "@/components/NavLinks";
 
@@ -79,6 +80,7 @@ export default function RootLayout({
         <AuthProvider>
           <LanguageProvider>
           <ThemeProvider>
+            <InviteGate>
             {/* Navigation Header */}
             <header className="flex-shrink-0 bg-surface-50 border-b border-surface-300 relative z-30">
               <div className="max-w-4xl mx-auto px-4 py-2 md:py-3 flex items-center justify-between min-h-[48px]">
@@ -113,6 +115,7 @@ export default function RootLayout({
             <main className="flex-1 flex flex-col overflow-hidden">
               {children}
             </main>
+            </InviteGate>
           </ThemeProvider>
           </LanguageProvider>
         </AuthProvider>

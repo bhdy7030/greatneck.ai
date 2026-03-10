@@ -263,6 +263,7 @@ async def get_me(user: dict = Depends(get_current_user)):
         "avatar_url": user["avatar_url"],
         "is_admin": bool(user.get("is_admin")),
         "can_debug": bool(user.get("can_debug")),
+        "is_invited": bool(user.get("is_invited")),
         "tier": resolve_tier(user),
         "promo_expires_at": user.get("promo_expires_at"),
     }
@@ -280,6 +281,7 @@ async def get_users(user: dict = Depends(require_admin)):
             "name": u["name"],
             "is_admin": bool(u.get("is_admin")),
             "can_debug": bool(u.get("can_debug")),
+            "is_invited": bool(u.get("is_invited")),
             "tier": resolve_tier(u),
             "raw_tier": u.get("tier", "free"),
             "promo_expires_at": u.get("promo_expires_at"),

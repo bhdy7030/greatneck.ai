@@ -256,6 +256,38 @@ const translations: Record<string, Record<Lang, string>> = {
   "annotate.done": { en: "Done", zh: "完成" },
   "annotate.skip": { en: "Skip", zh: "跳过" },
 
+  // ── Invite ──
+  "invite.title": { en: "Invite Only", zh: "邻里专属" },
+  "invite.subtitle": {
+    en: "greatneck.ai is currently available by invitation only.",
+    zh: "目前仅限受邀的大颈小伙伴使用哦~",
+  },
+  "invite.placeholder": { en: "Enter invite code", zh: "粘贴邀请码" },
+  "invite.enter": { en: "Enter", zh: "进入" },
+  "invite.invalid": { en: "Invalid invite code", zh: "邀请码不对哦，再看看？" },
+  "invite.used": { en: "This invite code has already been used", zh: "这个码已经被用过啦" },
+  "invite.needInvite": {
+    en: "Have an invite code? Enter it above. Or ask a member to share one with you.",
+    zh: "有码直接输入~ 没有的话找邻居要一个吧！",
+  },
+  "invite.alreadyMember": { en: "Already a member? Sign in", zh: "已经是老用户了？直接登录" },
+  "invite.generate": { en: "Generate Invite", zh: "生成邀请码" },
+  "invite.remaining": { en: "{n} of {total} remaining", zh: "还剩 {n}/{total} 个" },
+  "invite.unlimited": { en: "Unlimited", zh: "不限量" },
+  "invite.copied": { en: "Copied!", zh: "已复制！" },
+  "invite.friends": { en: "Invite Friends", zh: "邀请邻居" },
+  "invite.available": { en: "Available", zh: "可用" },
+  "invite.redeemed": { en: "Used", zh: "已使用" },
+  "invite.shareNeighbors": { en: "Share with neighbors!", zh: "分享给邻居！" },
+  "invite.copyCode": { en: "Copy Code", zh: "复制邀请码" },
+  "invite.copyLink": { en: "Copy Link", zh: "复制链接" },
+  "invite.share": { en: "Share", zh: "分享" },
+  "invite.shareText": {
+    en: "Join me on greatneck.ai — your AI community assistant for Great Neck! Use invite code: {code}",
+    zh: "来试试 greatneck.ai 吧！大颈社区AI助手，邀请码：{code}",
+  },
+  "invite.noInvites": { en: "No invites yet", zh: "还没有邀请码" },
+
   // ── Pipeline ──
   "pipeline.researching": { en: "Researching...", zh: "正在搜索..." },
   "pipeline.thinking": { en: "Thinking...", zh: "思考中..." },

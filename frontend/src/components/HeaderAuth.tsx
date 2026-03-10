@@ -4,11 +4,13 @@ import { useState, useRef, useEffect } from "react";
 import { useAuth } from "@/components/AuthProvider";
 import { useLanguage } from "./LanguageProvider";
 import TierBadge from "./TierBadge";
+import InviteManager from "./InviteManager";
 
 export default function HeaderAuth() {
   const { user, isLoading, login, loginWithApple, logout } = useAuth();
   const { t } = useLanguage();
   const [showMenu, setShowMenu] = useState(false);
+  const [showInviteManager, setShowInviteManager] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
   // Close menu on outside click
@@ -73,38 +75,80 @@ export default function HeaderAuth() {
     );
   }
 
+  // Nudge: show dot badge after 3+ chat sessions
+  const [showNudge, setShowNudge] = useState(false);
+  useEffect(() => {
+    if (!user) return;
+    const count = parseInt(localStorage.getItem("gn_chat_count") || "0", 10);
+    const nudgeSeen = localStorage.getItem("gn_invite_nudge_seen");
+    if (count >= 3 && !nudgeSeen) {
+      setShowNudge(true);
+    }
+  }, [user]);
+
+  function handleOpenInvites() {
+    setShowMenu(false);
+    setShowInviteManager(true);
+    setShowNudge(false);
+    localStorage.setItem("gn_invite_nudge_seen", "1");
+  }
+
   return (
-    <div className="flex items-center gap-1 md:gap-2">
-      <TierBadge />
-      {user.avatar_url ? (
-        <img
-          src={user.avatar_url}
-          alt=""
-          className="w-6 h-6 rounded-full"
-          referrerPolicy="no-referrer"
-        />
-      ) : (
-        <div className="w-6 h-6 rounded-full bg-sage/20 flex items-center justify-center text-xs font-medium text-sage">
-          {user.name?.[0] || "?"}
-        </div>
+    <>
+      <div className="flex items-center gap-1 md:gap-2 relative" ref={menuRef}>
+        <TierBadge />
+        <button
+          onClick={() => setShowMenu((v) => !v)}
+          className="relative"
+        >
+          {user.avatar_url ? (
+            <img
+              src={user.avatar_url}
+              alt=""
+              className="w-6 h-6 rounded-full"
+              referrerPolicy="no-referrer"
+            />
+          ) : (
+            <div className="w-6 h-6 rounded-full bg-sage/20 flex items-center justify-center text-xs font-medium text-sage">
+              {user.name?.[0] || "?"}
+            </div>
+          )}
+          {showNudge && (
+            <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-sage rounded-full border-2 border-white" />
+          )}
+        </button>
+        {showMenu && (
+          <div className="absolute right-0 top-full mt-2 w-52 bg-white rounded-lg shadow-lg border border-surface-200 py-1 z-50">
+            <button
+              onClick={handleOpenInvites}
+              className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-text-700 hover:bg-surface-100 transition-colors"
+            >
+              <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+              </svg>
+              <span>{t("invite.friends")}</span>
+              {showNudge && (
+                <span className="ml-auto text-xs text-sage font-medium">
+                  {t("invite.shareNeighbors")}
+                </span>
+              )}
+            </button>
+            <div className="border-t border-surface-100 my-1" />
+            <button
+              onClick={() => { setShowMenu(false); logout(); }}
+              className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-text-700 hover:bg-surface-100 transition-colors"
+            >
+              <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+              </svg>
+              {t("auth.signOut")}
+            </button>
+          </div>
+        )}
+      </div>
+      {showInviteManager && (
+        <InviteManager onClose={() => setShowInviteManager(false)} />
       )}
-      <button
-        onClick={logout}
-        className="hidden md:inline text-xs text-text-400 hover:text-text-700 transition-colors"
-        title={t("auth.signOut")}
-      >
-        {t("auth.signOut")}
-      </button>
-      {/* Mobile: icon-only logout */}
-      <button
-        onClick={logout}
-        className="md:hidden p-1 text-text-400 hover:text-text-700 transition-colors"
-        title={t("auth.signOut")}
-      >
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-        </svg>
-      </button>
-    </div>
+    </>
   );
 }

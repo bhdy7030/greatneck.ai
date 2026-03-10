@@ -285,6 +285,18 @@ CREATE TABLE IF NOT EXISTS llm_usage (
 );
 CREATE INDEX IF NOT EXISTS idx_llm_usage_date ON llm_usage(created_at);
 CREATE INDEX IF NOT EXISTS idx_llm_usage_role ON llm_usage(role, created_at);
+
+CREATE TABLE IF NOT EXISTS invites (
+    id SERIAL PRIMARY KEY,
+    code TEXT UNIQUE NOT NULL,
+    created_by INTEGER NOT NULL REFERENCES users(id),
+    redeemed_by INTEGER REFERENCES users(id),
+    redeemed_at TIMESTAMP,
+    session_id TEXT,
+    created_at TIMESTAMP DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_invites_code ON invites(code);
+CREATE INDEX IF NOT EXISTS idx_invites_created_by ON invites(created_by);
 """
 
 _SQLITE_SCHEMA = """
@@ -387,6 +399,18 @@ CREATE TABLE IF NOT EXISTS llm_usage (
 );
 CREATE INDEX IF NOT EXISTS idx_llm_usage_date ON llm_usage(created_at);
 CREATE INDEX IF NOT EXISTS idx_llm_usage_role ON llm_usage(role, created_at);
+
+CREATE TABLE IF NOT EXISTS invites (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    code TEXT UNIQUE NOT NULL,
+    created_by INTEGER NOT NULL REFERENCES users(id),
+    redeemed_by INTEGER REFERENCES users(id),
+    redeemed_at TEXT,
+    session_id TEXT,
+    created_at TEXT DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_invites_code ON invites(code);
+CREATE INDEX IF NOT EXISTS idx_invites_created_by ON invites(created_by);
 """
 
 
@@ -437,6 +461,58 @@ def _migrate_apple_id():
         conn.commit()
 
 
+def _migrate_invites():
+    """Add invites table and is_invited column to users if missing."""
+    if _is_pg():
+        with _PgConnWrapper() as conn:
+            with conn.cursor() as cur:
+                # Add is_invited column
+                cur.execute("SELECT column_name FROM information_schema.columns WHERE table_name='users'")
+                existing = {row[0] for row in cur.fetchall()}
+                if "is_invited" not in existing:
+                    cur.execute("ALTER TABLE users ADD COLUMN is_invited BOOLEAN NOT NULL DEFAULT FALSE")
+                    # Mark all existing users as invited (they predate the system)
+                    cur.execute("UPDATE users SET is_invited = TRUE")
+                # Create invites table if missing
+                cur.execute("""
+                    CREATE TABLE IF NOT EXISTS invites (
+                        id SERIAL PRIMARY KEY,
+                        code TEXT UNIQUE NOT NULL,
+                        created_by INTEGER NOT NULL REFERENCES users(id),
+                        redeemed_by INTEGER REFERENCES users(id),
+                        redeemed_at TIMESTAMP,
+                        session_id TEXT,
+                        created_at TIMESTAMP DEFAULT NOW()
+                    )
+                """)
+                cur.execute("CREATE INDEX IF NOT EXISTS idx_invites_code ON invites(code)")
+                cur.execute("CREATE INDEX IF NOT EXISTS idx_invites_created_by ON invites(created_by)")
+                conn.commit()
+    else:
+        conn = _get_sqlite_conn()
+        existing = {row[1] for row in conn.execute("PRAGMA table_info(users)").fetchall()}
+        if "is_invited" not in existing:
+            conn.execute("ALTER TABLE users ADD COLUMN is_invited INTEGER NOT NULL DEFAULT 0")
+            conn.execute("UPDATE users SET is_invited = 1")
+        # Create invites table if missing
+        tables = {row[0] for row in conn.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()}
+        if "invites" not in tables:
+            conn.execute("""
+                CREATE TABLE invites (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    code TEXT UNIQUE NOT NULL,
+                    created_by INTEGER NOT NULL REFERENCES users(id),
+                    redeemed_by INTEGER REFERENCES users(id),
+                    redeemed_at TEXT,
+                    session_id TEXT,
+                    created_at TEXT DEFAULT (datetime('now'))
+                )
+            """)
+            conn.execute("CREATE INDEX IF NOT EXISTS idx_invites_code ON invites(code)")
+            conn.execute("CREATE INDEX IF NOT EXISTS idx_invites_created_by ON invites(created_by)")
+        conn.commit()
+
+
 def init_db():
     """Create tables if they don't exist."""
     if _is_pg():
@@ -446,6 +522,7 @@ def init_db():
                 conn.commit()
         _migrate_events_zh()
         _migrate_apple_id()
+        _migrate_invites()
         return
 
     # SQLite path (existing logic)
@@ -472,6 +549,7 @@ def init_db():
         init_db()
         return
     conn.commit()
+    _migrate_invites()
 
 
 # ── Users ───────────────────────────────────────────────────────
@@ -1189,3 +1267,112 @@ def get_usage_by_model(days: int = 7) -> list[dict]:
         "",
         (f"-{days}",),
     )
+
+
+# ── Invites ────────────────────────────────────────────────────
+
+
+def create_invite(code: str, created_by: int) -> dict:
+    """Insert a new invite code and return the invite row."""
+    if _is_pg():
+        from psycopg2.extras import RealDictCursor
+        with _PgConnWrapper() as conn:
+            with conn.cursor(cursor_factory=RealDictCursor) as cur:
+                cur.execute(
+                    "INSERT INTO invites (code, created_by) VALUES (%s, %s) RETURNING *",
+                    (code, created_by),
+                )
+                row = dict(cur.fetchone())
+                conn.commit()
+                return row
+    else:
+        conn = _get_sqlite_conn()
+        cur = conn.execute(
+            "INSERT INTO invites (code, created_by) VALUES (?, ?)",
+            (code, created_by),
+        )
+        conn.commit()
+        return dict(conn.execute("SELECT * FROM invites WHERE id=?", (cur.lastrowid,)).fetchone())
+
+
+def get_invite_by_code(code: str) -> dict | None:
+    return _exec_one(
+        "SELECT * FROM invites WHERE code=?",
+        "SELECT * FROM invites WHERE code=%s",
+        (code,),
+    )
+
+
+def redeem_invite(code: str, session_id: str, user_id: int | None = None) -> dict | None:
+    """Mark an invite as redeemed. Returns the updated invite or None if already redeemed."""
+    invite = get_invite_by_code(code)
+    if not invite or invite.get("redeemed_at"):
+        return None
+    now = datetime.now(_ET).isoformat()
+    _exec_modify(
+        "UPDATE invites SET redeemed_at=?, session_id=?, redeemed_by=? WHERE code=?",
+        "UPDATE invites SET redeemed_at=%s, session_id=%s, redeemed_by=%s WHERE code=%s",
+        (now, session_id, user_id, code),
+    )
+    return get_invite_by_code(code)
+
+
+def count_invites_by_user(user_id: int) -> int:
+    val = _exec_scalar(
+        "SELECT COUNT(*) FROM invites WHERE created_by=?",
+        "SELECT COUNT(*) FROM invites WHERE created_by=%s",
+        (user_id,),
+    )
+    return val if val else 0
+
+
+def list_invites_by_user(user_id: int) -> list[dict]:
+    return _exec(
+        "SELECT * FROM invites WHERE created_by=? ORDER BY created_at DESC",
+        "SELECT * FROM invites WHERE created_by=%s ORDER BY created_at DESC",
+        (user_id,),
+    )
+
+
+def list_all_invites() -> list[dict]:
+    return _exec(
+        """SELECT i.*, c.name AS creator_name, c.email AS creator_email,
+                  r.name AS redeemer_name, r.email AS redeemer_email
+           FROM invites i
+           LEFT JOIN users c ON i.created_by = c.id
+           LEFT JOIN users r ON i.redeemed_by = r.id
+           ORDER BY i.created_at DESC""",
+        """SELECT i.*, c.name AS creator_name, c.email AS creator_email,
+                  r.name AS redeemer_name, r.email AS redeemer_email
+           FROM invites i
+           LEFT JOIN users c ON i.created_by = c.id
+           LEFT JOIN users r ON i.redeemed_by = r.id
+           ORDER BY i.created_at DESC""",
+    )
+
+
+def mark_user_invited(user_id: int) -> dict | None:
+    _exec_modify(
+        "UPDATE users SET is_invited=1 WHERE id=?",
+        "UPDATE users SET is_invited=TRUE WHERE id=%s",
+        (user_id,),
+    )
+    return get_user_by_id(user_id)
+
+
+def link_invite_to_user(session_id: str, user_id: int) -> bool:
+    """Link a session's redeemed invite to a user account and set is_invited."""
+    invite = _exec_one(
+        "SELECT * FROM invites WHERE session_id=? AND redeemed_by IS NULL",
+        "SELECT * FROM invites WHERE session_id=%s AND redeemed_by IS NULL",
+        (session_id,),
+    )
+    if not invite:
+        return False
+    _exec_modify(
+        "UPDATE invites SET redeemed_by=? WHERE id=?",
+        "UPDATE invites SET redeemed_by=%s WHERE id=%s",
+        (user_id, invite["id"]),
+    )
+    mark_user_invited(user_id)
+    return True

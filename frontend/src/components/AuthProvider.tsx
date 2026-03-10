@@ -15,12 +15,16 @@ import {
   clearAuth,
   getStoredUser,
   setStoredUser,
+  getInviteCode,
+  getSessionId,
+  clearInviteCode,
   type AuthUser,
 } from "@/lib/auth";
 import {
   fetchCurrentUser,
   logoutServer,
   getUsageInfo,
+  linkInviteToAccount,
   type UsageInfo,
   type TierFeatures,
 } from "@/lib/api";
@@ -166,9 +170,23 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     fetchCurrentUser()
-      .then((u) => {
+      .then(async (u) => {
         setUser(u);
         setStoredUser(u);
+        // After login, link any stored invite code to this account
+        const inviteCode = getInviteCode();
+        if (inviteCode && !u.is_invited) {
+          try {
+            await linkInviteToAccount(getSessionId());
+            clearInviteCode();
+            // Refresh user to get updated is_invited
+            const updated = await fetchCurrentUser();
+            setUser(updated);
+            setStoredUser(updated);
+          } catch {
+            // non-critical
+          }
+        }
       })
       .catch(() => {
         clearAuth();
@@ -186,7 +204,11 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
       setShowBrowserPrompt(true);
       return;
     }
-    const returnTo = window.location.pathname + window.location.search;
+    // Strip ?invite= from returnTo — it's already stored in localStorage
+    const params = new URLSearchParams(window.location.search);
+    params.delete("invite");
+    const qs = params.toString();
+    const returnTo = window.location.pathname + (qs ? `?${qs}` : "");
     window.location.href = `${BASE_URL}/api/auth/google?return_to=${encodeURIComponent(returnTo)}`;
   }, []);
 
@@ -195,7 +217,10 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
       setShowBrowserPrompt(true);
       return;
     }
-    const returnTo = window.location.pathname + window.location.search;
+    const params = new URLSearchParams(window.location.search);
+    params.delete("invite");
+    const qs = params.toString();
+    const returnTo = window.location.pathname + (qs ? `?${qs}` : "");
     window.location.href = `${BASE_URL}/api/auth/apple?return_to=${encodeURIComponent(returnTo)}`;
   }, []);
 

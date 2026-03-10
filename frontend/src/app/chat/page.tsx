@@ -270,6 +270,9 @@ function ChatPageInner() {
         setSidebarRefresh((n) => n + 1);
         // Refresh usage counters
         refreshUsage();
+        // Track chat count for invite nudge
+        const chatCount = parseInt(localStorage.getItem("gn_chat_count") || "0", 10);
+        localStorage.setItem("gn_chat_count", String(chatCount + 1));
       } catch (err) {
         if (err instanceof TierError) {
           setTierModal(err.code as "trial_exhausted" | "must_sign_in");

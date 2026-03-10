@@ -124,6 +124,7 @@ from api.auth import router as auth_router
 from api.conversations import router as conversations_router
 from api.events import router as events_router
 from api.health import router as health_router
+from api.invite import router as invite_router
 
 app.include_router(chat_router, prefix="/api")
 app.include_router(admin_router, prefix="/api/admin")
@@ -132,6 +133,7 @@ app.include_router(debug_router, prefix="/api/debug")
 app.include_router(auth_router, prefix="/api")
 app.include_router(conversations_router, prefix="/api")
 app.include_router(events_router, prefix="/api")
+app.include_router(invite_router, prefix="/api")
 app.include_router(health_router)
 
 

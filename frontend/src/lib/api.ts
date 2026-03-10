@@ -574,6 +574,83 @@ export async function getUpcomingEvents(
   return res.json();
 }
 
+// ── Invite API ──
+
+export interface InviteStatus {
+  required: boolean;
+  has_invite: boolean;
+}
+
+export interface InviteInfo {
+  code: string;
+  created_at: string;
+  redeemed: boolean;
+  redeemed_at: string | null;
+}
+
+export interface MyInvites {
+  invites: InviteInfo[];
+  count: number;
+  limit: number | null;
+  remaining: number | null;
+}
+
+export async function checkInviteStatus(): Promise<InviteStatus> {
+  const res = await fetch(`${BASE_URL}/api/invite/status`, {
+    headers: { ...authHeaders() },
+  });
+  if (!res.ok) return { required: false, has_invite: true }; // fail-open
+  return res.json();
+}
+
+export async function redeemInviteCode(
+  code: string,
+  sessionId: string
+): Promise<{ ok: boolean; code: string }> {
+  const res = await fetch(`${BASE_URL}/api/invite/redeem`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...authHeaders() },
+    body: JSON.stringify({ code, session_id: sessionId }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: "Invalid invite code" }));
+    throw new Error(err.detail || "Failed to redeem invite");
+  }
+  return res.json();
+}
+
+export async function linkInviteToAccount(
+  sessionId: string
+): Promise<{ ok: boolean }> {
+  const res = await fetchWithRefresh(`${BASE_URL}/api/invite/link`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...authHeaders() },
+    body: JSON.stringify({ session_id: sessionId }),
+  });
+  if (!res.ok) return { ok: false };
+  return res.json();
+}
+
+export async function generateInvite(): Promise<{ code: string; created_at: string }> {
+  const res = await fetchWithRefresh(`${BASE_URL}/api/invite/generate`, {
+    method: "POST",
+    headers: { ...authHeaders() },
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: "Failed to generate invite" }));
+    throw new Error(err.detail || "Failed to generate invite");
+  }
+  return res.json();
+}
+
+export async function getMyInvites(): Promise<MyInvites> {
+  const res = await fetchWithRefresh(`${BASE_URL}/api/invite/mine`, {
+    headers: { ...authHeaders() },
+  });
+  if (!res.ok) throw new Error(`Failed to fetch invites: ${res.status}`);
+  return res.json();
+}
+
 // ── Auth API ──
 
 export async function fetchCurrentUser(): Promise<AuthUser> {

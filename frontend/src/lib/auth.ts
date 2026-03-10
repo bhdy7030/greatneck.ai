@@ -6,6 +6,7 @@ const TOKEN_KEY = "gn_token";
 const REFRESH_KEY = "gn_refresh";
 const USER_KEY = "gn_user";
 const SESSION_KEY = "gn_session_id";
+const INVITE_KEY = "gn_invite_code";
 
 export interface AuthUser {
   id: number;
@@ -14,6 +15,7 @@ export interface AuthUser {
   avatar_url: string;
   is_admin: boolean;
   can_debug: boolean;
+  is_invited?: boolean;
   tier?: string;
   promo_expires_at?: string | null;
 }
@@ -78,4 +80,18 @@ export function getSessionId(): string {
     localStorage.setItem(SESSION_KEY, id);
   }
   return id;
+}
+
+/** Invite code storage. */
+export function getInviteCode(): string | null {
+  if (typeof window === "undefined") return null;
+  return localStorage.getItem(INVITE_KEY);
+}
+
+export function setInviteCode(code: string): void {
+  localStorage.setItem(INVITE_KEY, code);
+}
+
+export function clearInviteCode(): void {
+  localStorage.removeItem(INVITE_KEY);
 }
