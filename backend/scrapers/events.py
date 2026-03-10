@@ -663,9 +663,15 @@ LIBCAL_AJAX_URL = "https://greatnecklibrary.libcal.com/ajax/calendar/list"
 LIBCAL_CAL_ID = "20029"
 
 
-async def scrape_library(limit: int = 40) -> list[ScrapedEvent]:
+async def scrape_library(limit: int = 80) -> list[ScrapedEvent]:
     """Scrape upcoming events from Great Neck Library via LibCal AJAX API."""
     events: list[ScrapedEvent] = []
+
+    # LibCal returns a fixed page per date param, so fetch each day separately
+    today = datetime.now()
+    days_until_sunday = (6 - today.weekday()) % 7 or 7
+    all_results: list[dict] = []
+    seen_ids: set[str] = set()
 
     try:
         async with httpx.AsyncClient(
@@ -673,22 +679,24 @@ async def scrape_library(limit: int = 40) -> list[ScrapedEvent]:
             timeout=TIMEOUT,
             follow_redirects=True,
         ) as client:
-            # Fetch today through next Sunday to cover the week ahead
-            today = datetime.now()
-            days_until_sunday = (6 - today.weekday()) % 7 or 7
-            end_date = today + timedelta(days=days_until_sunday)
-            resp = await client.get(LIBCAL_AJAX_URL, params={
-                "c": LIBCAL_CAL_ID,
-                "date": today.strftime("%Y-%m-%d"),
-                "end": end_date.strftime("%Y-%m-%d"),
-            })
-            resp.raise_for_status()
-            data = resp.json()
+            for offset in range(days_until_sunday + 1):
+                d = today + timedelta(days=offset)
+                resp = await client.get(LIBCAL_AJAX_URL, params={
+                    "c": LIBCAL_CAL_ID,
+                    "date": d.strftime("%Y-%m-%d"),
+                })
+                resp.raise_for_status()
+                data = resp.json()
+                for ev in data.get("results", []):
+                    eid = str(ev.get("id", ""))
+                    if eid and eid not in seen_ids:
+                        seen_ids.add(eid)
+                        all_results.append(ev)
     except Exception as e:
         logger.warning(f"[events:library] Failed to fetch LibCal: {e}")
         return events
 
-    for ev in data.get("results", [])[:limit]:
+    for ev in all_results[:limit]:
         try:
             title = ev.get("title", "").strip()
             if not title:
