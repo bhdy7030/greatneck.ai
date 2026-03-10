@@ -100,7 +100,7 @@ export default function RootLayout({
                     greatneck.ai
                   </span>
                 </a>
-                <nav className="flex items-center gap-2 md:gap-4">
+                <nav className="flex items-center gap-3 md:gap-4">
                   <NavLinks />
                   <LanguageToggle />
                   {/* <ThemeToggle /> */}

@@ -13,18 +13,11 @@ export default function NavLinks() {
     <>
       <a
         href="/chat/"
-        className="hidden md:inline text-sm text-text-500 hover:text-text-800 transition-colors"
+        className="p-2 text-white bg-sage hover:bg-sage-dark rounded-full transition-colors"
+        title={t("nav.ask")}
       >
-        {t("nav.chat")}
-      </a>
-      {/* Mobile: icon-only chat link */}
-      <a
-        href="/chat/"
-        className="md:hidden p-2 text-text-500 hover:text-text-800 transition-colors"
-        title={t("nav.chat")}
-      >
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
         </svg>
       </a>
       {isAdmin && (

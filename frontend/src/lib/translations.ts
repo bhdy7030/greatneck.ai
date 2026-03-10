@@ -183,6 +183,7 @@ const translations: Record<string, Record<Lang, string>> = {
 
   // ── Nav ──
   "nav.chat": { en: "Chat", zh: "对话" },
+  "nav.ask": { en: "ask", zh: "提问" },
 
   // ── Auth ──
   "auth.signIn": { en: "Sign in", zh: "登录" },
