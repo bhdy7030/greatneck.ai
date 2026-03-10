@@ -7,7 +7,7 @@ from dataclasses import asdict
 from datetime import datetime, timedelta
 from urllib.parse import quote
 
-from fastapi import APIRouter, Header, HTTPException, Query
+from fastapi import APIRouter, BackgroundTasks, Header, HTTPException, Query
 from fastapi.responses import Response
 
 from config import settings
@@ -130,36 +130,46 @@ async def event_calendar(event_id: str):
     )
 
 
+async def _do_refresh():
+    """Background: scrape, upsert, cleanup, translate."""
+    from scrapers.events import scrape_all_events
+
+    try:
+        events = await scrape_all_events()
+
+        upserted = 0
+        for event in events:
+            try:
+                await run_sync(upsert_event, asdict(event))
+                upserted += 1
+            except Exception as e:
+                logger.warning(f"[events:refresh] Failed to upsert '{event.title}': {e}")
+
+        await run_sync(cleanup_past_events)
+
+        # Translate new/changed events to Chinese
+        translated = 0
+        try:
+            from llm.translate import translate_untranslated_events
+            translated = await translate_untranslated_events()
+        except Exception as e:
+            logger.warning(f"[events:refresh] Translation failed (non-blocking): {e}")
+
+        logger.info(f"[events:refresh] Done — scraped={len(events)} upserted={upserted} translated={translated}")
+    except Exception as e:
+        logger.error(f"[events:refresh] Background refresh failed: {e}")
+
+
 @router.post("/admin/events/refresh")
 async def refresh_events(
+    background_tasks: BackgroundTasks,
     x_cron_secret: str = Header(default="", alias="X-Cron-Secret"),
 ):
-    """Trigger event scrape + upsert + cleanup. Protected by X-Cron-Secret header."""
+    """Trigger event scrape + upsert + cleanup. Runs in background, returns immediately."""
     if not settings.cron_secret:
         raise HTTPException(status_code=503, detail="Cron secret not configured")
     if x_cron_secret != settings.cron_secret:
         raise HTTPException(status_code=403, detail="Invalid cron secret")
 
-    from scrapers.events import scrape_all_events
-
-    events = await scrape_all_events()
-
-    upserted = 0
-    for event in events:
-        try:
-            await run_sync(upsert_event, asdict(event))
-            upserted += 1
-        except Exception as e:
-            logger.warning(f"[events:refresh] Failed to upsert '{event.title}': {e}")
-
-    await run_sync(cleanup_past_events)
-
-    # Translate new/changed events to Chinese
-    translated = 0
-    try:
-        from llm.translate import translate_untranslated_events
-        translated = await translate_untranslated_events()
-    except Exception as e:
-        logger.warning(f"[events:refresh] Translation failed (non-blocking): {e}")
-
-    return {"status": "ok", "scraped": len(events), "upserted": upserted, "translated": translated}
+    background_tasks.add_task(_do_refresh)
+    return {"status": "accepted", "message": "Refresh started in background"}

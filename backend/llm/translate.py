@@ -57,49 +57,56 @@ async def translate_untranslated_events() -> int:
         for r in rows
     ]
 
-    response_text = await llm_call(
-        messages=[
-            {"role": "system", "content": _SYSTEM_PROMPT},
-            {"role": "user", "content": _USER_TEMPLATE.format(events_json=json.dumps(events_for_llm, ensure_ascii=False))},
-        ],
-        role="translation",
-        temperature=0.1,
-        max_tokens=8192,
-    )
-
-    # Parse — strip markdown fences if present
-    text = response_text.strip()
-    if text.startswith("```"):
-        text = text.split("\n", 1)[1] if "\n" in text else text[3:]
-        if text.endswith("```"):
-            text = text[:-3]
-        text = text.strip()
-
-    try:
-        translations = json.loads(text)
-    except json.JSONDecodeError:
-        logger.error(f"[translate] Failed to parse LLM response as JSON: {text[:200]}")
-        return 0
-
-    if not isinstance(translations, list):
-        logger.error("[translate] LLM response is not a JSON array")
-        return 0
-
+    # Batch into chunks of 15 to stay within token limits
+    BATCH_SIZE = 15
     updated = 0
-    for item in translations:
-        eid = item.get("id")
-        if eid is None:
-            continue
-        title_zh = item.get("title_zh") or None
-        desc_zh = item.get("description_zh") or None
-        venue_zh = item.get("venue_zh") or None
 
-        _exec_modify(
-            f"UPDATE events SET title_zh={ph}, description_zh={ph}, venue_zh={ph} WHERE id={ph}",
-            f"UPDATE events SET title_zh={ph}, description_zh={ph}, venue_zh={ph} WHERE id={ph}",
-            (title_zh, desc_zh, venue_zh, eid),
-        )
-        updated += 1
+    for i in range(0, len(events_for_llm), BATCH_SIZE):
+        batch = events_for_llm[i : i + BATCH_SIZE]
+        try:
+            response_text = await llm_call(
+                messages=[
+                    {"role": "system", "content": _SYSTEM_PROMPT},
+                    {"role": "user", "content": _USER_TEMPLATE.format(events_json=json.dumps(batch, ensure_ascii=False))},
+                ],
+                role="translation",
+                temperature=0.1,
+                max_tokens=4096,
+            )
+
+            # Parse — strip markdown fences if present
+            text = response_text.strip()
+            if text.startswith("```"):
+                text = text.split("\n", 1)[1] if "\n" in text else text[3:]
+                if text.endswith("```"):
+                    text = text[:-3]
+                text = text.strip()
+
+            translations = json.loads(text)
+            if not isinstance(translations, list):
+                logger.error(f"[translate] Batch {i // BATCH_SIZE}: LLM response is not a JSON array")
+                continue
+
+            for item in translations:
+                eid = item.get("id")
+                if eid is None:
+                    continue
+                title_zh = item.get("title_zh") or None
+                desc_zh = item.get("description_zh") or None
+                venue_zh = item.get("venue_zh") or None
+
+                _exec_modify(
+                    f"UPDATE events SET title_zh={ph}, description_zh={ph}, venue_zh={ph} WHERE id={ph}",
+                    f"UPDATE events SET title_zh={ph}, description_zh={ph}, venue_zh={ph} WHERE id={ph}",
+                    (title_zh, desc_zh, venue_zh, eid),
+                )
+                updated += 1
+        except json.JSONDecodeError:
+            logger.error(f"[translate] Batch {i // BATCH_SIZE}: Failed to parse JSON: {text[:200]}")
+            continue
+        except Exception as e:
+            logger.warning(f"[translate] Batch {i // BATCH_SIZE} failed: {e}")
+            continue
 
     logger.info(f"[translate] Updated {updated}/{len(rows)} events with Chinese translations")
     return updated
