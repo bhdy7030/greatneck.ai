@@ -261,7 +261,8 @@ export async function sendMessageStream(
   conversationId?: string,
   webSearchMode?: WebSearchMode,
   language?: string,
-  fastMode?: boolean
+  fastMode?: boolean,
+  imageMime?: string
 ): Promise<ChatResponse> {
   const res = await fetchWithRefresh(`${BASE_URL}/api/chat/stream`, {
     method: "POST",
@@ -270,6 +271,7 @@ export async function sendMessageStream(
       message,
       village,
       image_base64: imageBase64 || null,
+      image_mime: imageMime || "image/jpeg",
       history: history || [],
       debug: debug || false,
       conversation_id: conversationId || null,

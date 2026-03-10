@@ -3,6 +3,7 @@
 import type { ChatMessage as ChatMessageType } from "@/lib/api";
 import SourceCitation from "./SourceCitation";
 import PermitTimeline, { type PermitPhase } from "./PermitTimeline";
+import EmailDraftCard from "./EmailDraftCard";
 import PipelineSteps from "./PipelineSteps";
 import CalendarCard from "./CalendarCard";
 import ReactMarkdown from "react-markdown";
@@ -85,6 +86,15 @@ const markdownComponents = {
         const phases: PermitPhase[] = data.phases || data;
         const projectType: string | undefined = data.project_type;
         return <PermitTimeline phases={phases} projectType={projectType} />;
+      } catch {
+        // Fall through to normal code rendering if parse fails
+      }
+    }
+    // Render email-draft blocks as copyable email card
+    if (className === "language-email-draft") {
+      try {
+        const data = JSON.parse(String(children).trim());
+        return <EmailDraftCard to={data.to} subject={data.subject} body={data.body} phone={data.phone} />;
       } catch {
         // Fall through to normal code rendering if parse fails
       }

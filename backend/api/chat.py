@@ -17,6 +17,7 @@ from agents.village_code import VillageCodeAgent
 from agents.permit import PermitAgent
 from agents.community import CommunityAgent
 from agents.vision import VisionAgent
+from agents.report import ReportAgent
 from agents.planner import PlannerAgent
 from agents.critic import CriticAgent
 from agents.base import AgentResponse
@@ -94,6 +95,7 @@ _agents: dict[str, Any] = {
     "permit": PermitAgent(),
     "community": CommunityAgent(),
     "vision": VisionAgent(),
+    "report": ReportAgent(),
 }
 
 
@@ -101,6 +103,7 @@ class ChatRequest(BaseModel):
     message: str
     village: str = ""
     image_base64: str | None = None
+    image_mime: str = "image/jpeg"
     history: list[dict] = Field(default_factory=list)
     debug: bool = False
     conversation_id: str | None = None
@@ -330,11 +333,82 @@ async def _handle_chat_stream(request: ChatRequest, user: dict | None = None) ->
         "language": request.language,
     }
 
+    # If an image is provided, add it to context for VisionAgent
+    if request.image_base64:
+        context["image_base64"] = request.image_base64
+        context["image_mime"] = request.image_mime
+
     # Only allow debug events for users with debug permission
     has_debug_perm = bool(user and (user.get("is_admin") or user.get("can_debug")))
     is_debug = request.debug and has_debug_perm
 
     try:
+        # ── Vision pipeline (image provided) ──
+        if request.image_base64:
+            yield _sse_event("step", {"stage": "vision", "status": "running", "label": "Analyzing image..."})
+            vision_agent = _agents["vision"]
+            vision_response: AgentResponse = await vision_agent.run(
+                request.message, context=context
+            )
+            yield _sse_event("step", {"stage": "vision", "status": "done", "label": "Image analyzed"})
+
+            # If there's also a text query, route it and combine with vision
+            if request.message.strip():
+                yield _sse_event("step", {"stage": "router", "status": "running", "label": "Understanding your question..."})
+                routing = await _router_agent.run(request.message, context=context)
+                agent_name = routing.get("agent", "general")
+                refined_query = routing.get("refined_query", request.message)
+                yield _sse_event("step", {"stage": "router", "status": "done", "label": "Understood"})
+
+                if agent_name in _agents and agent_name != "vision" and agent_name != "off_topic":
+                    # Run specialist with vision analysis injected into history
+                    vision_context = dict(context)
+                    vision_context["history"] = context["history"] + [
+                        {"role": "assistant", "content": f"[Vision Analysis]\n{vision_response.content}"},
+                    ]
+                    if agent_name == "general" or agent_name not in _agents:
+                        specialist = _agents["community"]
+                        agent_name = "community"
+                    else:
+                        specialist = _agents[agent_name]
+
+                    yield _sse_event("step", {"stage": "specialist", "status": "running", "label": "Searching..."})
+                    specialist_response: AgentResponse = await specialist.run(
+                        refined_query, context=vision_context
+                    )
+                    yield _sse_event("step", {"stage": "specialist", "status": "done", "label": "Search complete"})
+
+                    combined = (
+                        f"**Image Analysis:**\n{vision_response.content}\n\n"
+                        f"**Detailed Answer:**\n{specialist_response.content}"
+                    )
+                    sources = _extract_sources(specialist_response)
+                    used = f"vision+{agent_name}"
+                else:
+                    combined = vision_response.content
+                    sources = []
+                    used = "vision"
+            else:
+                combined = vision_response.content
+                sources = []
+                used = "vision"
+
+            # Save to DB
+            if user and request.conversation_id:
+                add_message(
+                    request.conversation_id, "assistant", combined,
+                    sources=sources if sources else None,
+                    agent_used=used,
+                )
+
+            yield _sse_event("response", {
+                "response": combined,
+                "sources": sources,
+                "agent_used": used,
+                "conversation_id": request.conversation_id,
+            })
+            return
+
         # Inject debug memory instructions into context if available
         debug_instructions = debug_memory.get_active_instructions()
         if debug_instructions:
@@ -482,7 +556,7 @@ async def _handle_chat_stream(request: ChatRequest, user: dict | None = None) ->
         })
 
         # Step 4: Critic (skip for simple community queries without a plan)
-        skip_critic = agent_name == "community" and not plan
+        skip_critic = (agent_name == "community" and not plan) or agent_name == "report"
         if not skip_critic:
             yield _sse_event("step", {"stage": "critic", "status": "running", "label": "Reviewing answer..."})
             verdict = await _critic_agent.run(
@@ -617,6 +691,7 @@ async def _handle_chat(request: ChatRequest) -> ChatResponse:
     # If an image is provided, route through VisionAgent first
     if request.image_base64:
         context["image_base64"] = request.image_base64
+        context["image_mime"] = request.image_mime
         vision_agent = _agents["vision"]
         vision_response: AgentResponse = await vision_agent.run(
             request.message, context=context
@@ -725,7 +800,7 @@ async def _handle_chat(request: ChatRequest) -> ChatResponse:
     }
 
     # Step 3: Critic validation (skip for simple community queries without a plan)
-    skip_critic = agent_name == "community" and not plan
+    skip_critic = (agent_name == "community" and not plan) or agent_name == "report"
     if not skip_critic:
         verdict = await _critic_agent.run(
             original_query=request.message,

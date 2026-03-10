@@ -240,6 +240,17 @@ const translations: Record<string, Record<Lang, string>> = {
     zh: "无限搜索为赞助者功能",
   },
 
+  // ── Email draft ──
+  "email.copyEmail": { en: "Copy Email", zh: "复制邮件" },
+  "email.copied": { en: "Copied!", zh: "已复制！" },
+  "email.openMail": { en: "Open in Mail", zh: "打开邮件" },
+
+  // ── Image annotator ──
+  "annotate.title": { en: "Mark the area", zh: "标记区域" },
+  "annotate.clear": { en: "Clear", zh: "清除" },
+  "annotate.done": { en: "Done", zh: "完成" },
+  "annotate.skip": { en: "Skip", zh: "跳过" },
+
   // ── Pipeline ──
   "pipeline.researching": { en: "Researching...", zh: "正在搜索..." },
   "pipeline.thinking": { en: "Thinking...", zh: "思考中..." },

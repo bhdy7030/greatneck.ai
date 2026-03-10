@@ -2,9 +2,10 @@
 
 import { useState, useRef, useCallback, type KeyboardEvent } from "react";
 import { useLanguage } from "./LanguageProvider";
+import ImageAnnotator from "./ImageAnnotator";
 
 interface ChatInputProps {
-  onSend: (message: string, imageBase64?: string) => void;
+  onSend: (message: string, imageBase64?: string, imageMime?: string) => void;
   disabled?: boolean;
 }
 
@@ -13,8 +14,16 @@ export default function ChatInput({ onSend, disabled }: ChatInputProps) {
   const [text, setText] = useState("");
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [imageBase64, setImageBase64] = useState<string | null>(null);
+  const [imageMime, setImageMime] = useState<string>("image/jpeg");
+  const [showAnnotator, setShowAnnotator] = useState(false);
+  const [rawDataUrl, setRawDataUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const extractMime = (dataUrl: string): string => {
+    const match = dataUrl.match(/^data:([^;]+);/);
+    return match ? match[1] : "image/jpeg";
+  };
 
   const handleImageSelect = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -24,18 +33,37 @@ export default function ChatInput({ onSend, disabled }: ChatInputProps) {
       const reader = new FileReader();
       reader.onload = () => {
         const result = reader.result as string;
-        setImagePreview(result);
-        const base64 = result.split(",")[1];
-        setImageBase64(base64);
+        setRawDataUrl(result);
+        setShowAnnotator(true);
       };
       reader.readAsDataURL(file);
     },
     []
   );
 
+  const handleAnnotatorDone = useCallback((mergedBase64: string, mime: string) => {
+    setShowAnnotator(false);
+    setImageBase64(mergedBase64);
+    setImageMime(mime);
+    setImagePreview(`data:${mime};base64,${mergedBase64}`);
+    setRawDataUrl(null);
+  }, []);
+
+  const handleAnnotatorSkip = useCallback(() => {
+    setShowAnnotator(false);
+    if (rawDataUrl) {
+      setImagePreview(rawDataUrl);
+      setImageBase64(rawDataUrl.split(",")[1]);
+      setImageMime(extractMime(rawDataUrl));
+    }
+    setRawDataUrl(null);
+  }, [rawDataUrl]);
+
   const clearImage = useCallback(() => {
     setImagePreview(null);
     setImageBase64(null);
+    setImageMime("image/jpeg");
+    setRawDataUrl(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -45,14 +73,14 @@ export default function ChatInput({ onSend, disabled }: ChatInputProps) {
     const trimmed = text.trim();
     if (!trimmed && !imageBase64) return;
 
-    onSend(trimmed, imageBase64 || undefined);
+    onSend(trimmed, imageBase64 || undefined, imageBase64 ? imageMime : undefined);
     setText("");
     clearImage();
 
     if (textareaRef.current) {
       textareaRef.current.style.height = "auto";
     }
-  }, [text, imageBase64, onSend, clearImage]);
+  }, [text, imageBase64, imageMime, onSend, clearImage]);
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent<HTMLTextAreaElement>) => {
@@ -160,6 +188,15 @@ export default function ChatInput({ onSend, disabled }: ChatInputProps) {
           </svg>
         </button>
       </div>
+
+      {/* Image annotator modal */}
+      {showAnnotator && rawDataUrl && (
+        <ImageAnnotator
+          imageDataUrl={rawDataUrl}
+          onDone={handleAnnotatorDone}
+          onSkip={handleAnnotatorSkip}
+        />
+      )}
     </div>
   );
 }

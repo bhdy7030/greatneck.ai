@@ -19,6 +19,7 @@ Classify into one of these categories:
 - "village_code" — questions about zoning laws, building codes, ordinances, setback requirements, noise rules, property regulations, code enforcement
 - "permit" — questions about permits, applications, forms, fees, inspections, building department submissions, construction projects, renovations, driveway work, fences, decks, roofing, plumbing, electrical work, or any home improvement that may require a permit
 - "community" — questions about schools, libraries, parks, community events, activities, things to do, what's happening, programs, classes, local services, recreation, restaurants, neighborhood life, real estate
+- "report" — reporting issues, filing complaints, contacting village departments, drafting emails to officials, reporting potholes, fallen trees, noise complaints, streetlight outages, trash issues, or any request to report/complain about something
 - "vision" — when the user provides an image and wants analysis of construction/renovation work, code compliance from photos
 - "general" — greetings or simple conversational messages (hi, hello, thanks)
 - "off_topic" — queries completely unrelated to Great Neck or local community topics. Examples: coding help, homework, math problems, recipes, general AI chat, medical advice, stock picks, writing essays. Be strict: if it has nothing to do with Great Neck / Long Island / local life / housing / community, it's off_topic.
@@ -56,7 +57,7 @@ Do NOT include any other text, explanation, or markdown. Only the JSON object.""
             decision = {"agent": "general", "refined_query": query}
 
         # Validate the agent name
-        valid_agents = {"village_code", "permit", "community", "vision", "general", "off_topic"}
+        valid_agents = {"village_code", "permit", "community", "report", "vision", "general", "off_topic"}
         if decision.get("agent") not in valid_agents:
             decision["agent"] = "general"
         if not decision.get("refined_query"):

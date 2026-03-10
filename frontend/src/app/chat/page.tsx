@@ -190,7 +190,7 @@ function ChatPageInner() {
   );
 
   const handleSend = useCallback(
-    async (text: string, imageBase64?: string) => {
+    async (text: string, imageBase64?: string, imageMime?: string) => {
       if (!village) return;
 
       const userMessage: ChatMessageType = {
@@ -243,7 +243,8 @@ function ChatPageInner() {
           activeConvoId || undefined,
           webSearchMode,
           language,
-          fastMode
+          fastMode,
+          imageMime
         );
 
         // Update conversation_id from response if we didn't have one
