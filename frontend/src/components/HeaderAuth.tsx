@@ -99,7 +99,7 @@ export default function HeaderAuth() {
         <TierBadge />
         <button
           onClick={() => setShowMenu((v) => !v)}
-          className="relative"
+          className="relative flex items-center gap-1 px-1.5 py-1 rounded-full hover:bg-surface-100 transition-colors"
         >
           {user.avatar_url ? (
             <img
@@ -113,6 +113,9 @@ export default function HeaderAuth() {
               {user.name?.[0] || "?"}
             </div>
           )}
+          <svg className={`w-3 h-3 text-text-400 transition-transform ${showMenu ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
+          </svg>
           {showNudge && (
             <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-sage rounded-full border-2 border-white" />
           )}
@@ -133,6 +136,31 @@ export default function HeaderAuth() {
                 </span>
               )}
             </button>
+            {user.is_admin && (
+              <a
+                href="/admin/"
+                onClick={() => setShowMenu(false)}
+                className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-text-700 hover:bg-surface-100 transition-colors"
+              >
+                <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.573-1.066z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                Admin
+              </a>
+            )}
+            {(user.is_admin || user.can_debug) && (
+              <a
+                href="/debug/"
+                onClick={() => setShowMenu(false)}
+                className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-text-700 hover:bg-surface-100 transition-colors"
+              >
+                <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Debug
+              </a>
+            )}
             <div className="border-t border-surface-100 my-1" />
             <button
               onClick={() => { setShowMenu(false); logout(); }}
