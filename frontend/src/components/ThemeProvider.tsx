@@ -9,7 +9,7 @@ import {
   type ReactNode,
 } from "react";
 
-type Theme = "light" | "dark" | "classic";
+type Theme = "light" | "classic" | "ocean" | "hamptons" | "coral" | "nord" | "sage";
 
 interface ThemeContextValue {
   theme: Theme;
@@ -20,15 +20,15 @@ interface ThemeContextValue {
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
 const STORAGE_KEY = "gn_theme";
-const THEMES: Theme[] = ["light", "dark", "classic"];
+const THEMES: Theme[] = ["light", "classic", "ocean", "hamptons", "coral", "nord", "sage"];
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>("light");
+  const [theme, setThemeState] = useState<Theme>("hamptons");
 
   // Sync initial state from DOM (set by inline script to avoid FOUC)
   useEffect(() => {
-    const stored = (localStorage.getItem(STORAGE_KEY) as Theme) || "light";
-    setThemeState(THEMES.includes(stored) ? stored : "light");
+    const stored = (localStorage.getItem(STORAGE_KEY) as Theme) || "hamptons";
+    setThemeState(THEMES.includes(stored) ? stored : "hamptons");
   }, []);
 
   const setTheme = useCallback((t: Theme) => {

@@ -2,8 +2,32 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ── Light theme (default) — Modern Civic ── */
-:root,
+/* ── Root fallback (Hamptons values) ── */
+:root {
+  --color-surface-50:  255 255 255;
+  --color-surface-100: 249 250 252;
+  --color-surface-200: 243 244 248;
+  --color-surface-300: 225 228 235;
+  --color-surface-400: 200 205 216;
+
+  --color-text-900: 17 24 39;
+  --color-text-800: 30 41 59;
+  --color-text-700: 51 65 85;
+  --color-text-600: 100 116 139;
+  --color-text-500: 148 163 184;
+
+  --color-sage:       25 55 125;
+  --color-sage-light: 55 90 170;
+  --color-sage-dark:  18 40 100;
+
+  --color-gold:       194 165 115;
+  --color-gold-light: 215 190 145;
+  --color-gold-dark:  160 135 85;
+
+  color-scheme: light;
+}
+
+/* ── Light theme — Modern Civic ── */
 [data-theme="light"] {
   --color-surface-50:  255 255 255;
   --color-surface-100: 248 250 252;
@@ -28,32 +52,7 @@
   color-scheme: light;
 }
 
-/* ── Dark theme — Midnight Civic ── */
-[data-theme="dark"] {
-  --color-surface-50:  30 41 59;
-  --color-surface-100: 15 23 42;
-  --color-surface-200: 30 41 59;
-  --color-surface-300: 51 65 85;
-  --color-surface-400: 71 85 105;
-
-  --color-text-900: 248 250 252;
-  --color-text-800: 241 245 249;
-  --color-text-700: 226 232 240;
-  --color-text-600: 148 163 184;
-  --color-text-500: 100 116 139;
-
-  --color-sage:       45 212 191;
-  --color-sage-light: 153 246 228;
-  --color-sage-dark:  20 184 166;
-
-  --color-gold:       129 140 248;
-  --color-gold-light: 199 210 254;
-  --color-gold-dark:  99 102 241;
-
-  color-scheme: dark;
-}
-
-/* ── Classic theme — Warm Village (original) ── */
+/* ── Classic theme — Warm Village ── */
 [data-theme="classic"] {
   --color-surface-50:  255 255 255;
   --color-surface-100: 248 245 240;
@@ -74,6 +73,131 @@
   --color-gold:       201 169 110;
   --color-gold-light: 221 192 138;
   --color-gold-dark:  168 136 79;
+
+  color-scheme: light;
+}
+
+/* ── Nord theme — Arctic Frost ── */
+[data-theme="nord"] {
+  --color-surface-50:  255 255 255;
+  --color-surface-100: 236 239 244;
+  --color-surface-200: 229 233 240;
+  --color-surface-300: 216 222 233;
+  --color-surface-400: 194 201 214;
+
+  --color-text-900: 46 52 64;
+  --color-text-800: 59 66 82;
+  --color-text-700: 67 76 94;
+  --color-text-600: 76 86 106;
+  --color-text-500: 123 136 161;
+
+  --color-sage:       94 129 172;
+  --color-sage-light: 129 161 193;
+  --color-sage-dark:  76 110 150;
+
+  --color-gold:       136 192 208;
+  --color-gold-light: 143 188 187;
+  --color-gold-dark:  107 163 178;
+
+  color-scheme: light;
+}
+
+/* ── Sage theme — Nord surfaces + muted green accent ── */
+[data-theme="sage"] {
+  --color-surface-50:  255 255 255;
+  --color-surface-100: 240 243 240;
+  --color-surface-200: 232 237 232;
+  --color-surface-300: 214 222 214;
+  --color-surface-400: 190 201 190;
+
+  --color-text-900: 32 38 32;
+  --color-text-800: 50 58 50;
+  --color-text-700: 68 78 68;
+  --color-text-600: 100 112 100;
+  --color-text-500: 140 152 140;
+
+  --color-sage:       58 130 110;
+  --color-sage-light: 90 168 145;
+  --color-sage-dark:  40 105 88;
+
+  --color-gold:       94 129 172;
+  --color-gold-light: 129 161 193;
+  --color-gold-dark:  76 110 150;
+
+  color-scheme: light;
+}
+
+/* ── Ocean theme — Deep Navy ── */
+[data-theme="ocean"] {
+  --color-surface-50:  30 41 59;
+  --color-surface-100: 15 23 42;
+  --color-surface-200: 30 41 59;
+  --color-surface-300: 51 65 85;
+  --color-surface-400: 71 85 105;
+
+  --color-text-900: 248 250 252;
+  --color-text-800: 226 232 240;
+  --color-text-700: 203 213 225;
+  --color-text-600: 148 163 184;
+  --color-text-500: 100 116 139;
+
+  --color-sage:       59 130 246;
+  --color-sage-light: 96 165 250;
+  --color-sage-dark:  37 99 235;
+
+  --color-gold:       6 182 212;
+  --color-gold-light: 34 211 238;
+  --color-gold-dark:  8 145 178;
+
+  color-scheme: dark;
+}
+
+/* ── Hamptons theme — Coastal Preppy ── */
+[data-theme="hamptons"] {
+  --color-surface-50:  255 255 255;
+  --color-surface-100: 249 250 252;
+  --color-surface-200: 243 244 248;
+  --color-surface-300: 225 228 235;
+  --color-surface-400: 200 205 216;
+
+  --color-text-900: 17 24 39;
+  --color-text-800: 30 41 59;
+  --color-text-700: 51 65 85;
+  --color-text-600: 100 116 139;
+  --color-text-500: 148 163 184;
+
+  --color-sage:       25 55 125;
+  --color-sage-light: 55 90 170;
+  --color-sage-dark:  18 40 100;
+
+  --color-gold:       194 165 115;
+  --color-gold-light: 215 190 145;
+  --color-gold-dark:  160 135 85;
+
+  color-scheme: light;
+}
+
+/* ── Coral theme — Friendly & Warm (Airbnb-inspired) ── */
+[data-theme="coral"] {
+  --color-surface-50:  255 255 255;
+  --color-surface-100: 252 249 247;
+  --color-surface-200: 247 243 240;
+  --color-surface-300: 235 228 222;
+  --color-surface-400: 218 208 200;
+
+  --color-text-900: 34 34 34;
+  --color-text-800: 72 72 72;
+  --color-text-700: 113 113 113;
+  --color-text-600: 155 155 155;
+  --color-text-500: 184 184 184;
+
+  --color-sage:       255 90 95;
+  --color-sage-light: 255 135 138;
+  --color-sage-dark:  220 60 65;
+
+  --color-gold:       0 132 137;
+  --color-gold-light: 0 166 153;
+  --color-gold-dark:  0 106 110;
 
   color-scheme: light;
 }

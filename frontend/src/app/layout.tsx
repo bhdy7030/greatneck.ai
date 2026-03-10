@@ -71,7 +71,7 @@ export default function RootLayout({
         />
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var t=localStorage.getItem("gn_theme");if(t&&["light","dark","classic"].includes(t)){document.documentElement.setAttribute("data-theme",t)}else{document.documentElement.setAttribute("data-theme","light")}}catch(e){document.documentElement.setAttribute("data-theme","light")}})()`,
+            __html: `(function(){try{var t=localStorage.getItem("gn_theme");if(t&&["light","classic","ocean","hamptons","coral","nord","sage"].includes(t)){document.documentElement.setAttribute("data-theme",t)}else{document.documentElement.setAttribute("data-theme","hamptons")}}catch(e){document.documentElement.setAttribute("data-theme","hamptons")}})()`,
           }}
         />
       </head>

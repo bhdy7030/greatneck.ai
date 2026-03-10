@@ -174,8 +174,12 @@ const translations: Record<string, Record<Lang, string>> = {
 
   // ── Theme ──
   "theme.light": { en: "Light", zh: "浅色" },
-  "theme.dark": { en: "Dark", zh: "深色" },
   "theme.classic": { en: "Classic", zh: "经典" },
+  "theme.ocean": { en: "Ocean", zh: "海洋" },
+  "theme.hamptons": { en: "Hamptons", zh: "汉普顿" },
+  "theme.coral": { en: "Coral", zh: "珊瑚" },
+  "theme.nord": { en: "Nord", zh: "北欧" },
+  "theme.sage": { en: "Sage", zh: "青翠" },
 
   // ── Nav ──
   "nav.chat": { en: "Chat", zh: "对话" },
