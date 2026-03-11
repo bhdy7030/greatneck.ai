@@ -6,6 +6,7 @@ import { useLanguage } from "./LanguageProvider";
 import type { GuideStep, StepStatus } from "@/lib/api";
 import { updateStepStatus } from "@/lib/api";
 import StepInlineChat from "./StepInlineChat";
+import StepReels from "./StepReels";
 
 interface GuideChecklistProps {
   guideId: string;
@@ -13,26 +14,6 @@ interface GuideChecklistProps {
   color?: string;
   initialStepId?: string | null;
 }
-
-const STATUS_ICONS: Record<StepStatus, React.ReactNode> = {
-  todo: null, // will show step number
-  in_progress: (
-    <span className="relative flex h-3 w-3">
-      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
-      <span className="relative inline-flex rounded-full h-3 w-3 bg-amber-500" />
-    </span>
-  ),
-  done: (
-    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-    </svg>
-  ),
-  skipped: (
-    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M20 12H4" />
-    </svg>
-  ),
-};
 
 const STATUS_OPTIONS: StepStatus[] = ["todo", "in_progress", "done", "skipped"];
 
@@ -47,21 +28,15 @@ export default function GuideChecklist({ guideId, steps: initialSteps, color, in
   const router = useRouter();
   const { t } = useLanguage();
   const [steps, setSteps] = useState(initialSteps);
-  const [expandedIdx, setExpandedIdx] = useState<number | null>(() => {
-    if (!initialStepId) return null;
+  const [activeIdx, setActiveIdx] = useState<number>(() => {
+    if (!initialStepId) return 0;
     const idx = initialSteps.findIndex((s) => s.id === initialStepId);
-    return idx >= 0 ? idx : null;
+    return idx >= 0 ? idx : 0;
   });
   const [editingNote, setEditingNote] = useState<number | null>(null);
   const [noteText, setNoteText] = useState("");
   const [inlineChatIdx, setInlineChatIdx] = useState<number | null>(null);
 
-  const doneCount = steps.filter((s) => s.status === "done").length;
-
-  const toggle = (i: number) => {
-    setExpandedIdx(expandedIdx === i ? null : i);
-    if (expandedIdx !== i) setInlineChatIdx(null);
-  };
 
   const cycleStatus = useCallback(
     async (idx: number, newStatus: StepStatus) => {
@@ -122,125 +97,80 @@ export default function GuideChecklist({ guideId, steps: initialSteps, color, in
 
   return (
     <div className="space-y-0">
-      {/* Progress bar */}
+      {/* Segmented progress bar */}
       <div className="flex items-center gap-2 mb-4">
-        <div className="flex-1 h-2 bg-surface-200 rounded-full overflow-hidden">
-          <div
-            className="h-full rounded-full transition-all duration-500"
-            style={{
-              width: `${steps.length ? (doneCount / steps.length) * 100 : 0}%`,
-              backgroundColor: color || "rgb(var(--color-sage))",
-            }}
-          />
+        <div className="flex items-center gap-1 flex-1">
+          {steps.map((s, i) => {
+            const isActive = i === activeIdx;
+            let bgColor = "rgb(var(--color-surface-300))";
+            if (s.status === "done") bgColor = color || "rgb(var(--color-sage))";
+            else if (s.status === "in_progress") bgColor = "rgb(245 158 11)";
+            else if (s.status === "skipped") bgColor = "rgb(var(--color-surface-400))";
+            return (
+              <button
+                key={s.id}
+                onClick={() => setActiveIdx(i)}
+                className={`flex-1 rounded-full transition-all duration-200 min-h-[28px] ${
+                  isActive
+                    ? "h-3 ring-2 ring-offset-2 scale-y-110"
+                    : "h-2 hover:h-2.5 opacity-70 hover:opacity-100"
+                }`}
+                style={{
+                  backgroundColor: bgColor,
+                  ...(isActive ? { "--tw-ring-color": color || "rgb(var(--color-sage))" } as React.CSSProperties : {}),
+                }}
+                aria-label={`Step ${i + 1}`}
+              />
+            );
+          })}
         </div>
-        <span className="text-xs font-medium text-text-600">
-          {doneCount}/{steps.length}
+        <span className="text-[11px] font-medium text-text-500 whitespace-nowrap">
+          {activeIdx + 1}/{steps.length}
         </span>
       </div>
 
-      {/* Steps */}
-      {steps.map((step, i) => {
-        const isExpanded = expandedIdx === i;
-        const isDone = step.status === "done";
-        const isSkipped = step.status === "skipped";
-        const isInProgress = step.status === "in_progress";
-
-        return (
-          <div key={step.id} className="flex gap-3">
-            {/* Left rail: circle + connector */}
-            <div className="flex flex-col items-center">
-              <div
-                className={`w-10 h-10 min-w-[44px] min-h-[44px] rounded-full flex items-center justify-center text-xs font-bold shrink-0 cursor-pointer transition-all ${
-                  isDone
-                    ? "bg-sage text-white"
-                    : isInProgress
-                      ? "bg-amber-500 text-white"
-                      : isSkipped
-                        ? "bg-surface-300 text-text-500"
-                        : isExpanded
-                          ? "bg-sage-dark text-white ring-2 ring-sage/30"
-                          : "border-2 border-surface-300 text-text-500 hover:border-sage"
-                }`}
-                onClick={() => toggle(i)}
-              >
-                {STATUS_ICONS[step.status] ?? (i + 1)}
-              </div>
-              {i < steps.length - 1 && (
-                <div
-                  className={`w-[2px] flex-1 min-h-[12px] ${
-                    isDone ? "bg-sage/50" : "bg-surface-300"
-                  }`}
-                />
-              )}
-            </div>
-
-            {/* Right content */}
-            <div className="flex-1 pb-3 min-w-0">
-              <div
-                className="flex items-center gap-2 cursor-pointer flex-wrap"
-                onClick={() => toggle(i)}
-              >
-                <span
-                  className={`text-xs font-semibold truncate ${
-                    isDone || isSkipped ? "text-text-500 line-through" : "text-text-900"
-                  }`}
-                >
-                  {step.title}
-                </span>
-                {step.priority === "high" && !isDone && (
-                  <span className="text-[9px] font-bold uppercase tracking-wide text-red-700 bg-red-100 border border-red-200 px-1.5 py-0.5 rounded-full whitespace-nowrap">
-                    {t("guides.priority")}
-                  </span>
+      {/* Reel view */}
+      <StepReels
+        steps={steps}
+        activeIdx={activeIdx}
+        color={color}
+        mode="full"
+        onNav={setActiveIdx}
+        renderContent={(i) => {
+          const step = steps[i];
+          return (
+            <div className="space-y-2.5">
+              {/* Section 1: Description + Details */}
+              <div className="bg-surface-100/60 rounded-xl px-3.5 py-3 border border-surface-200">
+                <p className="text-xs text-text-700 leading-relaxed">{step.description}</p>
+                {step.details && (
+                  <div className="text-text-600 whitespace-pre-line text-[11px] mt-2 leading-relaxed">
+                    {step.details}
+                  </div>
                 )}
-                {step.remind_at && (
-                  <span className="text-[9px] text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded-full flex items-center gap-0.5">
-                    <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    {t("guides.reminder")}
-                  </span>
+                {step.links.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 mt-2.5 pt-2.5 border-t border-surface-200">
+                    {step.links.map((link, j) => (
+                      <a
+                        key={j}
+                        href={link.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-[10px] text-sage hover:text-sage-dark bg-sage/10 px-2 py-1 rounded-full"
+                      >
+                        <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                        </svg>
+                        {link.label}
+                      </a>
+                    ))}
+                  </div>
                 )}
               </div>
 
-              {/* Note preview (when collapsed) */}
-              {!isExpanded && step.note && (
-                <p className="text-[10px] text-text-500 mt-0.5 truncate italic">
-                  {step.note}
-                </p>
-              )}
-
-              {/* Expanded detail */}
-              {isExpanded && (
-                <div className="mt-2 rounded-lg p-3 text-xs bg-surface-50 border border-surface-300 animate-in fade-in duration-150 space-y-2">
-                  <p className="text-text-700">{step.description}</p>
-
-                  {step.details && (
-                    <div className="text-text-600 whitespace-pre-line text-[11px]">
-                      {step.details}
-                    </div>
-                  )}
-
-                  {/* Links */}
-                  {step.links.length > 0 && (
-                    <div className="flex flex-wrap gap-1.5">
-                      {step.links.map((link, j) => (
-                        <a
-                          key={j}
-                          href={link.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1 text-[10px] text-sage hover:text-sage-dark bg-sage/10 px-2 py-1 rounded-full"
-                        >
-                          <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                          </svg>
-                          {link.label}
-                        </a>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Note editing */}
+              {/* Section 2: Note */}
+              {(editingNote === i || step.note) && (
+                <div className="bg-surface-100/60 rounded-xl px-3.5 py-3 border border-surface-200">
                   {editingNote === i ? (
                     <div className="flex gap-1.5">
                       <input
@@ -248,115 +178,111 @@ export default function GuideChecklist({ guideId, steps: initialSteps, color, in
                         value={noteText}
                         onChange={(e) => setNoteText(e.target.value)}
                         placeholder={t("guides.notePlaceholder")}
-                        className="flex-1 text-[11px] px-2 py-1 border border-surface-300 rounded bg-white focus:outline-none focus:border-sage"
+                        className="flex-1 text-[11px] px-2 py-1.5 border border-surface-300 rounded-lg bg-white focus:outline-none focus:border-sage"
                         autoFocus
                         onKeyDown={(e) => e.key === "Enter" && saveNote(i)}
                       />
                       <button
                         onClick={() => saveNote(i)}
-                        className="text-[10px] px-2 py-1 bg-sage text-white rounded hover:bg-sage-dark"
+                        className="text-[10px] px-3 py-1.5 bg-sage text-white rounded-lg hover:bg-sage-dark"
                       >
                         {t("guides.save")}
                       </button>
                     </div>
                   ) : step.note ? (
                     <div
-                      className="text-[11px] text-text-500 italic bg-surface-100 px-2 py-1 rounded cursor-pointer hover:bg-surface-200"
+                      className="text-[11px] text-text-500 italic cursor-pointer hover:text-text-600"
                       onClick={() => { setEditingNote(i); setNoteText(step.note); }}
                     >
                       {step.note}
                     </div>
                   ) : null}
-
-                  {/* Inline chat */}
-                  {inlineChatIdx === i && step.chat_prompt && (
-                    <StepInlineChat
-                      chatPrompt={step.chat_prompt}
-                      stepTitle={step.title}
-                      guideId={guideId}
-                      stepId={step.id}
-                      onContinueInChat={() => handleContinueInChat(step.chat_prompt)}
-                    />
-                  )}
-
-                  {/* Row 1: Segmented status control */}
-                  <div className="flex bg-surface-200 rounded-xl p-1 gap-1">
-                    {STATUS_OPTIONS.map((status) => {
-                      const isActive = step.status === status;
-                      let activeClass = "";
-                      if (isActive) {
-                        switch (status) {
-                          case "todo":
-                            activeClass = "bg-surface-50 text-text-700 shadow-sm border border-surface-300";
-                            break;
-                          case "in_progress":
-                            activeClass = "bg-amber-500 text-white shadow-sm";
-                            break;
-                          case "done":
-                            activeClass = "bg-sage text-white shadow-sm";
-                            break;
-                          case "skipped":
-                            activeClass = "bg-surface-300 text-text-500";
-                            break;
-                        }
-                      }
-                      return (
-                        <button
-                          key={status}
-                          onClick={() => cycleStatus(i, status)}
-                          className={`flex-1 min-h-[44px] text-[11px] font-medium rounded-lg transition-all duration-200 ${
-                            isActive
-                              ? activeClass
-                              : "text-text-500 hover:text-text-700 hover:bg-surface-100"
-                          }`}
-                        >
-                          {t(STATUS_LABEL_KEYS[status])}
-                        </button>
-                      );
-                    })}
-                  </div>
-
-                  {/* Row 2: Secondary actions */}
-                  <div className="flex gap-2 mt-2">
-                    {!step.remind_at && (
-                      <button
-                        onClick={() => setReminder(i)}
-                        className="flex-1 min-h-[44px] text-[11px] rounded-lg bg-surface-100 text-text-600 hover:bg-surface-200 flex items-center justify-center gap-1.5"
-                      >
-                        <span>🔔</span>
-                        {t("guides.action.remind")}
-                      </button>
-                    )}
-                    <button
-                      onClick={() => { setEditingNote(i); setNoteText(step.note || ""); }}
-                      className="flex-1 min-h-[44px] text-[11px] rounded-lg bg-surface-100 text-text-600 hover:bg-surface-200 flex items-center justify-center gap-1.5"
-                    >
-                      <span>📝</span>
-                      {t("guides.action.note")}
-                    </button>
-                    {step.chat_prompt && (
-                      <button
-                        onClick={() => setInlineChatIdx(inlineChatIdx === i ? null : i)}
-                        className="flex-1 min-h-[44px] text-[11px] rounded-lg bg-surface-100 text-text-600 hover:bg-surface-200 flex items-center justify-center gap-1.5"
-                      >
-                        <span>✨</span>
-                        {t("guides.action.askAI")}
-                      </button>
-                    )}
-                  </div>
                 </div>
               )}
-            </div>
-          </div>
-        );
-      })}
 
-      {/* Tap hint */}
-      {expandedIdx === null && steps.length > 0 && (
-        <p className="text-[10px] text-text-500 text-center mt-1">
-          {t("guides.tapHint")}
-        </p>
-      )}
+              {/* Section 3: Inline chat */}
+              {inlineChatIdx === i && step.chat_prompt && (
+                <div className="bg-surface-100/60 rounded-xl px-3.5 py-3 border border-surface-200">
+                  <StepInlineChat
+                    chatPrompt={step.chat_prompt}
+                    stepTitle={step.title}
+                    guideId={guideId}
+                    stepId={step.id}
+                    onContinueInChat={() => handleContinueInChat(step.chat_prompt)}
+                  />
+                </div>
+              )}
+
+              {/* Section 4: Status + Actions */}
+              <div className="bg-surface-100/60 rounded-xl px-3.5 py-3 border border-surface-200 space-y-2">
+                <div className="flex bg-surface-200 rounded-xl p-1 gap-1">
+                  {STATUS_OPTIONS.map((status) => {
+                    const isActive = step.status === status;
+                    let activeClass = "";
+                    if (isActive) {
+                      switch (status) {
+                        case "todo":
+                          activeClass = "bg-surface-50 text-text-700 shadow-sm border border-surface-300";
+                          break;
+                        case "in_progress":
+                          activeClass = "bg-amber-500 text-white shadow-sm";
+                          break;
+                        case "done":
+                          activeClass = "bg-sage text-white shadow-sm";
+                          break;
+                        case "skipped":
+                          activeClass = "bg-surface-300 text-text-500";
+                          break;
+                      }
+                    }
+                    return (
+                      <button
+                        key={status}
+                        onClick={() => cycleStatus(i, status)}
+                        className={`flex-1 min-h-[44px] text-[11px] font-medium rounded-lg transition-all duration-200 ${
+                          isActive
+                            ? activeClass
+                            : "text-text-500 hover:text-text-700 hover:bg-surface-100"
+                        }`}
+                      >
+                        {t(STATUS_LABEL_KEYS[status])}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <div className="flex gap-2">
+                  {!step.remind_at && (
+                    <button
+                      onClick={() => setReminder(i)}
+                      className="flex-1 min-h-[44px] text-[11px] rounded-lg bg-surface-200/80 text-text-600 hover:bg-surface-200 flex items-center justify-center gap-1.5"
+                    >
+                      <span>🔔</span>
+                      {t("guides.action.remind")}
+                    </button>
+                  )}
+                  <button
+                    onClick={() => { setEditingNote(i); setNoteText(step.note || ""); }}
+                    className="flex-1 min-h-[44px] text-[11px] rounded-lg bg-surface-200/80 text-text-600 hover:bg-surface-200 flex items-center justify-center gap-1.5"
+                  >
+                    <span>📝</span>
+                    {t("guides.action.note")}
+                  </button>
+                  {step.chat_prompt && (
+                    <button
+                      onClick={() => setInlineChatIdx(inlineChatIdx === i ? null : i)}
+                      className="flex-1 min-h-[44px] text-[11px] rounded-lg bg-surface-200/80 text-text-600 hover:bg-surface-200 flex items-center justify-center gap-1.5"
+                    >
+                      <span>✨</span>
+                      {t("guides.action.askAI")}
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          );
+        }}
+      />
     </div>
   );
 }
