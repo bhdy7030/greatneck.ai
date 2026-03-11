@@ -81,7 +81,7 @@ export default function StepInlineChat({
           village,
           (event: PipelineEvent) => {
             if (event.type === "response" && event.response) {
-              full += event.response;
+              full = event.response;
               setStreamText(full);
             }
           },
@@ -91,7 +91,12 @@ export default function StepInlineChat({
           undefined,
           "off",
           language,
-          true
+          true,
+          undefined,
+          (token) => {
+            full += token;
+            setStreamText(full);
+          },
         );
         setMessages((prev) => [
           ...prev,

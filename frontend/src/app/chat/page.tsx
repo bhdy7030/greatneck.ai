@@ -154,19 +154,9 @@ function ChatPageInner() {
     if (draft) {
       localStorage.removeItem("gn_draft");
       draftSentRef.current = true;
-
-      // If there's an active conversation from a previous session, load it first
-      const activeConvo = localStorage.getItem("gn_active_convo");
-      const urlId = searchParams.get("id");
-      if (activeConvo && !urlId && user) {
-        loadConversation(activeConvo).then(() => {
-          queueMicrotask(() => handleSend(draft));
-        }).catch(() => {
-          queueMicrotask(() => handleSend(draft));
-        });
-      } else {
-        queueMicrotask(() => handleSend(draft));
-      }
+      // Always start a fresh chat for landing page drafts
+      localStorage.removeItem("gn_active_convo");
+      queueMicrotask(() => handleSend(draft));
     }
   }, [village]); // eslint-disable-line react-hooks/exhaustive-deps
 
