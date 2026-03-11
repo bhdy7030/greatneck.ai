@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import time
 from dataclasses import dataclass, field
 from datetime import datetime
 from zoneinfo import ZoneInfo
@@ -11,6 +12,7 @@ from typing import Any, Callable, Awaitable, Optional
 
 from llm.provider import llm_call_with_tools, llm_call_streaming
 from tools.registry import Tool, execute_tool
+from metrics.collector import record_pipeline_event
 
 # Callback type for streaming pipeline events
 EventCallback = Optional[Callable[[dict[str, Any]], Awaitable[None]]]
@@ -72,7 +74,23 @@ class BaseAgent:
                 if on_event:
                     await on_event({"type": "tool_call", "tool": fn_name, "args": args})
 
-                result = await execute_tool(fn_name, args)
+                t0 = time.monotonic()
+                tool_success = True
+                try:
+                    result = await execute_tool(fn_name, args)
+                except Exception:
+                    tool_success = False
+                    raise
+                finally:
+                    dur = int((time.monotonic() - t0) * 1000)
+                    record_pipeline_event(
+                        event_type="tool_call",
+                        event_name=fn_name,
+                        duration_ms=dur,
+                        metadata={"agent": self.name, "args_keys": list(args.keys())},
+                        success=tool_success,
+                    )
+
                 calls_made.append({"tool": fn_name, "args": args, "result_preview": result[:2000]})
 
                 # Emit tool_result event after execution
@@ -150,7 +168,23 @@ class BaseAgent:
                 if on_event:
                     await on_event({"type": "tool_call", "tool": fn_name, "args": args})
 
-                result = await execute_tool(fn_name, args)
+                t0 = time.monotonic()
+                tool_success = True
+                try:
+                    result = await execute_tool(fn_name, args)
+                except Exception:
+                    tool_success = False
+                    raise
+                finally:
+                    dur = int((time.monotonic() - t0) * 1000)
+                    record_pipeline_event(
+                        event_type="tool_call",
+                        event_name=fn_name,
+                        duration_ms=dur,
+                        metadata={"agent": self.name, "args_keys": list(args.keys())},
+                        success=tool_success,
+                    )
+
                 calls_made.append({"tool": fn_name, "args": args, "result_preview": result[:2000]})
 
                 if on_event:

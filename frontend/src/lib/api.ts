@@ -428,7 +428,31 @@ export async function getKnowledgeStats(): Promise<KnowledgeStats> {
   return res.json();
 }
 
-// ── Metrics API ──
+// ── Page Visit Tracking ──
+
+/**
+ * Track a page visit. Fire-and-forget — never throws.
+ */
+export function trackVisit(page: string): void {
+  try {
+    fetch(`${BASE_URL}/api/track/visit`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...authHeaders(),
+        ...sessionHeaders(),
+      },
+      body: JSON.stringify({
+        page,
+        referrer: typeof document !== "undefined" ? document.referrer : "",
+      }),
+    }).catch(() => {});
+  } catch {
+    // silently ignore
+  }
+}
+
+// ── Metrics API (legacy) ──
 
 export interface MetricsDay {
   date: string;
@@ -459,6 +483,111 @@ export async function getMetrics(): Promise<MetricsData> {
     headers: authHeaders(),
   });
   if (!res.ok) throw new Error(`Failed to fetch metrics: ${res.status}`);
+  return res.json();
+}
+
+// ── New Metrics API (pre-aggregated) ──
+
+export interface MetricsSummary {
+  period: { start: string; end: string };
+  total_cost: number;
+  total_tokens: number;
+  total_llm_calls: number;
+  total_queries: number;
+  avg_dau: number;
+  avg_latency: number;
+}
+
+export interface TimeseriesPoint {
+  date: string;
+  count: number;
+  sum_value: number;
+  avg_value: number;
+  p95_value: number;
+  min_value: number;
+  max_value: number;
+}
+
+export interface BreakdownItem {
+  dimension: string;
+  total_count: number;
+  total_value: number;
+  avg_value: number;
+}
+
+export interface PipelineData {
+  agent_calls: { event_name: string; count: number }[];
+  tool_calls: { event_name: string; count: number; avg_duration_ms: number; success_rate: number }[];
+  stage_durations: { event_name: string; count: number; avg_duration_ms: number; p95_duration_ms: number; max_duration_ms: number }[];
+  cache_stats: { event_type: string; count: number }[];
+}
+
+export interface RealtimeMetrics {
+  llm_calls: number;
+  tokens: number;
+  cost_usd: number;
+  avg_latency_ms: number;
+  dau: number;
+}
+
+function metricsParams(opts: { period?: string; start_date?: string; end_date?: string; metric_type?: string; dimension?: string }): string {
+  const p = new URLSearchParams();
+  if (opts.period) p.set("period", opts.period);
+  if (opts.start_date) p.set("start_date", opts.start_date);
+  if (opts.end_date) p.set("end_date", opts.end_date);
+  if (opts.metric_type) p.set("metric_type", opts.metric_type);
+  if (opts.dimension) p.set("dimension", opts.dimension);
+  return p.toString();
+}
+
+export async function getMetricsSummary(period: string = "30d"): Promise<MetricsSummary> {
+  const qs = metricsParams({ period });
+  const res = await fetchWithRefresh(`${BASE_URL}/api/admin/metrics/summary?${qs}`, {
+    headers: authHeaders(),
+  });
+  if (!res.ok) throw new Error(`Failed to fetch metrics summary: ${res.status}`);
+  return res.json();
+}
+
+export async function getMetricsTimeseries(
+  metric_type: string,
+  period: string = "30d",
+  dimension: string = "_total",
+): Promise<TimeseriesPoint[]> {
+  const qs = metricsParams({ metric_type, period, dimension });
+  const res = await fetchWithRefresh(`${BASE_URL}/api/admin/metrics/timeseries?${qs}`, {
+    headers: authHeaders(),
+  });
+  if (!res.ok) throw new Error(`Failed to fetch timeseries: ${res.status}`);
+  return res.json();
+}
+
+export async function getMetricsBreakdown(
+  metric_type: string,
+  period: string = "30d",
+): Promise<BreakdownItem[]> {
+  const qs = metricsParams({ metric_type, period });
+  const res = await fetchWithRefresh(`${BASE_URL}/api/admin/metrics/breakdown?${qs}`, {
+    headers: authHeaders(),
+  });
+  if (!res.ok) throw new Error(`Failed to fetch breakdown: ${res.status}`);
+  return res.json();
+}
+
+export async function getMetricsPipeline(period: string = "30d"): Promise<PipelineData> {
+  const qs = metricsParams({ period });
+  const res = await fetchWithRefresh(`${BASE_URL}/api/admin/metrics/pipeline?${qs}`, {
+    headers: authHeaders(),
+  });
+  if (!res.ok) throw new Error(`Failed to fetch pipeline metrics: ${res.status}`);
+  return res.json();
+}
+
+export async function getRealtimeMetrics(): Promise<RealtimeMetrics> {
+  const res = await fetchWithRefresh(`${BASE_URL}/api/admin/metrics/realtime`, {
+    headers: authHeaders(),
+  });
+  if (!res.ok) throw new Error(`Failed to fetch realtime metrics: ${res.status}`);
   return res.json();
 }
 

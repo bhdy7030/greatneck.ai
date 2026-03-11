@@ -2,9 +2,10 @@
 from __future__ import annotations
 
 import logging
+from datetime import date, timedelta
 from typing import Annotated, Optional
 
-from fastapi import APIRouter, Depends, File, Form, Header, UploadFile, HTTPException
+from fastapi import APIRouter, Depends, File, Form, Header, Query, UploadFile, HTTPException
 from pydantic import BaseModel
 
 from rag.ingest import ingest_document, ingest_pdf
@@ -14,6 +15,8 @@ from llm.presets import PROVIDERS, ROLE_PRESETS, load_config, save_config
 from db import (
     get_dau, get_daily_queries, get_tier_breakdown, get_total_users,
     get_top_agents, get_daily_token_usage, get_usage_by_role, get_usage_by_model,
+    get_metrics_timeseries, get_metrics_summary, get_metrics_breakdown,
+    get_pipeline_events_summary, get_realtime_metrics,
 )
 from api.aio import run_sync
 
@@ -75,6 +78,87 @@ async def get_metrics(user: dict = Depends(require_admin)) -> dict:
             "month_tokens": month_tokens,
         },
     }
+
+
+def _resolve_date_range(period: str | None, start_date: str | None, end_date: str | None) -> tuple[str, str]:
+    """Resolve date range from either a period shortcut or explicit dates."""
+    today = date.today()
+    if period:
+        if period == "today":
+            return today.isoformat(), today.isoformat()
+        elif period == "7d":
+            return (today - timedelta(days=6)).isoformat(), today.isoformat()
+        elif period == "30d":
+            return (today - timedelta(days=29)).isoformat(), today.isoformat()
+        elif period == "90d":
+            return (today - timedelta(days=89)).isoformat(), today.isoformat()
+    if start_date and end_date:
+        return start_date, end_date
+    # Default to last 30 days
+    return (today - timedelta(days=29)).isoformat(), today.isoformat()
+
+
+@router.get("/metrics/timeseries")
+async def metrics_timeseries(
+    user: dict = Depends(require_admin),
+    metric_type: str = Query(..., description="e.g. cost, tokens, latency, queries, dau, visits"),
+    dimension: str = Query("_total"),
+    start_date: str | None = Query(None),
+    end_date: str | None = Query(None),
+    period: str | None = Query(None, description="today, 7d, 30d, 90d"),
+) -> list[dict]:
+    """Daily timeseries for a given metric (reads pre-aggregated data)."""
+    sd, ed = _resolve_date_range(period, start_date, end_date)
+    return await run_sync(get_metrics_timeseries, metric_type, sd, ed, dimension)
+
+
+@router.get("/metrics/summary")
+async def metrics_summary(
+    user: dict = Depends(require_admin),
+    period: str = Query("30d", description="today, 7d, 30d, 90d"),
+    start_date: str | None = Query(None),
+    end_date: str | None = Query(None),
+) -> dict:
+    """Key KPIs: total cost, tokens, queries, avg DAU, avg latency."""
+    sd, ed = _resolve_date_range(period, start_date, end_date)
+    summary = await run_sync(get_metrics_summary, sd, ed)
+    return {
+        "period": {"start": sd, "end": ed},
+        **summary,
+    }
+
+
+@router.get("/metrics/breakdown")
+async def metrics_breakdown(
+    user: dict = Depends(require_admin),
+    metric_type: str = Query(..., description="e.g. tokens, cost, latency"),
+    start_date: str | None = Query(None),
+    end_date: str | None = Query(None),
+    period: str | None = Query(None, description="today, 7d, 30d, 90d"),
+) -> list[dict]:
+    """Dimension-level breakdown for pie/bar charts."""
+    sd, ed = _resolve_date_range(period, start_date, end_date)
+    return await run_sync(get_metrics_breakdown, metric_type, sd, ed)
+
+
+@router.get("/metrics/pipeline")
+async def metrics_pipeline(
+    user: dict = Depends(require_admin),
+    start_date: str | None = Query(None),
+    end_date: str | None = Query(None),
+    period: str | None = Query(None, description="today, 7d, 30d, 90d"),
+) -> dict:
+    """Pipeline event stats: agent calls, tool calls, stage durations, cache stats."""
+    sd, ed = _resolve_date_range(period, start_date, end_date)
+    return await run_sync(get_pipeline_events_summary, sd, ed)
+
+
+@router.get("/metrics/realtime")
+async def metrics_realtime(
+    user: dict = Depends(require_admin),
+) -> dict:
+    """Today's live metrics from raw tables (pre-rollup)."""
+    return await run_sync(get_realtime_metrics)
 
 
 class ModelConfigUpdate(BaseModel):

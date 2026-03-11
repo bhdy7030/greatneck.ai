@@ -93,9 +93,14 @@ async def lifespan(app: FastAPI):
     from metrics.collector import collector as metrics_collector
     await metrics_collector.start()
 
+    # Start metrics rollup background task
+    from metrics.rollup import start_metrics_rollup, stop_metrics_rollup
+    await start_metrics_rollup()
+
     yield
 
-    # Shutdown: flush metrics, then close DB
+    # Shutdown: stop rollup, flush metrics, then close DB
+    await stop_metrics_rollup()
     await metrics_collector.stop()
     close_pg_pool()
 
@@ -127,6 +132,7 @@ from api.health import router as health_router
 from api.invite import router as invite_router
 from api.guides import router as guides_router
 from api.user_guides import router as user_guides_router
+from api.track import router as track_router
 
 app.include_router(chat_router, prefix="/api")
 app.include_router(admin_router, prefix="/api/admin")
@@ -138,6 +144,7 @@ app.include_router(events_router, prefix="/api")
 app.include_router(invite_router, prefix="/api")
 app.include_router(guides_router, prefix="/api")
 app.include_router(user_guides_router, prefix="/api")
+app.include_router(track_router, prefix="/api")
 app.include_router(health_router)
 
 

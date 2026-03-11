@@ -257,9 +257,10 @@ def _friendly_error(e: Exception) -> str:
 
 async def _handle_chat_stream(request: ChatRequest, user: dict | None = None) -> AsyncGenerator[str, None]:
     """Stream pipeline events as SSE."""
+    import time as _time
     from tools.budget import set_budget
     from llm.presets import set_fast_mode
-    from metrics.collector import set_request_context
+    from metrics.collector import set_request_context, record_pipeline_event
     set_budget(mode=request.web_search_mode, limit=5)
     set_fast_mode(request.fast_mode)
     set_request_context(
@@ -267,15 +268,15 @@ async def _handle_chat_stream(request: ChatRequest, user: dict | None = None) ->
         conversation_id=request.conversation_id or '',
     )
 
-    # ── Cache: skip for images; allow even with history (standalone questions
-    # like "What are the zoning rules?" are cacheable regardless of context) ──
-    _is_cacheable = not request.image_base64
+    # ── Cache: skip for images and follow-up questions (history means context-dependent) ──
+    _is_cacheable = not request.image_base64 and len(request.history) == 0
 
     if _is_cacheable:
         # 1) Event response cache (exact match by event ID, Redis-backed)
         from cache.events import get_cached_event_response
         cached = await run_sync(get_cached_event_response, request.message, request.language)
         if cached:
+            record_pipeline_event("cache_hit", "event_cache")
             if user and request.conversation_id:
                 await run_sync(add_message, request.conversation_id, "user", request.message)
                 await run_sync(
@@ -301,6 +302,7 @@ async def _handle_chat_stream(request: ChatRequest, user: dict | None = None) ->
             fast_mode=request.fast_mode, web_search_mode=request.web_search_mode,
         )
         if sem_cached:
+            record_pipeline_event("cache_hit", "semantic_cache")
             if user and request.conversation_id:
                 await run_sync(
                     add_message,
@@ -315,6 +317,8 @@ async def _handle_chat_stream(request: ChatRequest, user: dict | None = None) ->
                 "conversation_id": request.conversation_id,
             })
             return
+
+        record_pipeline_event("cache_miss", "all_caches")
 
     context: dict[str, Any] = {
         "village": request.village,
@@ -421,6 +425,7 @@ async def _handle_chat_stream(request: ChatRequest, user: dict | None = None) ->
         _rag_store = KnowledgeStore()
 
         # Run router and RAG searches concurrently (saves ~1s)
+        _t_router = _time.monotonic()
         router_coro = _router_agent.run(request.message, context=context)
         rag_coro = run_sync(_rag_store.search, request.message, village=request.village or None, n_results=3)
         shared_rag_coro = run_sync(_rag_store.search, request.message, village=None, n_results=3)
@@ -428,9 +433,14 @@ async def _handle_chat_stream(request: ChatRequest, user: dict | None = None) ->
         routing, rag_results, shared_results = await asyncio.gather(
             router_coro, rag_coro, shared_rag_coro
         )
+        _dur_router = int((_time.monotonic() - _t_router) * 1000)
 
         agent_name = routing.get("agent", "general")
         refined_query = routing.get("refined_query", request.message)
+
+        record_pipeline_event("pipeline_stage", "router", duration_ms=_dur_router)
+        record_pipeline_event("agent_selected", agent_name, metadata={"refined_query": refined_query[:200]})
+
         yield _sse_event("step", {
             "stage": "router", "status": "done",
             "label": "Understood",
@@ -476,7 +486,13 @@ async def _handle_chat_stream(request: ChatRequest, user: dict | None = None) ->
         # Step 2: Planner
         search_plan_text = None
         specialist_model_role = None
+        _t_planner = _time.monotonic()
         plan = await _planner_agent.run(refined_query, village=request.village, agent_type=agent_name)
+        _dur_planner = int((_time.monotonic() - _t_planner) * 1000)
+        record_pipeline_event(
+            "pipeline_stage", "planner", duration_ms=_dur_planner,
+            metadata={"complexity": plan.complexity if plan else "skipped"},
+        )
         if plan:
             search_plan_text = plan.raw_text
             if plan.complexity != "high":
@@ -519,6 +535,8 @@ async def _handle_chat_stream(request: ChatRequest, user: dict | None = None) ->
         agent_content = ""
         agent_calls: list[dict] = []
 
+        _t_specialist = _time.monotonic()
+
         async def run_specialist():
             async for item in agent.run_streaming(
                 refined_query,
@@ -546,6 +564,11 @@ async def _handle_chat_stream(request: ChatRequest, user: dict | None = None) ->
                 agent_calls = item[2]
 
         await task  # ensure no exceptions are lost
+        _dur_specialist = int((_time.monotonic() - _t_specialist) * 1000)
+        record_pipeline_event(
+            "pipeline_stage", "specialist", duration_ms=_dur_specialist,
+            metadata={"agent": agent_name, "tool_calls": len(agent_calls), "model": model_label},
+        )
 
         # Build an AgentResponse for downstream compatibility
         agent_response = AgentResponse(
@@ -563,11 +586,17 @@ async def _handle_chat_stream(request: ChatRequest, user: dict | None = None) ->
         skip_critic = (agent_name == "community" and not plan) or agent_name == "report"
         if not skip_critic:
             yield _sse_event("step", {"stage": "critic", "status": "running", "label": "Reviewing answer..."})
+            _t_critic = _time.monotonic()
             verdict = await _critic_agent.run(
                 original_query=request.message,
                 draft_response=agent_response.content,
                 tool_calls_made=agent_response.tool_calls_made,
                 village=request.village,
+            )
+            _dur_critic = int((_time.monotonic() - _t_critic) * 1000)
+            record_pipeline_event(
+                "pipeline_stage", "critic", duration_ms=_dur_critic,
+                metadata={"decision": verdict.decision, "confidence": verdict.confidence},
             )
             yield _sse_event("step", {
                 "stage": "critic", "status": "done",
@@ -692,9 +721,10 @@ async def _handle_chat_stream(request: ChatRequest, user: dict | None = None) ->
 
 
 async def _handle_chat(request: ChatRequest) -> ChatResponse:
+    import time as _time
     from tools.budget import set_budget
     from llm.presets import set_fast_mode
-    from metrics.collector import set_request_context
+    from metrics.collector import set_request_context, record_pipeline_event
     set_budget(mode=request.web_search_mode, limit=5)
     set_fast_mode(request.fast_mode)
     set_request_context(
@@ -702,8 +732,8 @@ async def _handle_chat(request: ChatRequest) -> ChatResponse:
         conversation_id=request.conversation_id or '',
     )
 
-    # Semantic cache check (skip for images only)
-    _is_cacheable = not request.image_base64
+    # Semantic cache check (skip for images and follow-up questions with history)
+    _is_cacheable = not request.image_base64 and len(request.history) == 0
     if _is_cacheable:
         from cache import semantic as semantic_cache
         sem_cached = await run_sync(
@@ -711,11 +741,13 @@ async def _handle_chat(request: ChatRequest) -> ChatResponse:
             fast_mode=request.fast_mode, web_search_mode=request.web_search_mode,
         )
         if sem_cached:
+            record_pipeline_event("cache_hit", "semantic_cache")
             return ChatResponse(
                 response=sem_cached["response"],
                 sources=sem_cached.get("sources", []),
                 agent_used=sem_cached.get("agent_used", "cached"),
             )
+        record_pipeline_event("cache_miss", "all_caches")
 
     context: dict[str, Any] = {
         "village": request.village,
@@ -774,10 +806,15 @@ async def _handle_chat(request: ChatRequest) -> ChatResponse:
     debug: dict[str, Any] = {}
 
     # Router
+    _t_router = _time.monotonic()
     routing = await _router_agent.run(request.message, context=context)
+    _dur_router = int((_time.monotonic() - _t_router) * 1000)
     agent_name = routing.get("agent", "general")
     refined_query = routing.get("refined_query", request.message)
     debug["router"] = {"agent": agent_name, "refined_query": refined_query}
+
+    record_pipeline_event("pipeline_stage", "router", duration_ms=_dur_router)
+    record_pipeline_event("agent_selected", agent_name, metadata={"refined_query": refined_query[:200]})
 
     logger.info(f"Routed to '{agent_name}' with query: {refined_query[:100]}")
 
@@ -798,10 +835,16 @@ async def _handle_chat(request: ChatRequest) -> ChatResponse:
     # Step 1: Generate search plan (skipped for community/simple queries)
     search_plan_text = None
     specialist_model_role = None  # None = use agent's default (reasoning/Opus)
+    _t_planner = _time.monotonic()
     plan = await _planner_agent.run(
         refined_query,
         village=request.village,
         agent_type=agent_name,
+    )
+    _dur_planner = int((_time.monotonic() - _t_planner) * 1000)
+    record_pipeline_event(
+        "pipeline_stage", "planner", duration_ms=_dur_planner,
+        metadata={"complexity": plan.complexity if plan else "skipped"},
     )
     if plan:
         search_plan_text = plan.raw_text
@@ -825,11 +868,17 @@ async def _handle_chat(request: ChatRequest) -> ChatResponse:
         debug["planner"] = {"skipped": True}
 
     # Step 2: Run specialist with search plan context and appropriate model
+    _t_specialist = _time.monotonic()
     agent_response: AgentResponse = await agent.run(
         refined_query,
         context=context,
         search_plan=search_plan_text,
         model_role_override=specialist_model_role,
+    )
+    _dur_specialist = int((_time.monotonic() - _t_specialist) * 1000)
+    record_pipeline_event(
+        "pipeline_stage", "specialist", duration_ms=_dur_specialist,
+        metadata={"agent": agent_name, "tool_calls": len(agent_response.tool_calls_made)},
     )
 
     debug["specialist"] = {
@@ -843,10 +892,16 @@ async def _handle_chat(request: ChatRequest) -> ChatResponse:
     # Step 3: Critic validation (skip for simple community queries without a plan)
     skip_critic = (agent_name == "community" and not plan) or agent_name == "report"
     if not skip_critic:
+        _t_critic = _time.monotonic()
         verdict = await _critic_agent.run(
             original_query=request.message,
             draft_response=agent_response.content,
             tool_calls_made=agent_response.tool_calls_made,
+        )
+        _dur_critic = int((_time.monotonic() - _t_critic) * 1000)
+        record_pipeline_event(
+            "pipeline_stage", "critic", duration_ms=_dur_critic,
+            metadata={"decision": verdict.decision, "confidence": verdict.confidence},
         )
         debug["critic_pass1"] = {
             "decision": verdict.decision,

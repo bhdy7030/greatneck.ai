@@ -323,6 +323,48 @@ CREATE TABLE IF NOT EXISTS guide_step_status (
 );
 CREATE INDEX IF NOT EXISTS idx_gss_remind ON guide_step_status(remind_at)
     WHERE remind_at IS NOT NULL;
+
+CREATE TABLE IF NOT EXISTS metrics_daily (
+    date DATE NOT NULL,
+    metric_type TEXT NOT NULL,
+    dimension TEXT NOT NULL DEFAULT '_total',
+    count INTEGER NOT NULL DEFAULT 0,
+    sum_value REAL NOT NULL DEFAULT 0,
+    avg_value REAL NOT NULL DEFAULT 0,
+    p95_value REAL NOT NULL DEFAULT 0,
+    min_value REAL NOT NULL DEFAULT 0,
+    max_value REAL NOT NULL DEFAULT 0,
+    metadata JSONB DEFAULT '{}',
+    updated_at TIMESTAMP DEFAULT NOW(),
+    PRIMARY KEY (date, metric_type, dimension)
+);
+CREATE INDEX IF NOT EXISTS idx_metrics_daily_type_date ON metrics_daily(metric_type, date);
+
+CREATE TABLE IF NOT EXISTS pipeline_events (
+    id SERIAL PRIMARY KEY,
+    created_at TIMESTAMP DEFAULT NOW(),
+    session_id TEXT DEFAULT '',
+    conversation_id TEXT DEFAULT '',
+    event_type TEXT NOT NULL,
+    event_name TEXT NOT NULL,
+    duration_ms INTEGER DEFAULT 0,
+    metadata JSONB DEFAULT '{}',
+    success BOOLEAN DEFAULT TRUE
+);
+CREATE INDEX IF NOT EXISTS idx_pe_created ON pipeline_events(created_at);
+CREATE INDEX IF NOT EXISTS idx_pe_type_created ON pipeline_events(event_type, created_at);
+
+CREATE TABLE IF NOT EXISTS page_visits (
+    id SERIAL PRIMARY KEY,
+    created_at TIMESTAMP DEFAULT NOW(),
+    session_id TEXT NOT NULL,
+    user_id INTEGER,
+    page TEXT NOT NULL,
+    referrer TEXT DEFAULT '',
+    user_agent TEXT DEFAULT ''
+);
+CREATE INDEX IF NOT EXISTS idx_pv_created ON page_visits(created_at);
+CREATE INDEX IF NOT EXISTS idx_pv_session_created ON page_visits(session_id, created_at);
 """
 
 _SQLITE_SCHEMA = """
@@ -462,6 +504,48 @@ CREATE TABLE IF NOT EXISTS guide_step_status (
     UNIQUE(session_id, guide_id, step_id)
 );
 CREATE INDEX IF NOT EXISTS idx_gss_remind ON guide_step_status(remind_at);
+
+CREATE TABLE IF NOT EXISTS metrics_daily (
+    date TEXT NOT NULL,
+    metric_type TEXT NOT NULL,
+    dimension TEXT NOT NULL DEFAULT '_total',
+    count INTEGER NOT NULL DEFAULT 0,
+    sum_value REAL NOT NULL DEFAULT 0,
+    avg_value REAL NOT NULL DEFAULT 0,
+    p95_value REAL NOT NULL DEFAULT 0,
+    min_value REAL NOT NULL DEFAULT 0,
+    max_value REAL NOT NULL DEFAULT 0,
+    metadata TEXT DEFAULT '{}',
+    updated_at TEXT DEFAULT (datetime('now')),
+    PRIMARY KEY (date, metric_type, dimension)
+);
+CREATE INDEX IF NOT EXISTS idx_metrics_daily_type_date ON metrics_daily(metric_type, date);
+
+CREATE TABLE IF NOT EXISTS pipeline_events (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    created_at TEXT DEFAULT (datetime('now')),
+    session_id TEXT DEFAULT '',
+    conversation_id TEXT DEFAULT '',
+    event_type TEXT NOT NULL,
+    event_name TEXT NOT NULL,
+    duration_ms INTEGER DEFAULT 0,
+    metadata TEXT DEFAULT '{}',
+    success INTEGER DEFAULT 1
+);
+CREATE INDEX IF NOT EXISTS idx_pe_created ON pipeline_events(created_at);
+CREATE INDEX IF NOT EXISTS idx_pe_type_created ON pipeline_events(event_type, created_at);
+
+CREATE TABLE IF NOT EXISTS page_visits (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    created_at TEXT DEFAULT (datetime('now')),
+    session_id TEXT NOT NULL,
+    user_id INTEGER,
+    page TEXT NOT NULL,
+    referrer TEXT DEFAULT '',
+    user_agent TEXT DEFAULT ''
+);
+CREATE INDEX IF NOT EXISTS idx_pv_created ON page_visits(created_at);
+CREATE INDEX IF NOT EXISTS idx_pv_session_created ON page_visits(session_id, created_at);
 """
 
 
@@ -690,6 +774,8 @@ def init_db():
         _migrate_invites()
         _migrate_guides()
         _migrate_user_guides()
+        _migrate_metrics_daily()
+        _migrate_page_visits()
         return
 
     # SQLite path (existing logic)
@@ -719,6 +805,8 @@ def init_db():
     _migrate_invites()
     _migrate_guides()
     _migrate_user_guides()
+    _migrate_metrics_daily()
+    _migrate_page_visits()
 
 
 # ── Users ───────────────────────────────────────────────────────
@@ -1341,6 +1429,80 @@ def batch_insert_usage(records: list) -> None:
         conn.commit()
 
 
+def batch_insert_pipeline_events(events: list) -> None:
+    """Batch-insert PipelineEvent objects into pipeline_events table.
+
+    Called by the metrics collector background task — NOT on the hot path.
+    """
+    if not events:
+        return
+
+    if _is_pg():
+        from psycopg2.extras import execute_values
+        with _PgConnWrapper() as conn:
+            with conn.cursor() as cur:
+                sql = """INSERT INTO pipeline_events
+                    (session_id, conversation_id, event_type, event_name,
+                     duration_ms, metadata, success)
+                    VALUES %s"""
+                values = [
+                    (e.session_id, e.conversation_id, e.event_type, e.event_name,
+                     e.duration_ms, json.dumps(e.metadata) if e.metadata else '{}',
+                     e.success)
+                    for e in events
+                ]
+                execute_values(cur, sql, values)
+                conn.commit()
+    else:
+        conn = _get_sqlite_conn()
+        conn.executemany(
+            """INSERT INTO pipeline_events
+                (session_id, conversation_id, event_type, event_name,
+                 duration_ms, metadata, success)
+                VALUES (?, ?, ?, ?, ?, ?, ?)""",
+            [(e.session_id, e.conversation_id, e.event_type, e.event_name,
+              e.duration_ms, json.dumps(e.metadata) if e.metadata else '{}',
+              1 if e.success else 0)
+             for e in events],
+        )
+        conn.commit()
+
+
+def batch_insert_page_visits(visits: list) -> None:
+    """Batch-insert PageVisit objects into page_visits table.
+
+    Called by the metrics collector background task — NOT on the hot path.
+    """
+    if not visits:
+        return
+
+    if _is_pg():
+        from psycopg2.extras import execute_values
+        with _PgConnWrapper() as conn:
+            with conn.cursor() as cur:
+                sql = """INSERT INTO page_visits
+                    (session_id, user_id, page, referrer, user_agent)
+                    VALUES %s"""
+                values = [
+                    (v.session_id, v.user_id or None, v.page,
+                     v.referrer, v.user_agent)
+                    for v in visits
+                ]
+                execute_values(cur, sql, values)
+                conn.commit()
+    else:
+        conn = _get_sqlite_conn()
+        conn.executemany(
+            """INSERT INTO page_visits
+                (session_id, user_id, page, referrer, user_agent)
+                VALUES (?, ?, ?, ?, ?)""",
+            [(v.session_id, v.user_id or None, v.page,
+              v.referrer, v.user_agent)
+             for v in visits],
+        )
+        conn.commit()
+
+
 def get_daily_token_usage(days: int = 30) -> list[dict]:
     """Daily totals: tokens, cost, call count."""
     if _is_pg():
@@ -1865,3 +2027,658 @@ def migrate_user_guide_data(session_id, user_id):
         "UPDATE user_guides SET user_id=%s, session_id=NULL WHERE session_id=%s AND user_id IS NULL",
         (user_id, session_id),
     )
+
+
+# ── Metrics daily rollup ──────────────────────────────────────────
+
+
+def _migrate_metrics_daily():
+    """Add metrics_daily table if missing (for existing deployments)."""
+    if _is_pg():
+        with _PgConnWrapper() as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    CREATE TABLE IF NOT EXISTS metrics_daily (
+                        date DATE NOT NULL,
+                        metric_type TEXT NOT NULL,
+                        dimension TEXT NOT NULL DEFAULT '_total',
+                        count INTEGER NOT NULL DEFAULT 0,
+                        sum_value REAL NOT NULL DEFAULT 0,
+                        avg_value REAL NOT NULL DEFAULT 0,
+                        p95_value REAL NOT NULL DEFAULT 0,
+                        min_value REAL NOT NULL DEFAULT 0,
+                        max_value REAL NOT NULL DEFAULT 0,
+                        metadata JSONB DEFAULT '{}',
+                        updated_at TIMESTAMP DEFAULT NOW(),
+                        PRIMARY KEY (date, metric_type, dimension)
+                    )
+                """)
+                cur.execute("CREATE INDEX IF NOT EXISTS idx_metrics_daily_type_date ON metrics_daily(metric_type, date)")
+                conn.commit()
+    else:
+        conn = _get_sqlite_conn()
+        tables = {row[0] for row in conn.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()}
+        if "metrics_daily" not in tables:
+            conn.execute("""
+                CREATE TABLE metrics_daily (
+                    date TEXT NOT NULL,
+                    metric_type TEXT NOT NULL,
+                    dimension TEXT NOT NULL DEFAULT '_total',
+                    count INTEGER NOT NULL DEFAULT 0,
+                    sum_value REAL NOT NULL DEFAULT 0,
+                    avg_value REAL NOT NULL DEFAULT 0,
+                    p95_value REAL NOT NULL DEFAULT 0,
+                    min_value REAL NOT NULL DEFAULT 0,
+                    max_value REAL NOT NULL DEFAULT 0,
+                    metadata TEXT DEFAULT '{}',
+                    updated_at TEXT DEFAULT (datetime('now')),
+                    PRIMARY KEY (date, metric_type, dimension)
+                )
+            """)
+            conn.execute("CREATE INDEX IF NOT EXISTS idx_metrics_daily_type_date ON metrics_daily(metric_type, date)")
+        conn.commit()
+
+
+def _migrate_page_visits():
+    """Add page_visits table if missing (for existing deployments)."""
+    if _is_pg():
+        with _PgConnWrapper() as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    CREATE TABLE IF NOT EXISTS page_visits (
+                        id SERIAL PRIMARY KEY,
+                        created_at TIMESTAMP DEFAULT NOW(),
+                        session_id TEXT NOT NULL,
+                        user_id INTEGER,
+                        page TEXT NOT NULL,
+                        referrer TEXT DEFAULT '',
+                        user_agent TEXT DEFAULT ''
+                    )
+                """)
+                cur.execute("CREATE INDEX IF NOT EXISTS idx_pv_created ON page_visits(created_at)")
+                cur.execute("CREATE INDEX IF NOT EXISTS idx_pv_session_created ON page_visits(session_id, created_at)")
+                conn.commit()
+    else:
+        conn = _get_sqlite_conn()
+        tables = {row[0] for row in conn.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()}
+        if "page_visits" not in tables:
+            conn.execute("""
+                CREATE TABLE page_visits (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    created_at TEXT DEFAULT (datetime('now')),
+                    session_id TEXT NOT NULL,
+                    user_id INTEGER,
+                    page TEXT NOT NULL,
+                    referrer TEXT DEFAULT '',
+                    user_agent TEXT DEFAULT ''
+                )
+            """)
+            conn.execute("CREATE INDEX IF NOT EXISTS idx_pv_created ON page_visits(created_at)")
+            conn.execute("CREATE INDEX IF NOT EXISTS idx_pv_session_created ON page_visits(session_id, created_at)")
+        conn.commit()
+
+
+def _upsert_metric(date: str, metric_type: str, dimension: str,
+                    count_val: int = 0, sum_val: float = 0,
+                    avg_val: float = 0, p95_val: float = 0,
+                    min_val: float = 0, max_val: float = 0):
+    """Upsert a single row into metrics_daily."""
+    if _is_pg():
+        with _PgConnWrapper() as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    INSERT INTO metrics_daily
+                        (date, metric_type, dimension, count, sum_value,
+                         avg_value, p95_value, min_value, max_value, updated_at)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, NOW())
+                    ON CONFLICT (date, metric_type, dimension)
+                    DO UPDATE SET
+                        count = EXCLUDED.count,
+                        sum_value = EXCLUDED.sum_value,
+                        avg_value = EXCLUDED.avg_value,
+                        p95_value = EXCLUDED.p95_value,
+                        min_value = EXCLUDED.min_value,
+                        max_value = EXCLUDED.max_value,
+                        updated_at = NOW()
+                """, (date, metric_type, dimension, count_val, sum_val,
+                      avg_val, p95_val, min_val, max_val))
+                conn.commit()
+    else:
+        conn = _get_sqlite_conn()
+        conn.execute("""
+            INSERT OR REPLACE INTO metrics_daily
+                (date, metric_type, dimension, count, sum_value,
+                 avg_value, p95_value, min_value, max_value, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
+        """, (date, metric_type, dimension, count_val, sum_val,
+              avg_val, p95_val, min_val, max_val))
+        conn.commit()
+
+
+def rollup_daily_metrics(target_date: str) -> int:
+    """Aggregate raw llm_usage + usage_tracking into metrics_daily for a given date.
+
+    target_date: 'YYYY-MM-DD' string.
+    Returns total number of rows upserted.
+    """
+    count = 0
+
+    # ── 1. Token/cost aggregation by role ──
+    if _is_pg():
+        rows = _exec(
+            "",
+            """SELECT role,
+                      COUNT(*) AS cnt,
+                      SUM(total_tokens) AS sum_tokens,
+                      AVG(total_tokens) AS avg_tokens,
+                      MIN(total_tokens) AS min_tokens,
+                      MAX(total_tokens) AS max_tokens,
+                      SUM(cost_usd) AS sum_cost
+               FROM llm_usage
+               WHERE created_at::date = %s
+               GROUP BY role""",
+            (target_date,),
+        )
+    else:
+        rows = _exec(
+            """SELECT role,
+                      COUNT(*) AS cnt,
+                      SUM(total_tokens) AS sum_tokens,
+                      AVG(total_tokens) AS avg_tokens,
+                      MIN(total_tokens) AS min_tokens,
+                      MAX(total_tokens) AS max_tokens,
+                      SUM(cost_usd) AS sum_cost
+               FROM llm_usage
+               WHERE date(created_at) = ?
+               GROUP BY role""",
+            "",
+            (target_date,),
+        )
+    for r in rows:
+        _upsert_metric(target_date, 'tokens', r['role'],
+                        count_val=r['cnt'], sum_val=r['sum_tokens'] or 0,
+                        avg_val=r['avg_tokens'] or 0,
+                        min_val=r['min_tokens'] or 0, max_val=r['max_tokens'] or 0)
+        _upsert_metric(target_date, 'cost', r['role'],
+                        count_val=r['cnt'], sum_val=r['sum_cost'] or 0)
+        count += 2
+
+    # ── 2. Token/cost total (all roles combined) ──
+    if _is_pg():
+        total = _exec_one(
+            "",
+            """SELECT COUNT(*) AS cnt,
+                      SUM(total_tokens) AS sum_tokens,
+                      AVG(total_tokens) AS avg_tokens,
+                      MIN(total_tokens) AS min_tokens,
+                      MAX(total_tokens) AS max_tokens,
+                      SUM(cost_usd) AS sum_cost
+               FROM llm_usage
+               WHERE created_at::date = %s""",
+            (target_date,),
+        )
+    else:
+        total = _exec_one(
+            """SELECT COUNT(*) AS cnt,
+                      SUM(total_tokens) AS sum_tokens,
+                      AVG(total_tokens) AS avg_tokens,
+                      MIN(total_tokens) AS min_tokens,
+                      MAX(total_tokens) AS max_tokens,
+                      SUM(cost_usd) AS sum_cost
+               FROM llm_usage
+               WHERE date(created_at) = ?""",
+            "",
+            (target_date,),
+        )
+    if total and total['cnt']:
+        _upsert_metric(target_date, 'tokens', '_total',
+                        count_val=total['cnt'], sum_val=total['sum_tokens'] or 0,
+                        avg_val=total['avg_tokens'] or 0,
+                        min_val=total['min_tokens'] or 0, max_val=total['max_tokens'] or 0)
+        _upsert_metric(target_date, 'cost', '_total',
+                        count_val=total['cnt'], sum_val=total['sum_cost'] or 0)
+        count += 2
+
+    # ── 3. Latency aggregation by role ──
+    if _is_pg():
+        lat_rows = _exec(
+            "",
+            """SELECT role,
+                      COUNT(*) AS cnt,
+                      AVG(latency_ms) AS avg_lat,
+                      MIN(latency_ms) AS min_lat,
+                      MAX(latency_ms) AS max_lat,
+                      PERCENTILE_CONT(0.95) WITHIN GROUP (ORDER BY latency_ms) AS p95_lat
+               FROM llm_usage
+               WHERE created_at::date = %s AND latency_ms > 0
+               GROUP BY role""",
+            (target_date,),
+        )
+    else:
+        # SQLite has no PERCENTILE_CONT; use max as p95 approximation
+        lat_rows = _exec(
+            """SELECT role,
+                      COUNT(*) AS cnt,
+                      AVG(latency_ms) AS avg_lat,
+                      MIN(latency_ms) AS min_lat,
+                      MAX(latency_ms) AS max_lat,
+                      MAX(latency_ms) AS p95_lat
+               FROM llm_usage
+               WHERE date(created_at) = ? AND latency_ms > 0
+               GROUP BY role""",
+            "",
+            (target_date,),
+        )
+    for r in lat_rows:
+        _upsert_metric(target_date, 'latency', r['role'],
+                        count_val=r['cnt'],
+                        avg_val=r['avg_lat'] or 0,
+                        p95_val=r['p95_lat'] or 0,
+                        min_val=r['min_lat'] or 0, max_val=r['max_lat'] or 0)
+        count += 1
+
+    # ── 4. Token aggregation by model ──
+    if _is_pg():
+        model_rows = _exec(
+            "",
+            """SELECT model,
+                      COUNT(*) AS cnt,
+                      SUM(total_tokens) AS sum_tokens,
+                      SUM(cost_usd) AS sum_cost
+               FROM llm_usage
+               WHERE created_at::date = %s
+               GROUP BY model""",
+            (target_date,),
+        )
+    else:
+        model_rows = _exec(
+            """SELECT model,
+                      COUNT(*) AS cnt,
+                      SUM(total_tokens) AS sum_tokens,
+                      SUM(cost_usd) AS sum_cost
+               FROM llm_usage
+               WHERE date(created_at) = ?
+               GROUP BY model""",
+            "",
+            (target_date,),
+        )
+    for r in model_rows:
+        dim = f"model:{r['model']}"
+        _upsert_metric(target_date, 'tokens', dim,
+                        count_val=r['cnt'], sum_val=r['sum_tokens'] or 0)
+        _upsert_metric(target_date, 'cost', dim,
+                        count_val=r['cnt'], sum_val=r['sum_cost'] or 0)
+        count += 2
+
+    # ── 5. Query count (total queries from llm_usage) ──
+    if total and total['cnt']:
+        _upsert_metric(target_date, 'queries', '_total', count_val=total['cnt'])
+        count += 1
+
+    # ── 6. DAU from usage_tracking ──
+    if _is_pg():
+        dau = _exec_scalar(
+            "",
+            """SELECT COUNT(DISTINCT session_id)
+               FROM usage_tracking
+               WHERE last_query_at::date = %s""",
+            (target_date,),
+        )
+    else:
+        dau = _exec_scalar(
+            """SELECT COUNT(DISTINCT session_id)
+               FROM usage_tracking
+               WHERE date(last_query_at) = ?""",
+            "",
+            (target_date,),
+        )
+    if dau:
+        _upsert_metric(target_date, 'dau', '_total', count_val=dau)
+        count += 1
+
+    # ── 7. Pipeline events aggregation (if table exists) ──
+    try:
+        if _is_pg():
+            pe_rows = _exec(
+                "",
+                """SELECT event_type,
+                          COUNT(*) AS cnt
+                   FROM pipeline_events
+                   WHERE created_at::date = %s
+                   GROUP BY event_type""",
+                (target_date,),
+            )
+        else:
+            pe_rows = _exec(
+                """SELECT event_type,
+                          COUNT(*) AS cnt
+                   FROM pipeline_events
+                   WHERE date(created_at) = ?
+                   GROUP BY event_type""",
+                "",
+                (target_date,),
+            )
+        for r in pe_rows:
+            _upsert_metric(target_date, 'pipeline', r['event_type'],
+                            count_val=r['cnt'])
+            count += 1
+    except Exception:
+        # pipeline_events table may not exist yet
+        pass
+
+    # ── 8. Page visits by page ──
+    try:
+        if _is_pg():
+            pv_rows = _exec(
+                "",
+                """SELECT page,
+                          COUNT(*) AS cnt
+                   FROM page_visits
+                   WHERE created_at::date = %s
+                   GROUP BY page""",
+                (target_date,),
+            )
+        else:
+            pv_rows = _exec(
+                """SELECT page,
+                          COUNT(*) AS cnt
+                   FROM page_visits
+                   WHERE date(created_at) = ?
+                   GROUP BY page""",
+                "",
+                (target_date,),
+            )
+        for r in pv_rows:
+            _upsert_metric(target_date, 'visits', r['page'], count_val=r['cnt'])
+            count += 1
+
+        # Total page views
+        total_views = sum(r['cnt'] for r in pv_rows)
+        if total_views:
+            _upsert_metric(target_date, 'visits', '_total', count_val=total_views)
+            count += 1
+
+        # ── 9. Unique visitors (unique session_ids) ──
+        if _is_pg():
+            uv = _exec_scalar(
+                "",
+                """SELECT COUNT(DISTINCT session_id)
+                   FROM page_visits
+                   WHERE created_at::date = %s""",
+                (target_date,),
+            )
+        else:
+            uv = _exec_scalar(
+                """SELECT COUNT(DISTINCT session_id)
+                   FROM page_visits
+                   WHERE date(created_at) = ?""",
+                "",
+                (target_date,),
+            )
+        if uv:
+            _upsert_metric(target_date, 'unique_visitors', '_total', count_val=uv)
+            count += 1
+
+        # ── 10. Authenticated visitors (unique user_ids, non-null) ──
+        if _is_pg():
+            av = _exec_scalar(
+                "",
+                """SELECT COUNT(DISTINCT user_id)
+                   FROM page_visits
+                   WHERE created_at::date = %s AND user_id IS NOT NULL""",
+                (target_date,),
+            )
+        else:
+            av = _exec_scalar(
+                """SELECT COUNT(DISTINCT user_id)
+                   FROM page_visits
+                   WHERE date(created_at) = ? AND user_id IS NOT NULL""",
+                "",
+                (target_date,),
+            )
+        if av:
+            _upsert_metric(target_date, 'authenticated_visitors', '_total', count_val=av)
+            count += 1
+    except Exception:
+        # page_visits table may not exist yet
+        pass
+
+    return count
+
+
+# ── Metrics API query functions ────────────────────────────────────
+
+
+def get_metrics_timeseries(metric_type: str, start_date: str, end_date: str,
+                           dimension: str = "_total") -> list[dict]:
+    """Return daily timeseries from metrics_daily for charting."""
+    if _is_pg():
+        return _exec(
+            "",
+            """SELECT date::TEXT, count, sum_value, avg_value, p95_value, min_value, max_value
+               FROM metrics_daily
+               WHERE metric_type = %s AND dimension = %s
+                 AND date >= %s AND date <= %s
+               ORDER BY date""",
+            (metric_type, dimension, start_date, end_date),
+        )
+    return _exec(
+        """SELECT date, count, sum_value, avg_value, p95_value, min_value, max_value
+           FROM metrics_daily
+           WHERE metric_type = ? AND dimension = ?
+             AND date >= ? AND date <= ?
+           ORDER BY date""",
+        "",
+        (metric_type, dimension, start_date, end_date),
+    )
+
+
+def get_metrics_summary(start_date: str, end_date: str) -> dict:
+    """Return aggregated KPIs across a date range from metrics_daily."""
+    if _is_pg():
+        row = _exec_one(
+            "",
+            """SELECT
+                  COALESCE(SUM(CASE WHEN metric_type='cost' AND dimension='_total' THEN sum_value END), 0) AS total_cost,
+                  COALESCE(SUM(CASE WHEN metric_type='tokens' AND dimension='_total' THEN sum_value END), 0) AS total_tokens,
+                  COALESCE(SUM(CASE WHEN metric_type='tokens' AND dimension='_total' THEN count END), 0) AS total_llm_calls,
+                  COALESCE(SUM(CASE WHEN metric_type='queries' AND dimension='_total' THEN count END), 0) AS total_queries,
+                  COALESCE(AVG(CASE WHEN metric_type='dau' AND dimension='_total' THEN count END), 0) AS avg_dau,
+                  COALESCE(AVG(CASE WHEN metric_type='latency' AND dimension='_total' THEN avg_value END), 0) AS avg_latency
+               FROM metrics_daily
+               WHERE date >= %s AND date <= %s""",
+            (start_date, end_date),
+        )
+    else:
+        row = _exec_one(
+            """SELECT
+                  COALESCE(SUM(CASE WHEN metric_type='cost' AND dimension='_total' THEN sum_value END), 0) AS total_cost,
+                  COALESCE(SUM(CASE WHEN metric_type='tokens' AND dimension='_total' THEN sum_value END), 0) AS total_tokens,
+                  COALESCE(SUM(CASE WHEN metric_type='tokens' AND dimension='_total' THEN count END), 0) AS total_llm_calls,
+                  COALESCE(SUM(CASE WHEN metric_type='queries' AND dimension='_total' THEN count END), 0) AS total_queries,
+                  COALESCE(AVG(CASE WHEN metric_type='dau' AND dimension='_total' THEN count END), 0) AS avg_dau,
+                  COALESCE(AVG(CASE WHEN metric_type='latency' AND dimension='_total' THEN avg_value END), 0) AS avg_latency
+               FROM metrics_daily
+               WHERE date >= ? AND date <= ?""",
+            "",
+            (start_date, end_date),
+        )
+    return row or {
+        "total_cost": 0, "total_tokens": 0, "total_llm_calls": 0,
+        "total_queries": 0, "avg_dau": 0, "avg_latency": 0,
+    }
+
+
+def get_metrics_breakdown(metric_type: str, start_date: str, end_date: str) -> list[dict]:
+    """Return dimension-level breakdown for a metric_type (for pie/bar charts)."""
+    if _is_pg():
+        return _exec(
+            "",
+            """SELECT dimension,
+                      SUM(count) AS total_count,
+                      SUM(sum_value) AS total_value,
+                      AVG(avg_value) AS avg_value
+               FROM metrics_daily
+               WHERE metric_type = %s AND date >= %s AND date <= %s
+                 AND dimension != '_total'
+               GROUP BY dimension
+               ORDER BY total_count DESC""",
+            (metric_type, start_date, end_date),
+        )
+    return _exec(
+        """SELECT dimension,
+                  SUM(count) AS total_count,
+                  SUM(sum_value) AS total_value,
+                  AVG(avg_value) AS avg_value
+           FROM metrics_daily
+           WHERE metric_type = ? AND date >= ? AND date <= ?
+             AND dimension != '_total'
+           GROUP BY dimension
+           ORDER BY total_count DESC""",
+        "",
+        (metric_type, start_date, end_date),
+    )
+
+
+def get_pipeline_events_summary(start_date: str, end_date: str) -> dict:
+    """Return pipeline event stats from pipeline_events table."""
+    result = {"agent_calls": [], "tool_calls": [], "stage_durations": [], "cache_stats": []}
+    try:
+        if _is_pg():
+            result["agent_calls"] = _exec(
+                "",
+                """SELECT event_name, COUNT(*) AS count
+                   FROM pipeline_events
+                   WHERE event_type = 'agent_selected'
+                     AND created_at::date >= %s AND created_at::date <= %s
+                   GROUP BY event_name ORDER BY count DESC""",
+                (start_date, end_date),
+            )
+            result["tool_calls"] = _exec(
+                "",
+                """SELECT event_name,
+                          COUNT(*) AS count,
+                          AVG(duration_ms) AS avg_duration_ms,
+                          SUM(CASE WHEN success THEN 1 ELSE 0 END)::FLOAT / NULLIF(COUNT(*), 0) AS success_rate
+                   FROM pipeline_events
+                   WHERE event_type = 'tool_call'
+                     AND created_at::date >= %s AND created_at::date <= %s
+                   GROUP BY event_name ORDER BY count DESC""",
+                (start_date, end_date),
+            )
+            result["stage_durations"] = _exec(
+                "",
+                """SELECT event_name,
+                          COUNT(*) AS count,
+                          AVG(duration_ms) AS avg_duration_ms,
+                          PERCENTILE_CONT(0.95) WITHIN GROUP (ORDER BY duration_ms) AS p95_duration_ms,
+                          MAX(duration_ms) AS max_duration_ms
+                   FROM pipeline_events
+                   WHERE event_type = 'pipeline_stage'
+                     AND created_at::date >= %s AND created_at::date <= %s
+                   GROUP BY event_name ORDER BY event_name""",
+                (start_date, end_date),
+            )
+            result["cache_stats"] = _exec(
+                "",
+                """SELECT event_type, event_name, COUNT(*) AS count
+                   FROM pipeline_events
+                   WHERE event_type IN ('cache_hit', 'cache_miss')
+                     AND created_at::date >= %s AND created_at::date <= %s
+                   GROUP BY event_type, event_name ORDER BY count DESC""",
+                (start_date, end_date),
+            )
+        else:
+            result["agent_calls"] = _exec(
+                """SELECT event_name, COUNT(*) AS count
+                   FROM pipeline_events
+                   WHERE event_type = 'agent_selected'
+                     AND date(created_at) >= ? AND date(created_at) <= ?
+                   GROUP BY event_name ORDER BY count DESC""",
+                "",
+                (start_date, end_date),
+            )
+            result["tool_calls"] = _exec(
+                """SELECT event_name,
+                          COUNT(*) AS count,
+                          AVG(duration_ms) AS avg_duration_ms,
+                          CAST(SUM(CASE WHEN success THEN 1 ELSE 0 END) AS FLOAT) / MAX(COUNT(*), 1) AS success_rate
+                   FROM pipeline_events
+                   WHERE event_type = 'tool_call'
+                     AND date(created_at) >= ? AND date(created_at) <= ?
+                   GROUP BY event_name ORDER BY count DESC""",
+                "",
+                (start_date, end_date),
+            )
+            result["stage_durations"] = _exec(
+                """SELECT event_name,
+                          COUNT(*) AS count,
+                          AVG(duration_ms) AS avg_duration_ms,
+                          MAX(duration_ms) AS p95_duration_ms,
+                          MAX(duration_ms) AS max_duration_ms
+                   FROM pipeline_events
+                   WHERE event_type = 'pipeline_stage'
+                     AND date(created_at) >= ? AND date(created_at) <= ?
+                   GROUP BY event_name ORDER BY event_name""",
+                "",
+                (start_date, end_date),
+            )
+            result["cache_stats"] = _exec(
+                """SELECT event_type, event_name, COUNT(*) AS count
+                   FROM pipeline_events
+                   WHERE event_type IN ('cache_hit', 'cache_miss')
+                     AND date(created_at) >= ? AND date(created_at) <= ?
+                   GROUP BY event_type, event_name ORDER BY count DESC""",
+                "",
+                (start_date, end_date),
+            )
+    except Exception:
+        pass  # pipeline_events table may not exist yet
+    return result
+
+
+def get_realtime_metrics() -> dict:
+    """Return today's partial metrics from raw tables (before rollup runs)."""
+    if _is_pg():
+        row = _exec_one(
+            "",
+            """SELECT COUNT(*) AS llm_calls,
+                      COALESCE(SUM(total_tokens), 0) AS tokens,
+                      COALESCE(SUM(cost_usd), 0) AS cost_usd,
+                      COALESCE(AVG(latency_ms), 0) AS avg_latency_ms
+               FROM llm_usage
+               WHERE created_at::date = CURRENT_DATE""",
+            (),
+        )
+        dau = _exec_scalar(
+            "",
+            """SELECT COUNT(DISTINCT session_id)
+               FROM usage_tracking
+               WHERE last_query_at::date = CURRENT_DATE""",
+            (),
+        )
+    else:
+        row = _exec_one(
+            """SELECT COUNT(*) AS llm_calls,
+                      COALESCE(SUM(total_tokens), 0) AS tokens,
+                      COALESCE(SUM(cost_usd), 0) AS cost_usd,
+                      COALESCE(AVG(latency_ms), 0) AS avg_latency_ms
+               FROM llm_usage
+               WHERE date(created_at) = date('now')""",
+            "",
+            (),
+        )
+        dau = _exec_scalar(
+            """SELECT COUNT(DISTINCT session_id)
+               FROM usage_tracking
+               WHERE date(last_query_at) = date('now')""",
+            "",
+            (),
+        )
+    return {
+        "llm_calls": row["llm_calls"] if row else 0,
+        "tokens": row["tokens"] if row else 0,
+        "cost_usd": round(row["cost_usd"], 4) if row else 0,
+        "avg_latency_ms": round(row["avg_latency_ms"], 1) if row else 0,
+        "dau": dau or 0,
+    }

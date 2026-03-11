@@ -9,6 +9,7 @@ import AuthProvider from "@/components/AuthProvider";
 import InviteGate from "@/components/InviteGate";
 import HeaderAuth from "@/components/HeaderAuth";
 import NavLinks from "@/components/NavLinks";
+import PageTracker from "@/components/PageTracker";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -110,6 +111,8 @@ export default function RootLayout({
                 </nav>
               </div>
             </header>
+
+            <PageTracker />
 
             {/* Main content */}
             <main className="flex-1 flex flex-col overflow-hidden">

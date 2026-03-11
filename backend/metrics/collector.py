@@ -59,6 +59,32 @@ class UsageRecord:
     timestamp: float = field(default_factory=time.time)
 
 
+# ── Pipeline event record ──
+
+@dataclass
+class PipelineEvent:
+    event_type: str        # agent_selected, tool_call, pipeline_stage, cache_hit, cache_miss, web_search
+    event_name: str        # agent name, tool name, stage name
+    duration_ms: int = 0
+    metadata: dict = field(default_factory=dict)
+    success: bool = True
+    session_id: str = ""
+    conversation_id: str = ""
+    timestamp: float = field(default_factory=time.time)
+
+
+# ── Page visit record ──
+
+@dataclass
+class PageVisit:
+    session_id: str
+    page: str
+    user_id: int | None = None
+    referrer: str = ""
+    user_agent: str = ""
+    timestamp: float = field(default_factory=time.time)
+
+
 # ── Collector singleton ──
 
 class MetricsCollector:
@@ -66,12 +92,22 @@ class MetricsCollector:
 
     def __init__(self):
         self._queue: deque[UsageRecord] = deque(maxlen=10_000)
+        self._event_queue: deque[PipelineEvent] = deque(maxlen=10_000)
+        self._visit_queue: deque[PageVisit] = deque(maxlen=10_000)
         self._task: asyncio.Task | None = None
         self._running = False
 
     def record(self, rec: UsageRecord):
         """Fire-and-forget from hot path. ~0 latency."""
         self._queue.append(rec)
+
+    def record_event(self, event: PipelineEvent):
+        """Fire-and-forget pipeline event from hot path. ~0 latency."""
+        self._event_queue.append(event)
+
+    def record_visit(self, visit: PageVisit):
+        """Fire-and-forget page visit from hot path. ~0 latency."""
+        self._visit_queue.append(visit)
 
     async def start(self):
         """Start the background drain loop (call from FastAPI lifespan)."""
@@ -104,26 +140,50 @@ class MetricsCollector:
                 logger.exception("Metrics flush error")
 
     async def _flush(self):
-        """Drain up to MAX_BATCH records and batch-insert to DB."""
-        if not self._queue:
-            return
+        """Drain up to MAX_BATCH records from both queues and batch-insert to DB."""
+        from api.aio import run_sync
 
-        batch: list[UsageRecord] = []
-        while self._queue and len(batch) < MAX_BATCH:
-            batch.append(self._queue.popleft())
+        # Flush usage records
+        if self._queue:
+            batch: list[UsageRecord] = []
+            while self._queue and len(batch) < MAX_BATCH:
+                batch.append(self._queue.popleft())
+            if batch:
+                try:
+                    from db import batch_insert_usage
+                    await run_sync(batch_insert_usage, batch)
+                except Exception:
+                    logger.exception("Failed to flush %d usage records", len(batch))
+                    for rec in reversed(batch):
+                        self._queue.appendleft(rec)
 
-        if not batch:
-            return
+        # Flush pipeline events
+        if self._event_queue:
+            event_batch: list[PipelineEvent] = []
+            while self._event_queue and len(event_batch) < MAX_BATCH:
+                event_batch.append(self._event_queue.popleft())
+            if event_batch:
+                try:
+                    from db import batch_insert_pipeline_events
+                    await run_sync(batch_insert_pipeline_events, event_batch)
+                except Exception:
+                    logger.exception("Failed to flush %d pipeline events", len(event_batch))
+                    for evt in reversed(event_batch):
+                        self._event_queue.appendleft(evt)
 
-        try:
-            from db import batch_insert_usage
-            from api.aio import run_sync
-            await run_sync(batch_insert_usage, batch)
-        except Exception:
-            logger.exception("Failed to flush %d metrics records", len(batch))
-            # Put them back for retry (prepend to front)
-            for rec in reversed(batch):
-                self._queue.appendleft(rec)
+        # Flush page visits
+        if self._visit_queue:
+            visit_batch: list[PageVisit] = []
+            while self._visit_queue and len(visit_batch) < MAX_BATCH:
+                visit_batch.append(self._visit_queue.popleft())
+            if visit_batch:
+                try:
+                    from db import batch_insert_page_visits
+                    await run_sync(batch_insert_page_visits, visit_batch)
+                except Exception:
+                    logger.exception("Failed to flush %d page visits", len(visit_batch))
+                    for v in reversed(visit_batch):
+                        self._visit_queue.appendleft(v)
 
 
 # Module-level singleton
@@ -148,6 +208,25 @@ def record_llm_usage(
         total_tokens=total_tokens,
         cost_usd=cost_usd,
         latency_ms=latency_ms,
+        session_id=get_session_id(),
+        conversation_id=get_conversation_id(),
+    ))
+
+
+def record_pipeline_event(
+    event_type: str,
+    event_name: str,
+    duration_ms: int = 0,
+    metadata: dict | None = None,
+    success: bool = True,
+):
+    """Fire-and-forget pipeline event recording. ~0 latency on hot path."""
+    collector.record_event(PipelineEvent(
+        event_type=event_type,
+        event_name=event_name,
+        duration_ms=duration_ms,
+        metadata=metadata or {},
+        success=success,
         session_id=get_session_id(),
         conversation_id=get_conversation_id(),
     ))

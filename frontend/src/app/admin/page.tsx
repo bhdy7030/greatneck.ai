@@ -12,14 +12,13 @@ import {
   updateUserPromo,
   getModelConfig,
   updateModelConfig,
-  getMetrics,
   type SourceDoc,
   type KnowledgeStats,
   type UserInfo,
   type ModelConfig,
-  type MetricsData,
 } from "@/lib/api";
 import { useAuth } from "@/components/AuthProvider";
+import MetricsDashboard from "@/components/MetricsDashboard";
 
 const VILLAGES = [
   "Great Neck",
@@ -83,22 +82,10 @@ function AdminContent() {
   const [modelConfig, setModelConfig] = useState<ModelConfig | null>(null);
   const [isUpdatingModel, setIsUpdatingModel] = useState(false);
 
-  // Metrics state
-  const [metrics, setMetrics] = useState<MetricsData | null>(null);
-
   // User management state
   const [users, setUsers] = useState<UserInfo[]>([]);
   const [isLoadingUsers, setIsLoadingUsers] = useState(false);
   const [userError, setUserError] = useState<string | null>(null);
-
-  const loadMetrics = useCallback(async () => {
-    try {
-      const data = await getMetrics();
-      setMetrics(data);
-    } catch (err) {
-      console.error("Failed to load metrics", err);
-    }
-  }, []);
 
   const loadModelConfig = useCallback(async () => {
     try {
@@ -183,8 +170,7 @@ function AdminContent() {
     loadData();
     loadUsers();
     loadModelConfig();
-    loadMetrics();
-  }, [loadData, loadUsers, loadModelConfig, loadMetrics]);
+  }, [loadData, loadUsers, loadModelConfig]);
 
   const handleUpload = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -260,93 +246,7 @@ function AdminContent() {
         </div>
 
         {/* Metrics Dashboard */}
-        {metrics && (
-          <>
-            {/* Row 1: Stat Cards */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="bg-surface-200 border border-surface-300 rounded-xl p-4">
-                <p className="text-xs text-text-500 uppercase tracking-wide">DAU Today</p>
-                <p className="text-2xl font-bold text-text-900 mt-1">{metrics.today.users}</p>
-              </div>
-              <div className="bg-surface-200 border border-surface-300 rounded-xl p-4">
-                <p className="text-xs text-text-500 uppercase tracking-wide">Queries Today</p>
-                <p className="text-2xl font-bold text-text-900 mt-1">{metrics.today.queries}</p>
-              </div>
-              <div className="bg-surface-200 border border-surface-300 rounded-xl p-4">
-                <p className="text-xs text-text-500 uppercase tracking-wide">Total Users</p>
-                <p className="text-2xl font-bold text-text-900 mt-1">{metrics.total_users}</p>
-              </div>
-              <div className="bg-surface-200 border border-surface-300 rounded-xl p-4">
-                <p className="text-xs text-text-500 uppercase tracking-wide">Cost Today</p>
-                <p className="text-2xl font-bold text-text-900 mt-1">${metrics.cost.today_usd.toFixed(4)}</p>
-                <p className="text-[11px] text-text-500 mt-0.5">${metrics.cost.month_usd.toFixed(4)} / 30d</p>
-              </div>
-            </div>
-
-            {/* Row 2: 30-day Trend Charts */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* DAU Chart */}
-              <div className="bg-surface-200 border border-surface-300 rounded-xl p-4">
-                <h3 className="text-xs text-text-500 uppercase tracking-wide mb-3">DAU — 30 Days</h3>
-                <BarChart data={metrics.dau.map(d => ({ label: d.date, value: d.users }))} color="bg-sage" />
-              </div>
-              {/* Query Volume Chart */}
-              <div className="bg-surface-200 border border-surface-300 rounded-xl p-4">
-                <h3 className="text-xs text-text-500 uppercase tracking-wide mb-3">Queries — 30 Days</h3>
-                <BarChart data={metrics.daily_queries.map(d => ({ label: d.date, value: d.count }))} color="bg-gold" />
-              </div>
-            </div>
-
-            {/* Row 3: Token & Cost Charts */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="bg-surface-200 border border-surface-300 rounded-xl p-4">
-                <h3 className="text-xs text-text-500 uppercase tracking-wide mb-3">Tokens — 30 Days</h3>
-                <BarChart data={metrics.daily_tokens.map(d => ({ label: d.date, value: d.total_tokens }))} color="bg-blue-400" />
-              </div>
-              <div className="bg-surface-200 border border-surface-300 rounded-xl p-4">
-                <h3 className="text-xs text-text-500 uppercase tracking-wide mb-3">Cost (USD) — 30 Days</h3>
-                <BarChart data={metrics.daily_tokens.map(d => ({ label: d.date, value: Math.round(d.cost_usd * 10000) / 10000 }))} color="bg-red-400" />
-              </div>
-            </div>
-
-            {/* Row 4: Usage by Role */}
-            {metrics.usage_by_role.length > 0 && (
-              <div className="bg-surface-200 border border-surface-300 rounded-xl p-4">
-                <h3 className="text-xs text-text-500 uppercase tracking-wide mb-3">Token Usage by Role — 7 Days</h3>
-                <div className="border border-surface-300 rounded-lg overflow-hidden">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="bg-surface-300">
-                        <th className="text-left px-3 py-2 text-xs text-text-600 font-medium">Role</th>
-                        <th className="text-right px-3 py-2 text-xs text-text-600 font-medium">Calls</th>
-                        <th className="text-right px-3 py-2 text-xs text-text-600 font-medium">Tokens</th>
-                        <th className="text-right px-3 py-2 text-xs text-text-600 font-medium">Cost</th>
-                        <th className="text-right px-3 py-2 text-xs text-text-600 font-medium">Avg Latency</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {metrics.usage_by_role.map(r => (
-                        <tr key={r.role} className="border-t border-surface-300">
-                          <td className="px-3 py-2 text-text-800 font-medium">{r.role}</td>
-                          <td className="px-3 py-2 text-text-600 text-right">{r.call_count}</td>
-                          <td className="px-3 py-2 text-text-600 text-right">{r.total_tokens.toLocaleString()}</td>
-                          <td className="px-3 py-2 text-text-600 text-right">${r.cost_usd.toFixed(4)}</td>
-                          <td className="px-3 py-2 text-text-600 text-right">{r.avg_latency_ms}ms</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
-
-            {/* Row 5: Tier Breakdown */}
-            <div className="bg-surface-200 border border-surface-300 rounded-xl p-4">
-              <h3 className="text-xs text-text-500 uppercase tracking-wide mb-3">Tier Breakdown</h3>
-              <TierBar breakdown={metrics.tier_breakdown} total={metrics.total_users} />
-            </div>
-          </>
-        )}
+        <MetricsDashboard />
 
         {/* Model Settings */}
         <div className="bg-surface-200 border border-surface-300 rounded-xl p-6">
@@ -726,57 +626,3 @@ function AdminContent() {
   );
 }
 
-/** Simple CSS bar chart — no chart library needed. */
-function BarChart({ data, color }: { data: { label: string; value: number }[]; color: string }) {
-  const max = Math.max(...data.map(d => d.value), 1);
-  return (
-    <div className="flex items-end gap-[2px] h-24">
-      {data.map((d, i) => (
-        <div key={i} className="flex-1 flex flex-col items-center justify-end h-full group relative">
-          <div
-            className={`w-full rounded-t ${color} min-h-[2px] transition-all`}
-            style={{ height: `${(d.value / max) * 100}%` }}
-          />
-          {/* Tooltip */}
-          <div className="absolute bottom-full mb-1 hidden group-hover:block bg-surface-100 border border-surface-300 rounded px-1.5 py-0.5 text-[10px] text-text-700 whitespace-nowrap z-10 shadow">
-            {d.label.slice(5)}: {d.value}
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-/** Horizontal stacked bar for tier breakdown. */
-function TierBar({ breakdown, total }: { breakdown: { free: number; free_promo: number; pro: number }; total: number }) {
-  if (total === 0) return <p className="text-sm text-text-500">No users yet.</p>;
-  const pct = (n: number) => Math.max((n / total) * 100, n > 0 ? 3 : 0);
-  const segments = [
-    { label: "Community", count: breakdown.free, bg: "bg-surface-400" },
-    { label: "Community+", count: breakdown.free_promo, bg: "bg-amber-400" },
-    { label: "Sponsor", count: breakdown.pro, bg: "bg-sage" },
-  ];
-  return (
-    <div>
-      <div className="flex rounded-lg overflow-hidden h-6">
-        {segments.map(s => s.count > 0 && (
-          <div
-            key={s.label}
-            className={`${s.bg} flex items-center justify-center text-[10px] font-medium text-white`}
-            style={{ width: `${pct(s.count)}%` }}
-          >
-            {s.count}
-          </div>
-        ))}
-      </div>
-      <div className="flex gap-4 mt-2">
-        {segments.map(s => (
-          <div key={s.label} className="flex items-center gap-1.5 text-xs text-text-600">
-            <div className={`w-2.5 h-2.5 rounded-sm ${s.bg}`} />
-            {s.label}: {s.count}
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
