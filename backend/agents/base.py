@@ -252,6 +252,9 @@ The local knowledge base may contain outdated information — businesses close, 
 
 NOTE: These formatting rules apply to your written response ONLY. Do NOT reduce your search thoroughness — always do multi-hop searches, follow-up queries, and verify information as instructed by your search strategy."""
 
+        # ── Split point: everything above is static/cacheable, below is dynamic ──
+        _static_system = system
+
         if context:
             village = context.get("village", "")
             if village:
@@ -302,7 +305,24 @@ NOTE: These formatting rules apply to your written response ONLY. Do NOT reduce 
                 "Keep section numbers, law/code references, village names, and proper nouns in English."
             )
 
-        messages: list[dict] = [{"role": "system", "content": system}]
+        # Split system prompt into static (cacheable) and dynamic parts.
+        # Static = agent prompt + date + data freshness + formatting rules
+        # (identical across requests to the same agent within the same day).
+        # Dynamic = village, RAG, search plan, critic, language (varies per request).
+        # Provider-level caching: Anthropic cache_control, Gemini implicit caching.
+        static_part = _static_system
+        dynamic_part = system[len(_static_system):]
+
+        if dynamic_part.strip():
+            messages: list[dict] = [{"role": "system", "content": [
+                {"type": "text", "text": static_part, "cache_control": {"type": "ephemeral"}},
+                {"type": "text", "text": dynamic_part},
+            ]}]
+        else:
+            messages: list[dict] = [{"role": "system", "content": [
+                {"type": "text", "text": static_part, "cache_control": {"type": "ephemeral"}},
+            ]}]
+
         messages.extend(history)
         messages.append({"role": "user", "content": query})
         return messages
