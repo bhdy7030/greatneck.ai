@@ -12,10 +12,13 @@ import {
   updateUserPromo,
   getModelConfig,
   updateModelConfig,
+  getWaitlist,
+  deleteWaitlistEntry,
   type SourceDoc,
   type KnowledgeStats,
   type UserInfo,
   type ModelConfig,
+  type WaitlistEntry,
 } from "@/lib/api";
 import { useAuth } from "@/components/AuthProvider";
 import MetricsDashboard from "@/components/MetricsDashboard";
@@ -87,6 +90,10 @@ function AdminContent() {
   const [isLoadingUsers, setIsLoadingUsers] = useState(false);
   const [userError, setUserError] = useState<string | null>(null);
 
+  // Waitlist state
+  const [waitlistEntries, setWaitlistEntries] = useState<WaitlistEntry[]>([]);
+  const [isLoadingWaitlist, setIsLoadingWaitlist] = useState(false);
+
   const loadModelConfig = useCallback(async () => {
     try {
       const cfg = await getModelConfig();
@@ -148,6 +155,27 @@ function AdminContent() {
     }
   };
 
+  const loadWaitlist = useCallback(async () => {
+    setIsLoadingWaitlist(true);
+    try {
+      const data = await getWaitlist();
+      setWaitlistEntries(data.entries);
+    } catch (err) {
+      console.error("Failed to load waitlist", err);
+    } finally {
+      setIsLoadingWaitlist(false);
+    }
+  }, []);
+
+  const handleDeleteWaitlist = async (id: number) => {
+    try {
+      await deleteWaitlistEntry(id);
+      setWaitlistEntries((prev) => prev.filter((e) => e.id !== id));
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to delete");
+    }
+  };
+
   const loadData = useCallback(async () => {
     setIsLoadingSources(true);
     setLoadError(null);
@@ -170,7 +198,8 @@ function AdminContent() {
     loadData();
     loadUsers();
     loadModelConfig();
-  }, [loadData, loadUsers, loadModelConfig]);
+    loadWaitlist();
+  }, [loadData, loadUsers, loadModelConfig, loadWaitlist]);
 
   const handleUpload = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -561,6 +590,57 @@ function AdminContent() {
                 </div>
               );
             })}
+          </div>
+        </div>
+
+        {/* Waitlist */}
+        <div className="bg-surface-200 border border-surface-300 rounded-xl p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-text-900">
+              Waitlist
+              {waitlistEntries.length > 0 && (
+                <span className="ml-2 text-sm font-normal text-text-500">({waitlistEntries.length})</span>
+              )}
+            </h2>
+            <button
+              onClick={loadWaitlist}
+              disabled={isLoadingWaitlist}
+              className="text-xs text-sage hover:text-sage-dark transition-colors disabled:opacity-50"
+            >
+              {isLoadingWaitlist ? "Loading..." : "Refresh"}
+            </button>
+          </div>
+
+          {waitlistEntries.length === 0 && !isLoadingWaitlist && (
+            <p className="text-sm text-text-500 text-center py-4">No waitlist entries yet.</p>
+          )}
+
+          <div className="space-y-2">
+            {waitlistEntries.map((entry) => (
+              <div
+                key={entry.id}
+                className="flex items-center justify-between bg-surface-100 rounded-lg px-4 py-3 border border-surface-300"
+              >
+                <div className="flex-1 min-w-0">
+                  <span className="text-sm font-medium text-text-900">{entry.email}</span>
+                  {entry.name && (
+                    <span className="text-xs text-text-500 ml-2">{entry.name}</span>
+                  )}
+                  {entry.note && (
+                    <p className="text-xs text-text-400 mt-0.5 truncate">{entry.note}</p>
+                  )}
+                  <p className="text-[11px] text-text-400 mt-0.5">
+                    {new Date(entry.created_at).toLocaleDateString()} {new Date(entry.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                  </p>
+                </div>
+                <button
+                  onClick={() => handleDeleteWaitlist(entry.id)}
+                  className="flex-shrink-0 text-xs text-red-400 hover:text-red-300 transition-colors ml-4"
+                >
+                  Remove
+                </button>
+              </div>
+            ))}
           </div>
         </div>
 

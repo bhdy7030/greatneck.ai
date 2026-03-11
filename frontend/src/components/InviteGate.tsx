@@ -8,7 +8,7 @@ import {
   setInviteCode,
   getSessionId,
 } from "@/lib/auth";
-import { checkInviteStatus, redeemInviteCode } from "@/lib/api";
+import { checkInviteStatus, redeemInviteCode, joinWaitlist } from "@/lib/api";
 
 export default function InviteGate({ children }: { children: ReactNode }) {
   const { user, isLoading, login, loginWithApple } = useAuth();
@@ -18,6 +18,12 @@ export default function InviteGate({ children }: { children: ReactNode }) {
   const [code, setCode] = useState("");
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [showWaitlist, setShowWaitlist] = useState(false);
+  const [waitlistEmail, setWaitlistEmail] = useState("");
+  const [waitlistName, setWaitlistName] = useState("");
+  const [waitlistSubmitting, setWaitlistSubmitting] = useState(false);
+  const [waitlistDone, setWaitlistDone] = useState(false);
+  const [waitlistError, setWaitlistError] = useState("");
 
   useEffect(() => {
     if (isLoading) return;
@@ -93,6 +99,25 @@ export default function InviteGate({ children }: { children: ReactNode }) {
     } finally {
       setSubmitting(false);
       setChecking(false);
+    }
+  }
+
+  async function handleWaitlistSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    const email = waitlistEmail.trim();
+    if (!email || !email.includes("@")) {
+      setWaitlistError(t("waitlist.error"));
+      return;
+    }
+    setWaitlistSubmitting(true);
+    setWaitlistError("");
+    try {
+      await joinWaitlist(email, waitlistName);
+      setWaitlistDone(true);
+    } catch {
+      setWaitlistError(t("waitlist.error"));
+    } finally {
+      setWaitlistSubmitting(false);
     }
   }
 
@@ -180,9 +205,85 @@ export default function InviteGate({ children }: { children: ReactNode }) {
             </button>
           </form>
 
-          <p className="text-xs text-text-400 mb-6">
+          <p className="text-xs text-text-400 mb-4">
             {t("invite.needInvite")}
           </p>
+
+          {/* Waitlist link */}
+          {!showWaitlist && (
+            <button
+              onClick={() => setShowWaitlist(true)}
+              className="w-full py-2.5 text-sm font-medium text-sage hover:text-sage/80 transition-colors mb-4"
+            >
+              {t("waitlist.join")} &rarr;
+            </button>
+          )}
+
+          {/* Waitlist form (inline expand) */}
+          {showWaitlist && (
+            <div className="mb-4 p-4 bg-surface-50 rounded-xl border border-surface-200">
+              {waitlistDone ? (
+                <div className="text-center py-2">
+                  <svg className="w-8 h-8 mx-auto text-green-500 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <p className="text-sm text-text-700">{t("waitlist.success")}</p>
+                  <button
+                    onClick={() => { setShowWaitlist(false); setWaitlistDone(false); }}
+                    className="text-xs text-text-400 mt-2 hover:text-text-600"
+                  >
+                    {t("waitlist.back")}
+                  </button>
+                </div>
+              ) : (
+                <form onSubmit={handleWaitlistSubmit} className="space-y-2">
+                  <p className="text-xs text-text-500 mb-2">{t("waitlist.description")}</p>
+                  <input
+                    type="email"
+                    value={waitlistEmail}
+                    onChange={(e) => { setWaitlistEmail(e.target.value); setWaitlistError(""); }}
+                    placeholder={t("waitlist.emailPlaceholder")}
+                    className="w-full px-3 py-2.5 border border-surface-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-sage/50 focus:border-sage transition-colors"
+                    autoFocus
+                    disabled={waitlistSubmitting}
+                  />
+                  <input
+                    type="text"
+                    value={waitlistName}
+                    onChange={(e) => setWaitlistName(e.target.value)}
+                    placeholder={t("waitlist.namePlaceholder")}
+                    className="w-full px-3 py-2.5 border border-surface-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-sage/50 focus:border-sage transition-colors"
+                    disabled={waitlistSubmitting}
+                  />
+                  {waitlistError && (
+                    <p className="text-red-500 text-xs">{waitlistError}</p>
+                  )}
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setShowWaitlist(false)}
+                      className="flex-1 py-2.5 text-sm text-text-500 border border-surface-300 rounded-lg hover:bg-surface-100 transition-colors"
+                    >
+                      {t("waitlist.back")}
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={!waitlistEmail.trim() || waitlistSubmitting}
+                      className="flex-1 py-2.5 bg-sage text-white rounded-lg text-sm font-medium hover:bg-sage/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {waitlistSubmitting ? (
+                        <span className="flex items-center justify-center gap-2">
+                          <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        </span>
+                      ) : (
+                        t("waitlist.submit")
+                      )}
+                    </button>
+                  </div>
+                </form>
+              )}
+            </div>
+          )}
 
           {/* Sign in section for existing members */}
           <div className="border-t border-surface-200 pt-5">

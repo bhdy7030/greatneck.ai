@@ -365,6 +365,15 @@ CREATE TABLE IF NOT EXISTS page_visits (
 );
 CREATE INDEX IF NOT EXISTS idx_pv_created ON page_visits(created_at);
 CREATE INDEX IF NOT EXISTS idx_pv_session_created ON page_visits(session_id, created_at);
+
+CREATE TABLE IF NOT EXISTS waitlist (
+    id SERIAL PRIMARY KEY,
+    email TEXT UNIQUE NOT NULL,
+    name TEXT DEFAULT '',
+    note TEXT DEFAULT '',
+    created_at TIMESTAMP DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_waitlist_created ON waitlist(created_at);
 """
 
 _SQLITE_SCHEMA = """
@@ -546,6 +555,15 @@ CREATE TABLE IF NOT EXISTS page_visits (
 );
 CREATE INDEX IF NOT EXISTS idx_pv_created ON page_visits(created_at);
 CREATE INDEX IF NOT EXISTS idx_pv_session_created ON page_visits(session_id, created_at);
+
+CREATE TABLE IF NOT EXISTS waitlist (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    email TEXT UNIQUE NOT NULL,
+    name TEXT DEFAULT '',
+    note TEXT DEFAULT '',
+    created_at TEXT DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_waitlist_created ON waitlist(created_at);
 """
 
 
@@ -776,6 +794,7 @@ def init_db():
         _migrate_user_guides()
         _migrate_metrics_daily()
         _migrate_page_visits()
+        _migrate_waitlist()
         return
 
     # SQLite path (existing logic)
@@ -807,6 +826,7 @@ def init_db():
     _migrate_user_guides()
     _migrate_metrics_daily()
     _migrate_page_visits()
+    _migrate_waitlist()
 
 
 # ── Users ───────────────────────────────────────────────────────
@@ -2116,6 +2136,72 @@ def _migrate_page_visits():
             conn.execute("CREATE INDEX IF NOT EXISTS idx_pv_created ON page_visits(created_at)")
             conn.execute("CREATE INDEX IF NOT EXISTS idx_pv_session_created ON page_visits(session_id, created_at)")
         conn.commit()
+
+
+def _migrate_waitlist():
+    """Add waitlist table if missing (for existing deployments)."""
+    if _is_pg():
+        with _PgConnWrapper() as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    CREATE TABLE IF NOT EXISTS waitlist (
+                        id SERIAL PRIMARY KEY,
+                        email TEXT UNIQUE NOT NULL,
+                        name TEXT DEFAULT '',
+                        note TEXT DEFAULT '',
+                        created_at TIMESTAMP DEFAULT NOW()
+                    )
+                """)
+                cur.execute("CREATE INDEX IF NOT EXISTS idx_waitlist_created ON waitlist(created_at)")
+                conn.commit()
+    else:
+        conn = _get_sqlite_conn()
+        tables = {row[0] for row in conn.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()}
+        if "waitlist" not in tables:
+            conn.execute("""
+                CREATE TABLE waitlist (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    email TEXT UNIQUE NOT NULL,
+                    name TEXT DEFAULT '',
+                    note TEXT DEFAULT '',
+                    created_at TEXT DEFAULT (datetime('now'))
+                )
+            """)
+            conn.execute("CREATE INDEX IF NOT EXISTS idx_waitlist_created ON waitlist(created_at)")
+        conn.commit()
+
+
+# ── Waitlist ─────────────────────────────────────────────────────
+
+
+def add_to_waitlist(email: str, name: str = "", note: str = "") -> dict | None:
+    """Add an email to the waitlist. Returns the row or None if duplicate."""
+    try:
+        return _exec_insert_returning(
+            "INSERT INTO waitlist (email, name, note) VALUES (?, ?, ?)",
+            "INSERT INTO waitlist (email, name, note) VALUES (%s, %s, %s) RETURNING *",
+            (email.lower().strip(), name.strip(), note.strip()),
+        )
+    except Exception:
+        # Duplicate email — ignore
+        return None
+
+
+def list_waitlist() -> list[dict]:
+    """List all waitlist entries, newest first."""
+    return _exec(
+        "SELECT * FROM waitlist ORDER BY created_at DESC",
+        "SELECT * FROM waitlist ORDER BY created_at DESC",
+    )
+
+
+def delete_waitlist_entry(entry_id: int) -> None:
+    """Remove a waitlist entry by ID."""
+    _exec_modify(
+        "DELETE FROM waitlist WHERE id=?",
+        "DELETE FROM waitlist WHERE id=%s",
+        (entry_id,),
+    )
 
 
 def _upsert_metric(date: str, metric_type: str, dimension: str,

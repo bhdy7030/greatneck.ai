@@ -133,6 +133,7 @@ from api.invite import router as invite_router
 from api.guides import router as guides_router
 from api.user_guides import router as user_guides_router
 from api.track import router as track_router
+from api.waitlist import router as waitlist_router
 
 app.include_router(chat_router, prefix="/api")
 app.include_router(admin_router, prefix="/api/admin")
@@ -145,6 +146,7 @@ app.include_router(invite_router, prefix="/api")
 app.include_router(guides_router, prefix="/api")
 app.include_router(user_guides_router, prefix="/api")
 app.include_router(track_router, prefix="/api")
+app.include_router(waitlist_router, prefix="/api")
 app.include_router(health_router)
 
 

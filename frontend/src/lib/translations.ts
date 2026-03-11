@@ -288,6 +288,22 @@ const translations: Record<string, Record<Lang, string>> = {
   },
   "invite.noInvites": { en: "No invites yet", zh: "还没有邀请码" },
 
+  // ── Waitlist ──
+  "waitlist.join": { en: "Join the Waitlist", zh: "加入候补名单" },
+  "waitlist.description": {
+    en: "No invite code? Leave your email and we'll notify you when a spot opens up.",
+    zh: "没有邀请码？留下邮箱，有名额时我们会通知你。",
+  },
+  "waitlist.emailPlaceholder": { en: "your@email.com", zh: "your@email.com" },
+  "waitlist.namePlaceholder": { en: "Your name (optional)", zh: "你的名字（选填）" },
+  "waitlist.submit": { en: "Join Waitlist", zh: "加入候补" },
+  "waitlist.success": {
+    en: "You're on the list! We'll reach out when a spot opens.",
+    zh: "你已加入候补名单！有名额时我们会联系你。",
+  },
+  "waitlist.error": { en: "Please enter a valid email", zh: "请输入有效的邮箱" },
+  "waitlist.back": { en: "Back", zh: "返回" },
+
   // ── Pipeline ──
   "pipeline.researching": { en: "Researching...", zh: "正在搜索..." },
   "pipeline.thinking": { en: "Thinking...", zh: "思考中..." },

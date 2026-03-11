@@ -1160,3 +1160,42 @@ export async function refineGuide(
   if (!res.ok) throw new Error("Failed to refine guide");
   return res.json();
 }
+
+// ── Waitlist API ──
+
+export async function joinWaitlist(email: string, name?: string, note?: string): Promise<{ ok: boolean; message: string }> {
+  const res = await fetch(`${BASE_URL}/api/waitlist`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, name: name || "", note: note || "" }),
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({ detail: "Request failed" }));
+    throw new Error(data.detail || "Failed to join waitlist");
+  }
+  return res.json();
+}
+
+export interface WaitlistEntry {
+  id: number;
+  email: string;
+  name: string;
+  note: string;
+  created_at: string;
+}
+
+export async function getWaitlist(): Promise<{ entries: WaitlistEntry[]; count: number }> {
+  const res = await fetchWithRefresh(`${BASE_URL}/api/admin/waitlist`, {
+    headers: authHeaders(),
+  });
+  if (!res.ok) throw new Error(`Failed to fetch waitlist: ${res.status}`);
+  return res.json();
+}
+
+export async function deleteWaitlistEntry(entryId: number): Promise<void> {
+  const res = await fetchWithRefresh(`${BASE_URL}/api/admin/waitlist/${entryId}`, {
+    method: "DELETE",
+    headers: authHeaders(),
+  });
+  if (!res.ok) throw new Error(`Failed to delete waitlist entry: ${res.status}`);
+}
