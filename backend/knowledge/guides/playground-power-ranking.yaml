@@ -1,0 +1,178 @@
+id: "playground-power-ranking"
+type: "onboarding"
+title:
+  en: "The Great Neck Playground Power Rankings"
+  zh: "大颈游乐场实力排行榜"
+description:
+  en: "Not all playgrounds are created equal. Some have shade, some have bathrooms, and some are where the cool parents hang out. The definitive guide."
+  zh: "并非所有游乐场都生而平等。有些有遮阳，有些有厕所，有些是酷爸妈聚集地。权威指南。"
+icon: "flower"
+color: "#43A047"
+active: true
+
+steps:
+  - id: "scoring-system"
+    title: { en: "The 5-Star Scoring System", zh: "五星评分系统" }
+    description: { en: "We rate on what actually matters to parents, not what the Parks Department brochure says.", zh: "我们按家长真正在意的评分，不是公园管理处宣传册说的。" }
+    details:
+      en: |
+        - Shade ☀️: Is there tree cover or a pavilion? Sun-baked rubber at 2pm = foot burns
+        - Bathroom 🚻: Within eyesight? Or "hold it for 10 minutes while we run to the car"?
+        - Age range 👶: Does it have both toddler-safe and big-kid challenging equipment?
+        - Seating 💺: Benches WITH backrests (non-negotiable for 90-minute visits)
+        - Vibe 😎: Other parents chatting and relaxed, or helicoptering anxiously?
+        - Bonus: water fountain, parking ease, ice cream truck proximity
+      zh: |
+        - 遮阳 ☀️：有树荫或凉亭吗？下午2点被晒的橡胶地面=烫脚
+        - 厕所 🚻：视线范围内？还是"忍10分钟我们跑回车里"？
+        - 年龄范围 👶：有没有幼儿安全和大孩子有挑战性的设备？
+        - 座位 💺：有靠背的长椅（90分钟访问的底线）
+        - 氛围 😎：其他家长在聊天放松，还是焦虑地直升机式看管？
+        - 加分：饮水机、停车方便、冰淇淋车距离
+    links: []
+    category: "guide"
+    priority: "high"
+    applies_to: "all"
+    chat_prompt: { en: "What are the best playgrounds in Great Neck?", zh: "大颈最好的游乐场有哪些？" }
+
+  - id: "top-picks"
+    title: { en: "The Top 3 Playgrounds (in order)", zh: "前三名游乐场（按排名）" }
+    description: { en: "These are the ones you'll visit 80% of the time. Bookmark them.", zh: "这三个你会去80%的时间。收藏它们。" }
+    details:
+      en: |
+        - #1: Firefighters Park (Arrandale Ave)
+          • Great shade, clean bathrooms, separate toddler area
+          • The spray pad in summer is *chef's kiss*
+          • Parent bench circle = built-in social scene
+          • Parking: easy lot right there
+        - #2: Steppingstone Park Playground
+          • Waterfront views while your kid plays — you feel like you're on vacation
+          • Bigger equipment for ages 5-10
+          • Downside: limited shade, bring hats
+          • Combine with a walk on the path after
+        - #3: Parkwood Pool Complex Playground
+          • Newer equipment, rubber surface (softer falls)
+          • Good for mixed-age sibling groups
+          • Near the pool if you want to extend the outing
+      zh: |
+        - 第1名：消防员公园（Arrandale Ave）
+          • 好遮阳、干净厕所、独立幼儿区
+          • 夏天的喷水垫*完美*
+          • 家长长椅圈=自带社交场景
+          • 停车：就在旁边有停车场
+        - 第2名：Steppingstone公园游乐场
+          • 孩子玩的时候看海景——感觉在度假
+          • 适合5-10岁的大型设备
+          • 缺点：遮阳有限，带帽子
+          • 之后可以结合步道散步
+        - 第3名：Parkwood泳池综合游乐场
+          • 较新设备、橡胶地面（摔得不那么疼）
+          • 适合不同年龄的兄弟姐妹
+          • 靠近泳池，可以延长外出时间
+    links:
+      - label: { en: "GN Park District", zh: "大颈公园管理区" }
+        url: "https://www.greatneckparkdistrict.com"
+    category: "top-picks"
+    priority: "high"
+    applies_to: "all"
+    chat_prompt: { en: "Where's the best playground for toddlers in Great Neck?", zh: "大颈最适合幼儿的游乐场在哪？" }
+
+  - id: "hidden-gems"
+    title: { en: "The Hidden Gems (less crowded, equally good)", zh: "隐藏宝石（人少但同样好）" }
+    description: { en: "When the popular ones are packed on Saturday morning, go here instead.", zh: "当热门的周六早上人满为患时，去这些地方。" }
+    details:
+      en: |
+        - Village Green Park: tiny but perfect for toddlers. Zero crowd. Shady in the afternoon.
+        - Baker Hill playground: most people don't even know it exists. Quiet, clean, small.
+        - Udall's Cove area: more nature-oriented. Let them explore, throw rocks in water, get muddy.
+        - The "secret" hack: school playgrounds on weekends. Empty and usually well-maintained.
+          • Saddle Rock Elementary has a great structure
+          • Baker Hill has a nice climbing wall
+        - Note: school playgrounds are technically for students during school hours, but weekends/evenings are fair game
+      zh: |
+        - Village Green公园：小但完美适合幼儿。零人群。下午有阴凉。
+        - Baker Hill游乐场：大多数人甚至不知道它存在。安静、干净、小巧。
+        - Udall's Cove区域：更偏自然。让他们探索、往水里扔石头、弄脏。
+        - "秘密"技巧：周末的学校游乐场。空的且通常维护良好。
+          • Saddle Rock Elementary有很好的设施
+          • Baker Hill有不错的攀岩墙
+        - 注意：学校游乐场上课时间技术上是给学生的，但周末/晚上可以去
+    links: []
+    category: "hidden"
+    priority: "medium"
+    applies_to: "all"
+    chat_prompt: { en: "Are there any quiet, less crowded playgrounds in Great Neck?", zh: "大颈有安静人少的游乐场吗？" }
+
+  - id: "seasonal-tips"
+    title: { en: "Seasonal Playground Hacks", zh: "季节性游乐场技巧" }
+    description: { en: "The same playground hits different in January vs July. Adjust your strategy.", zh: "同一个游乐场在一月和七月感觉完全不同。调整你的策略。" }
+    details:
+      en: |
+        - Summer (June-Aug):
+          • Go before 10am or after 4pm — midday is brutal
+          • Spray pads: Firefighters Park, Steppingstone — bring swimsuits + towel
+          • Sunscreen BEFORE you leave the house. Applying at the playground = chaos
+        - Fall (Sep-Nov):
+          • The golden hours — perfect weather, fewer crowds
+          • Leaf piles ARE the playground. Don't overthink it.
+          • Layer up — 60°F at the bench feels colder than you think
+        - Winter (Dec-Feb):
+          • Sled hills: Steppingstone, any steep park area after snow
+          • Dress in snow gear and go anyway — 30 min of cold air resets everyone's mood
+          • Hot cocoa in a thermos = hero parent status
+        - Spring (Mar-May):
+          • Mud season. Bring extra socks. Accept the mess.
+          • Best playground flowers at Steppingstone — actually pretty
+      zh: |
+        - 夏天（6-8月）：
+          • 上午10点前或下午4点后去——中午太热
+          • 喷水垫：消防员公园、Steppingstone——带泳衣+毛巾
+          • 出门前涂防晒霜。在游乐场涂=混乱
+        - 秋天（9-11月）：
+          • 黄金时段——完美天气、人更少
+          • 落叶堆就是游乐场。别想太多。
+          • 多穿层——长椅上60°F比你想的冷
+        - 冬天（12-2月）：
+          • 雪橇山丘：Steppingstone、下雪后任何陡坡
+          • 穿好雪地装备照样去——30分钟冷空气能重置所有人的心情
+          • 保温杯里的热可可=英雄家长
+        - 春天（3-5月）：
+          • 泥泞季节。带额外袜子。接受混乱。
+          • Steppingstone最好的游乐场花——真的很漂亮
+    links: []
+    category: "tips"
+    priority: "medium"
+    applies_to: "all"
+    chat_prompt: { en: "Which Great Neck parks have spray pads or water features for kids?", zh: "大颈哪些公园有儿童喷水设施？" }
+
+  - id: "parent-survival"
+    title: { en: "The Parent Survival Kit", zh: "家长生存包" }
+    description: { en: "What to keep in your car so you're always playground-ready. No more 'we forgot the snacks' meltdowns.", zh: "车里常备这些东西，随时游乐场就绪。再也不会'我们忘了零食'崩溃了。" }
+    details:
+      en: |
+        - The car kit (keep a bag in the trunk):
+          • Sunscreen stick (easier than spray with squirmy kids)
+          • Baby wipes (even if your kids aren't babies anymore)
+          • 2 water bottles + granola bars
+          • Change of clothes in a ziplock (socks especially)
+          • Band-aids + a small first aid kit
+          • A camp chair (game-changer if benches are taken)
+        - Phone: download a podcast or audiobook. 90 min of pushing swings needs entertainment.
+        - The exit strategy: "5 more minutes" warning → "2 more minutes" → "last one down the slide" → leave. No negotiation.
+        - If they melt down at departure: ice cream bribe. No shame. It works.
+      zh: |
+        - 车载包（放后备箱里）：
+          • 防晒棒（比喷雾更适合扭来扭去的孩子）
+          • 湿巾（即使你的孩子不再是婴儿）
+          • 2瓶水+格兰诺拉棒
+          • 密封袋里的换洗衣服（特别是袜子）
+          • 创可贴+小急救包
+          • 折叠椅（长椅被占时的大招）
+        - 手机：下载播客或有声书。推90分钟秋千需要娱乐。
+        - 撤退策略："再5分钟"警告→"再2分钟"→"最后滑一次"→离开。不谈判。
+        - 如果离开时崩溃：冰淇淋贿赂。不丢人。有用。
+    links: []
+    category: "tips"
+    priority: "medium"
+    applies_to: "all"
+    chat_prompt: { en: "What should I bring to the playground with kids?", zh: "带孩子去游乐场应该带什么？" }

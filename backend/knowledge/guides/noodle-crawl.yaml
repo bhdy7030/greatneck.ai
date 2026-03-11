@@ -1,0 +1,160 @@
+id: "noodle-crawl"
+type: "onboarding"
+title:
+  en: "The Great Neck Noodle & Dumpling Underground"
+  zh: "大颈面条&水饺地下美食图"
+description:
+  en: "Your curated crawl through the best hand-pulled noodles, soup dumplings, and off-menu gems hiding in plain sight on Northern Blvd."
+  zh: "精心策划的美食之旅——Northern Blvd上隐藏在众目睽睽之下的最佳手拉面、小笼包和隐藏菜单。"
+icon: "kitchen"
+color: "#D32F2F"
+active: true
+
+steps:
+  - id: "noodle-tier"
+    title: { en: "The Hand-Pulled Noodle Tier List", zh: "手拉面天梯排行" }
+    description: { en: "Not all noodle shops are equal. Here's who's actually pulling by hand and who's phoning it in.", zh: "面馆各有不同。谁是真正手拉，谁在糊弄。" }
+    details:
+      en: |
+        - Lanzhou hand-pulled (兰州拉面): Look for the guy stretching dough in the window. If you can't see it happening, it's not happening.
+        - Knife-cut noodles (刀削面): Thick, chewy, rustic — order with braised lamb
+        - Dan dan noodles (担担面): Sichuan peppercorn numbness — ask for "extra ma la" (extra numbing-spicy)
+        - Pro tip: Go between 11:30am-12:30pm on weekdays. You'll eat with the Chinese regulars. That's the quality check.
+        - Skip any noodle place with more than 40 items on the menu — it's a red flag
+      zh: |
+        - 兰州拉面：看窗口有没有人在拉面。看不到就不是真的。
+        - 刀削面：厚实、有嚼劲、朴实——配红烧羊肉点
+        - 担担面：四川花椒的麻——要"extra ma la"（加麻加辣）
+        - 小窍门：工作日11:30-12:30去，和中国常客一起吃。这是质量检验。
+        - 跳过菜单超过40道菜的面馆——这是红旗
+    links: []
+    category: "noodles"
+    priority: "high"
+    applies_to: "all"
+    chat_prompt: { en: "Where can I find the best hand-pulled noodles near Great Neck?", zh: "大颈附近哪里有最好的手拉面？" }
+
+  - id: "dumpling-matrix"
+    title: { en: "The Dumpling Matrix: Soup vs. Pan-Fried vs. Boiled", zh: "饺子矩阵：小笼包 vs 煎饺 vs 水饺" }
+    description: { en: "Three dumpling styles, three different spots to hit. Don't make the mistake of getting all three at one place.", zh: "三种饺子风格，三个不同的店。别犯在一家店点全部三种的错误。" }
+    details:
+      en: |
+        - Soup dumplings (小笼包/XLB): The gold standard. Look for thin skin, hot broth inside, served in bamboo steamers.
+        - Pan-fried (生煎包/锅贴): Crispy bottom, juicy inside. The best ones have a shatteringly crispy skirt.
+        - Boiled (水饺): Handmade skin is non-negotiable. Pork & chive is the classic test order.
+        - The rookie mistake: ordering all three at the same restaurant. Specialists beat generalists every time.
+        - Order vinegar + chili oil on the side. Always. The dipping sauce is half the experience.
+      zh: |
+        - 小笼包：黄金标准。看皮薄、内有热汤汁、竹笼蒸笼上桌。
+        - 煎饺/生煎包：底部酥脆、内部多汁。最好的有脆裙边。
+        - 水饺：手工皮是底线。猪肉韭菜是经典试吃款。
+        - 新手错误：在同一家餐厅点全部三种。专门店永远胜过综合店。
+        - 配醋+辣椒油。永远。蘸料是体验的一半。
+    links: []
+    category: "dumplings"
+    priority: "high"
+    applies_to: "all"
+    chat_prompt: { en: "Where are the best soup dumplings near Great Neck?", zh: "大颈附近哪里有最好的小笼包？" }
+
+  - id: "order-like-regular"
+    title: { en: "The \"Order Like a Regular\" Cheat Codes", zh: "\"像老客一样点菜\"秘籍" }
+    description: { en: "Skip the safe picks. Here's what to actually order — including items not on the English menu.", zh: "跳过安全选项。这里是真正该点的菜——包括英文菜单上没有的。" }
+    details:
+      en: |
+        - At any Chinese spot: ignore the "American Chinese" section entirely
+        - Show the Chinese menu on your phone if they have a separate one (they often do)
+        - Point-and-order from other tables — it's not rude, it's respected
+        - Universal power moves:
+          • "Cumin lamb" (孜然羊肉) — if they have it, order it
+          • "Ma po tofu" (麻婆豆腐) — ask for "Sichuan style, real spicy"
+          • "Scallion pancake" (葱油饼) as an appetizer, always
+          • Cold appetizer plate (凉菜拼盘) — the real test of a kitchen
+        - If the staff seems surprised by your order, you're doing it right
+      zh: |
+        - 在任何中餐馆：完全忽略"美式中餐"部分
+        - 如果他们有单独的中文菜单，用手机展示（通常都有）
+        - 指着别桌的菜点——这不是不礼貌，这是受尊重的
+        - 万能操作：
+          • 孜然羊肉 — 有的话必点
+          • 麻婆豆腐 — 要"四川正宗，真辣"
+          • 葱油饼做开胃菜，永远
+          • 凉菜拼盘 — 检验厨房水平的真正标准
+        - 如果服务员对你的点单感到惊讶，说明你做对了
+    links: []
+    category: "tips"
+    priority: "medium"
+    applies_to: "all"
+    chat_prompt: { en: "What are the best off-menu items at Chinese restaurants near Great Neck?", zh: "大颈附近中餐馆有什么值得点的隐藏菜？" }
+
+  - id: "korean-detour"
+    title: { en: "The Korean Fried Chicken Detour", zh: "韩式炸鸡绕路站" }
+    description: { en: "Halfway through your crawl, pivot to Korean. The moms know where to go. Follow them.", zh: "美食探索到一半，转向韩式。韩国妈妈们知道去哪。跟着她们。" }
+    details:
+      en: |
+        - Great Neck has one of the best Korean food concentrations outside of Flushing
+        - Korean fried chicken: double-fried, sauced (yangnyeom) or soy garlic — get both
+        - The crunch test: if it's still crunchy after 10 minutes in sauce, it's legit
+        - Don't skip the banchan (side dishes) — they're free and they tell you everything about the restaurant
+        - Army stew (budae jjigae) is the ultimate cold-weather crawl ender
+        - Soju + beer (somaek) if you're doing this crawl properly on a weekend
+      zh: |
+        - 大颈拥有法拉盛以外最好的韩国美食集中地之一
+        - 韩式炸鸡：双重炸制，酱料味（杨念）或酱油蒜味——两种都点
+        - 脆度测试：如果在酱汁里泡了10分钟还是脆的，就是正宗的
+        - 别跳过小菜（banchan）——免费的，能告诉你关于这家餐厅的一切
+        - 部队锅（budae jjigae）是冷天美食探索的终极结尾
+        - 烧酒+啤酒（somaek）如果你周末正经做这个美食探索的话
+    links: []
+    category: "korean"
+    priority: "medium"
+    applies_to: "all"
+    chat_prompt: { en: "Where's the best Korean fried chicken in Great Neck?", zh: "大颈最好的韩式炸鸡在哪？" }
+
+  - id: "persian-wildcard"
+    title: { en: "The Persian Wildcard Finale", zh: "波斯美食惊喜终点" }
+    description: { en: "End your crawl with kabob. Great Neck's Persian food scene is a hidden superpower.", zh: "用烤肉结束你的美食之旅。大颈的波斯美食是隐藏的超级力量。" }
+    details:
+      en: |
+        - Great Neck has a significant Iranian-American community — the food reflects it
+        - Koobideh (ground lamb/beef kabob): the entry point. Juicy, charcoal-grilled, served with saffron rice and grilled tomato.
+        - Joojeh kabob (saffron chicken): the lighter option but equally incredible
+        - Tahdig: crispy saffron rice crust — this is the dish. If the restaurant makes good tahdig, everything else will be good.
+        - Persian ice cream (bastani): rosewater + saffron + pistachios. Get it for dessert.
+        - The vibe in Persian restaurants is warm and generous. Portions are massive. Plan accordingly.
+      zh: |
+        - 大颈有重要的伊朗裔美国社区——美食反映了这一点
+        - Koobideh（碎羊肉/牛肉烤串）：入门款。多汁、炭烤、配藏红花米饭和烤番茄
+        - Joojeh kabob（藏红花鸡肉）：较清淡但同样令人难以置信
+        - Tahdig：酥脆藏红花锅巴——这就是那道菜。如果餐厅的tahdig做得好，其他一切都不会差
+        - 波斯冰淇淋（bastani）：玫瑰水+藏红花+开心果。甜点必点
+        - 波斯餐厅的氛围温暖大方。分量巨大。提前做好准备
+    links: []
+    category: "persian"
+    priority: "medium"
+    applies_to: "all"
+    chat_prompt: { en: "What are the best Persian restaurants in Great Neck?", zh: "大颈最好的波斯餐厅有哪些？" }
+
+  - id: "route-map"
+    title: { en: "The Full Route Map & Parking Strategy", zh: "完整路线图和停车攻略" }
+    description: { en: "The optimal walking order, where to park once, and what to skip.", zh: "最佳步行顺序、一次停车位置和该跳过什么。" }
+    details:
+      en: |
+        - Park at the Great Neck LIRR station lot (free on weekends) — central to everything
+        - Walk Northern Blvd east: noodles first (lighter), then dumplings, then heavier dishes
+        - Suggested order: noodle shop → dumpling spot → Korean chicken → Persian kabob
+        - The whole crawl is about 0.6 miles on foot — totally walkable
+        - Skip: any place with a B health rating in the window, tourist-trap sushi buffets, anything with "Great Wall" in the name
+        - Best timing: Saturday 11:30am start, done by 3pm with breaks
+        - Bring: cash (some spots are cash-only), stretchy pants (not kidding), a friend who's adventurous
+      zh: |
+        - 停在大颈LIRR车站停车场（周末免费）——位于一切的中心
+        - 沿Northern Blvd向东走：先面条（较清淡），再饺子，然后重口味
+        - 建议顺序：面馆→饺子店→韩式炸鸡→波斯烤肉
+        - 整个路线步行约0.6英里——完全可以走
+        - 跳过：窗口贴B级卫生评级的、游客陷阱自助寿司、名字里有"长城"的
+        - 最佳时间：周六11:30开始，3点前结束（含休息）
+        - 带上：现金（有些店只收现金）、弹力裤（不开玩笑）、一个爱冒险的朋友
+    links: []
+    category: "logistics"
+    priority: "high"
+    applies_to: "all"
+    chat_prompt: { en: "What's the best food crawl route along Northern Blvd in Great Neck?", zh: "大颈Northern Blvd最佳美食路线是什么？" }

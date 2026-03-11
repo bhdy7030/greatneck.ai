@@ -262,7 +262,8 @@ export async function sendMessageStream(
   webSearchMode?: WebSearchMode,
   language?: string,
   fastMode?: boolean,
-  imageMime?: string
+  imageMime?: string,
+  onToken?: (text: string) => void,
 ): Promise<ChatResponse> {
   const res = await fetchWithRefresh(`${BASE_URL}/api/chat/stream`, {
     method: "POST",
@@ -303,6 +304,9 @@ export async function sendMessageStream(
           const event: PipelineEvent = { type: currentEventType, ...data };
           onEvent(event);
 
+          if (currentEventType === "token" && onToken) {
+            onToken(data.text || "");
+          }
           if (currentEventType === "response") {
             finalResponse = {
               response: data.response || "",

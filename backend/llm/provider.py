@@ -85,6 +85,69 @@ async def llm_call(
     return await _retry(_call)
 
 
+async def llm_call_streaming(
+    messages: list[dict],
+    role: str = "reasoning",
+    temperature: float = 0.2,
+    max_tokens: int = 4096,
+):
+    """Async generator that yields token chunks from a streaming LLM call."""
+    model = get_model(role)
+    start = time.time()
+
+    response = await litellm.acompletion(
+        model=model,
+        messages=messages,
+        temperature=temperature,
+        max_tokens=max_tokens,
+        stream=True,
+    )
+
+    full_content = ""
+    prompt_tokens = 0
+    completion_tokens = 0
+
+    async for chunk in response:
+        choice = chunk.choices[0] if chunk.choices else None
+        if not choice:
+            continue
+        delta = choice.delta.content or ""
+        if delta:
+            full_content += delta
+            yield delta
+
+        # Capture usage from the final chunk if available
+        usage = getattr(chunk, "usage", None)
+        if usage:
+            prompt_tokens = getattr(usage, "prompt_tokens", 0) or 0
+            completion_tokens = getattr(usage, "completion_tokens", 0) or 0
+
+    # Record metrics after stream completes
+    try:
+        total_tokens = prompt_tokens + completion_tokens
+        # Estimate cost from token counts
+        try:
+            cost = litellm.completion_cost(
+                model=model,
+                prompt=str(prompt_tokens),
+                completion=str(completion_tokens),
+            )
+        except Exception:
+            cost = 0.0
+        latency_ms = int((time.time() - start) * 1000)
+        record_llm_usage(
+            role=role,
+            model=model,
+            prompt_tokens=prompt_tokens,
+            completion_tokens=completion_tokens,
+            total_tokens=total_tokens,
+            cost_usd=cost,
+            latency_ms=latency_ms,
+        )
+    except Exception:
+        logger.debug("Failed to record streaming LLM usage metrics", exc_info=True)
+
+
 async def llm_call_with_tools(
     messages: list[dict],
     tools: list[dict],

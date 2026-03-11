@@ -53,8 +53,8 @@ You MUST output ONLY valid JSON (no markdown, no explanation) matching this exac
 - Priority: "high" for critical/time-sensitive, "medium" for important, "low" for optional/nice-to-have
 - chat_prompt should be a question the user might want to ask the AI assistant about that step
 
-## Icon Options (use one of these keys)
-home, snowflake, flower, sun, leaf, star, briefcase, heart, book, tools
+## Icon Options (use one of these keys — each maps to a fun emoji)
+home, snowflake, flower, sun, leaf, star, briefcase, heart, book, tools, kitchen, garden, money, car, baby, paint, shield, globe, school, dog, tree, rocket
 
 ## Color Options (use one of these hex values)
 #4A90D9, #D94A4A, #4AD97A, #D9A84A, #9B4AD9, #4AD9D9, #D94A9B, #7A8B3D

@@ -373,8 +373,10 @@ const translations: Record<string, Record<Lang, string>> = {
 
   // Landing page playbooks section
   "landing.playbooks.title": { en: "Your Playbooks", zh: "你的攻略" },
-  "landing.playbooks.seeAll": { en: "See all playbooks", zh: "查看所有攻略" },
+  "landing.playbooks.seeAll": { en: "See all", zh: "查看全部" },
   "landing.playbooks.create": { en: "Create your own", zh: "创建你自己的" },
+  "landing.playbooks.subtitleMine": { en: "Your cheat sheets for surviving (and thriving in) Great Neck.", zh: "你的大颈生存（和发展）小抄。" },
+  "landing.playbooks.subtitleExplore": { en: "Step-by-step cheat sheets for everything from dog walks to school drop-off. Grab one.", zh: "从遛狗到接送上学，一步步的生存指南。拿一个吧。" },
 };
 
 export default translations;

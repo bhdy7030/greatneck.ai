@@ -1,0 +1,190 @@
+id: "summer-friday"
+type: "seasonal"
+title:
+  en: "The Summer Friday Vanishing Act"
+  zh: "夏日周五消失术"
+description:
+  en: "The house is a zoo, the AC is loud, and you have 4 hours of real work to protect. Here's how to disappear."
+  zh: "家里像动物园，空调嗡嗡响，你有4小时的工作要保护。以下是消失攻略。"
+icon: "briefcase"
+color: "#0277BD"
+active: true
+
+season:
+  months: [5, 6, 7, 8, 9]
+  label: { en: "WFH Survival", zh: "居家办公生存" }
+
+steps:
+  - id: "tier-system"
+    title: { en: "Pick your vibe: the 3-tier escape system", zh: "选择你的风格：3级逃生系统" }
+    description: { en: "Not every escape needs to be dramatic. Match your energy level to the right tier.", zh: "不是每次逃跑都需要戏剧性。根据你的能量水平选择合适的级别。" }
+    details:
+      en: |
+        - Tier 1 — Silent Focus: You need absolute quiet. No music, no chatter. Deep work mode.
+        - Tier 2 — Light Buzz: You work well with ambient noise. Coffee shop vibes.
+        - Tier 3 — Outdoor Reset: You need air and a change of scenery more than silence.
+        - Tier 4 (Nuclear) — The Fake Commute: Leave the house entirely and ride the train.
+        - Choose based on what you're doing:
+          • Writing/coding/strategy → Tier 1
+          • Emails/calls/admin → Tier 2
+          • Creative/brainstorming → Tier 3
+          • "I need to feel like a real person again" → Tier 4
+      zh: |
+        - 第1级——绝对安静：你需要完全安静。没有音乐，没有闲聊。深度工作模式。
+        - 第2级——轻度喧嚣：你在有环境噪音时工作得更好。咖啡馆氛围。
+        - 第3级——户外重置：你需要新鲜空气和换个环境，而不是安静。
+        - 第4级（核选项）——假通勤：完全离开家，坐火车走。
+        - 根据你的工作内容选择：
+          • 写作/编程/策略 → 第1级
+          • 邮件/电话/行政 → 第2级
+          • 创意/头脑风暴 → 第3级
+          • "我需要重新感觉自己是个正常人" → 第4级
+    links: []
+    category: "planning"
+    priority: "high"
+    applies_to: "all"
+    chat_prompt: { en: "Where can I work remotely near Great Neck?", zh: "大颈附近哪里可以远程办公？" }
+
+  - id: "silent-focus"
+    title: { en: "Tier 1: Great Neck Library — The Silent Floor", zh: "第1级：大颈图书馆——安静楼层" }
+    description: { en: "Free, quiet, air-conditioned, and nobody will find you here. The 2nd floor is the move.", zh: "免费、安静、有空调、没人能找到你。二楼是正确选择。" }
+    details:
+      en: |
+        - Great Neck Library, 159 Bayview Ave — the main branch
+        - 2nd floor reading room: the quietest spot in Great Neck. Period.
+        - Study rooms can be reserved — check the library website or ask at the desk
+        - Free WiFi (reliable, decent speed for video calls with camera off)
+        - Power outlets at most tables — bring your charger
+        - Hours: Mon-Fri 9am-9pm, Sat 9am-5pm
+        - Pro tip: go right at 9am opening. You'll have the floor to yourself for 2 hours.
+        - Downside: no food/drinks at tables. Bring a water bottle and sneak sips.
+      zh: |
+        - 大颈图书馆，159 Bayview Ave——总馆
+        - 二楼阅览室：大颈最安静的地方。没有之一。
+        - 自习室可以预约——查看图书馆网站或前台咨询
+        - 免费WiFi（稳定，关摄像头视频通话没问题）
+        - 大多数桌子有电源插座——带上充电器
+        - 时间：周一至周五9am-9pm，周六9am-5pm
+        - 小窍门：9点开门就去。你会独享楼层2小时。
+        - 缺点：桌子上不能吃喝。带水壶偷偷喝。
+    links:
+      - label: { en: "Great Neck Library", zh: "大颈图书馆" }
+        url: "https://www.greatnecklibrary.org"
+    category: "workspace"
+    priority: "high"
+    applies_to: "all"
+    chat_prompt: { en: "Can I reserve a study room at Great Neck Library?", zh: "可以预约大颈图书馆的自习室吗？" }
+
+  - id: "light-buzz"
+    title: { en: "Tier 2: Coffee shops with outlets and no stroller traffic", zh: "第2级：有插座且没有婴儿车的咖啡馆" }
+    description: { en: "Ambient noise, good coffee, and a table you can camp at for 3 hours without guilt.", zh: "环境噪音、好咖啡、以及你可以毫无愧疚地坐3小时的桌子。" }
+    details:
+      en: |
+        - Key criteria: WiFi, outlets, table space, not too loud, tolerates laptop campers
+        - The back corner table is always the play. Claim it early.
+        - Buy something every 90 minutes and nobody will bother you. That's the social contract.
+        - Noise-canceling headphones + lo-fi playlist = instant productivity dome
+        - Avoid: any spot next to the door (draft + noise), any table near the register (constant chatter)
+        - Best time window: 9:30am-12:30pm — after the morning rush, before the lunch crowd
+      zh: |
+        - 关键标准：WiFi、插座、桌面空间、不太吵、容忍笔记本电脑客
+        - 后角的桌子永远是首选。早点占。
+        - 每90分钟买点东西就没人打扰你。这是社交契约。
+        - 降噪耳机+lo-fi播放列表=即时生产力穹顶
+        - 避免：门旁边的位置（穿堂风+噪音）、收银台旁的桌子（不断的闲聊）
+        - 最佳时间窗口：9:30am-12:30pm——早高峰后、午餐人群前
+    links: []
+    category: "workspace"
+    priority: "medium"
+    applies_to: "all"
+    chat_prompt: { en: "What are the best coffee shops for working remotely in Great Neck?", zh: "大颈最适合远程办公的咖啡馆有哪些？" }
+
+  - id: "outdoor-option"
+    title: { en: "Tier 3: Outdoor WiFi spots + hotspot setup", zh: "第3级：户外WiFi点+热点设置" }
+    description: { en: "Fresh air, vitamin D, and a surprising amount of productivity if you set up right.", zh: "新鲜空气、维生素D，如果设置得当，生产力高得惊人。" }
+    details:
+      en: |
+        - Steppingstone Park: picnic tables near the water, no WiFi but great hotspot signal
+        - Phone hotspot tips:
+          • Tether via USB (not WiFi) for best speed and to save battery
+          • T-Mobile/Verizon both have strong signal at Steppingstone
+          • Check your plan's hotspot cap — most have 15-40GB/month
+        - Bring: portable charger, sunscreen, sunglasses (glare is real), a physical notebook for when you need to think
+        - The bench near the marina is the best-kept-secret office in Great Neck
+        - Works for: creative work, planning, calls. Does NOT work for: anything requiring screen visibility in direct sunlight.
+      zh: |
+        - Steppingstone公园：水边的野餐桌，没有WiFi但热点信号好
+        - 手机热点技巧：
+          • 通过USB连接（不是WiFi）以获得最佳速度并节省电池
+          • T-Mobile/Verizon在Steppingstone信号都很强
+          • 检查你的套餐热点流量上限——大多数有15-40GB/月
+        - 带上：移动电源、防晒霜、太阳镜（反光很严重）、实体笔记本用于需要思考时
+        - 码头附近的长椅是大颈最隐秘的办公室
+        - 适合：创意工作、规划、通话。不适合：阳光直射下需要看屏幕的任何事。
+    links: []
+    category: "workspace"
+    priority: "medium"
+    applies_to: "all"
+    chat_prompt: { en: "Are there any outdoor spots good for working in Great Neck?", zh: "大颈有没有适合户外办公的地方？" }
+
+  - id: "fake-commute"
+    title: { en: "Tier 4 (Nuclear): The Fake Commute to Midtown", zh: "第4级（核选项）：假装通勤去曼哈顿" }
+    description: { en: "LIRR to Penn Station. Work from a hotel lobby. Train back by 3pm. Nobody needs to know.", zh: "LIRR到Penn Station。在酒店大堂工作。3点前坐火车回来。没人需要知道。" }
+    details:
+      en: |
+        - Great Neck LIRR → Penn Station: 36 minutes, runs every 20-30 min
+        - Off-peak fare is cheaper — check the MTA app
+        - Hotel lobby power moves:
+          • Walk in confidently, sit down, open laptop. Nobody will question you.
+          • Order one coffee at the lobby bar = unlimited stay
+          • Best lobbies: any business hotel in Midtown with a quiet mezzanine level
+        - Alternative: WeWork day pass if you want guaranteed desk + fast WiFi
+        - The train ride itself is 36 min of uninterrupted work. Use it.
+        - Be home by 3pm and pick up dinner on the way. You're the hero, not the escapee.
+      zh: |
+        - 大颈LIRR → Penn Station：36分钟，每20-30分钟一班
+        - 非高峰票价更便宜——查看MTA应用
+        - 酒店大堂操作：
+          • 自信地走进去，坐下，打开笔记本电脑。没人会质疑你。
+          • 在大堂吧点一杯咖啡=无限制停留
+          • 最佳大堂：曼哈顿中城任何有安静夹层的商务酒店
+        - 备选：WeWork日通行证，如果你想要保证的工位+快速WiFi
+        - 火车本身36分钟不被打扰的工作时间。利用它。
+        - 3点前到家，回来路上买晚餐。你是英雄，不是逃跑者。
+    links:
+      - label: { en: "LIRR Schedule", zh: "LIRR时刻表" }
+        url: "https://new.mta.info/schedules"
+    category: "escape"
+    priority: "low"
+    applies_to: "all"
+    chat_prompt: { en: "What's the LIRR schedule from Great Neck to Penn Station?", zh: "大颈到Penn Station的LIRR时刻表是什么？" }
+
+  - id: "re-entry"
+    title: { en: "The Re-Entry Plan (cover your tracks)", zh: "重返计划（掩盖你的踪迹）" }
+    description: { en: "Come home with food and nobody asks where you were. It's that simple.", zh: "带着食物回家，没人会问你去了哪。就这么简单。" }
+    details:
+      en: |
+        - The golden rule: always bring something back. Food is best.
+        - Quick pickup options on Middle Neck Road:
+          • Pizza from La Piccola Liguria or Gino's
+          • Sushi from any of the 47 sushi places (your call)
+          • Bagels if it's morning re-entry
+        - If anyone asks: "I had a few errands and grabbed dinner"
+        - Bonus move: bring back a small treat for the kids (donut, cookie). Now you're a hero.
+        - The key insight: nobody resents your alone time if you return bearing gifts
+        - Schedule this as a recurring Friday event. Protect the ritual.
+      zh: |
+        - 黄金法则：回来时一定带点东西。食物最好。
+        - Middle Neck路上的快速取餐选项：
+          • La Piccola Liguria或Gino's的披萨
+          • 47家寿司店里任意一家的寿司（你选）
+          • 如果是早上回来的话——百吉饼
+        - 如果有人问："我出去办了点事，顺便买了晚饭"
+        - 加分操作：给孩子带个小零食（甜甜圈、饼干）。现在你是英雄了。
+        - 关键洞察：如果你带着礼物回来，没人会介意你的独处时间
+        - 把这设为每周五固定日程。保护这个仪式。
+    links: []
+    category: "wrap-up"
+    priority: "low"
+    applies_to: "all"
+    chat_prompt: { en: "What are good quick takeout options on Middle Neck Road?", zh: "Middle Neck路上有什么好的快速外卖选择？" }

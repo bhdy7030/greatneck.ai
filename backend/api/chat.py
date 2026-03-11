@@ -414,9 +414,21 @@ async def _handle_chat_stream(request: ChatRequest, user: dict | None = None) ->
                     "data": {"matched": True, "context_length": len(registry_context)},
                 })
 
-        # Step 1: Router
+        # Step 1: Router + RAG in parallel
         yield _sse_event("step", {"stage": "router", "status": "running", "label": "Understanding your question..."})
-        routing = await _router_agent.run(request.message, context=context)
+
+        from rag.store import KnowledgeStore
+        _rag_store = KnowledgeStore()
+
+        # Run router and RAG searches concurrently (saves ~1s)
+        router_coro = _router_agent.run(request.message, context=context)
+        rag_coro = run_sync(_rag_store.search, request.message, village=request.village or None, n_results=3)
+        shared_rag_coro = run_sync(_rag_store.search, request.message, village=None, n_results=3)
+
+        routing, rag_results, shared_results = await asyncio.gather(
+            router_coro, rag_coro, shared_rag_coro
+        )
+
         agent_name = routing.get("agent", "general")
         refined_query = routing.get("refined_query", request.message)
         yield _sse_event("step", {
@@ -445,12 +457,7 @@ async def _handle_chat_stream(request: ChatRequest, user: dict | None = None) ->
         else:
             agent = _agents[agent_name]
 
-        # Pre-inject RAG context for all agents so curated knowledge
-        # (permits, jurisdiction hierarchy, etc.) is always available
-        from rag.store import KnowledgeStore
-        _rag_store = KnowledgeStore()
-        rag_results = await run_sync(_rag_store.search, refined_query, village=request.village or None, n_results=3)
-        shared_results = await run_sync(_rag_store.search, refined_query, village=None, n_results=3)
+        # RAG results already fetched in parallel above
         all_rag = rag_results + shared_results
         # Filter by relevance
         all_rag = [r for r in all_rag if (r.get("distance") or 0) <= 1.2]
@@ -498,46 +505,53 @@ async def _handle_chat_stream(request: ChatRequest, user: dict | None = None) ->
                 },
             })
 
-        # Step 3: Specialist with tool call streaming
+        # Step 3: Specialist with tool call + token streaming
         model_label = "Sonnet" if specialist_model_role == "specialist" else "Opus"
         yield _sse_event("step", {"stage": "specialist", "status": "running", "label": "Searching..."})
 
-        async def on_tool_event(event: dict):
-            """Callback for streaming tool calls from BaseAgent."""
-            # Non-local yield not possible, so we use a queue pattern
-            pass  # Handled via queue below
-
-        # Use a queue to bridge BaseAgent callbacks → SSE stream
-        tool_event_queue: asyncio.Queue[dict | None] = asyncio.Queue()
+        # Use a queue to bridge BaseAgent events → SSE stream
+        # Events are: ("tool_event", dict), ("token", str), ("done", content, calls)
+        stream_queue: asyncio.Queue[tuple | None] = asyncio.Queue()
 
         async def emit_tool_event(event: dict):
-            await tool_event_queue.put(event)
+            await stream_queue.put(("tool_event", event))
 
-        # Run the specialist in a background task so we can yield events as they come
-        agent_response_holder: list[AgentResponse] = []
+        agent_content = ""
+        agent_calls: list[dict] = []
 
         async def run_specialist():
-            resp = await agent.run(
+            async for item in agent.run_streaming(
                 refined_query,
                 context=context,
                 search_plan=search_plan_text,
                 model_role_override=specialist_model_role,
                 on_event=emit_tool_event,
-            )
-            agent_response_holder.append(resp)
-            await tool_event_queue.put(None)  # sentinel
+            ):
+                await stream_queue.put(item)
+            await stream_queue.put(None)  # sentinel
 
         task = asyncio.create_task(run_specialist())
 
-        # Yield tool events as they stream in
+        # Yield tool events and tokens as they stream in
         while True:
-            event = await tool_event_queue.get()
-            if event is None:
+            item = await stream_queue.get()
+            if item is None:
                 break
-            yield _sse_event("tool", event)
+            if item[0] == "tool_event":
+                yield _sse_event("tool", item[1])
+            elif item[0] == "token":
+                yield _sse_event("token", {"text": item[1]})
+            elif item[0] == "done":
+                agent_content = item[1]
+                agent_calls = item[2]
 
         await task  # ensure no exceptions are lost
-        agent_response = agent_response_holder[0]
+
+        # Build an AgentResponse for downstream compatibility
+        agent_response = AgentResponse(
+            content=agent_content,
+            tool_calls_made=agent_calls,
+        )
 
         tool_count = len(agent_response.tool_calls_made)
         yield _sse_event("step", {
@@ -573,35 +587,45 @@ async def _handle_chat_stream(request: ChatRequest, user: dict | None = None) ->
             if verdict.decision == "retry":
                 yield _sse_event("step", {"stage": "retry", "status": "running", "label": "Improving answer..."})
 
-                # Retry with queue pattern
-                retry_queue: asyncio.Queue[dict | None] = asyncio.Queue()
+                # Retry with streaming queue pattern
+                retry_queue: asyncio.Queue[tuple | None] = asyncio.Queue()
 
                 async def emit_retry_event(event: dict):
-                    await retry_queue.put(event)
+                    await retry_queue.put(("tool_event", event))
 
-                retry_holder: list[AgentResponse] = []
+                retry_content = ""
+                retry_calls: list[dict] = []
 
                 async def run_retry():
-                    resp = await agent.run(
+                    async for item in agent.run_streaming(
                         refined_query,
                         context=context,
                         search_plan=search_plan_text,
                         critic_feedback=verdict.feedback,
                         model_role_override=None,
                         on_event=emit_retry_event,
-                    )
-                    retry_holder.append(resp)
+                    ):
+                        await retry_queue.put(item)
                     await retry_queue.put(None)
 
                 retry_task = asyncio.create_task(run_retry())
                 while True:
-                    event = await retry_queue.get()
-                    if event is None:
+                    item = await retry_queue.get()
+                    if item is None:
                         break
-                    yield _sse_event("tool", {**event, "retry": True})
+                    if item[0] == "tool_event":
+                        yield _sse_event("tool", {**item[1], "retry": True})
+                    elif item[0] == "token":
+                        yield _sse_event("token", {"text": item[1]})
+                    elif item[0] == "done":
+                        retry_content = item[1]
+                        retry_calls = item[2]
 
                 await retry_task
-                agent_response = retry_holder[0]
+                agent_response = AgentResponse(
+                    content=retry_content,
+                    tool_calls_made=retry_calls,
+                )
 
                 yield _sse_event("step", {"stage": "retry", "status": "done", "label": "Answer improved"})
 

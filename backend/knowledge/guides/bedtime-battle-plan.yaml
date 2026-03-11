@@ -1,0 +1,164 @@
+id: "bedtime-battle-plan"
+type: "onboarding"
+title:
+  en: "The Bedtime Battle Plan"
+  zh: "睡前大作战计划"
+description:
+  en: "It's 7:30pm and you've said 'get in bed' fourteen times. Here's a system that actually works — tested by exhausted Great Neck parents."
+  zh: "晚上7:30你已经说了14遍'上床睡觉'。以下是一个真正有效的系统——经过疲惫的大颈家长们的验证。"
+icon: "star"
+color: "#6A1B9A"
+active: true
+
+steps:
+  - id: "energy-dump"
+    title: { en: "6:00pm — The Controlled Energy Dump", zh: "下午6:00——可控能量释放" }
+    description: { en: "They can't sleep if they're wired. Burn it off BEFORE the routine starts.", zh: "他们精力旺盛就睡不着。在例行程序开始之前消耗掉。" }
+    details:
+      en: |
+        - 20-30 minutes of physical activity, outdoors if possible
+        - Options by weather:
+          • Nice out: bike ride around the block, basketball in the driveway, jump rope
+          • Raining: dance party in the living room, obstacle course with couch cushions, yoga cards
+        - The goal is "panting but not hyper" — there's a sweet spot
+        - AVOID screen time in this window. It stimulates, not calms.
+        - Wrestling/roughhousing with a parent is scientifically proven to help kids wind down (look it up)
+        - End with 5 minutes of "cool down" — slow walking, stretching, deep breaths
+      zh: |
+        - 20-30分钟体力活动，尽可能户外
+        - 按天气选择：
+          • 天气好：绕街区骑车、车道上打篮球、跳绳
+          • 下雨：客厅舞会、用沙发垫做障碍赛、瑜伽卡片
+        - 目标是"喘气但不亢奋"——有个最佳点
+        - 这个时间段避免屏幕时间。它是刺激，不是镇静。
+        - 和家长摔跤/打闹被科学证明能帮助孩子平静下来（可以查）
+        - 以5分钟"冷却"结束——慢走、拉伸、深呼吸
+    links: []
+    category: "routine"
+    priority: "high"
+    applies_to: "all"
+    chat_prompt: { en: "What are good ways to tire kids out before bedtime?", zh: "有什么好方法在睡前消耗孩子的精力？" }
+
+  - id: "routine-anchor"
+    title: { en: "6:30pm — The 4-Step Routine (same every night)", zh: "下午6:30——4步例行程序（每晚相同）" }
+    description: { en: "Predictability IS the sleep hack. Their brain starts winding down when the sequence begins.", zh: "可预测性就是睡眠秘诀。当程序开始时，他们的大脑就开始平静下来。" }
+    details:
+      en: |
+        - Step 1: Bath/Shower (15 min)
+          • Warm water, not hot. Warm → cool body temp drop signals sleep.
+          • Bath toys: only 2-3. More = playtime, not wind-down time.
+        - Step 2: Pajamas + Teeth (10 min)
+          • Let them pick PJs (tiny choice = feeling of control = less resistance)
+          • Electric toothbrush with a timer — removes the "am I done?" debate
+        - Step 3: Stories (15 min)
+          • 2 books MAX. Let them choose which 2.
+          • Read in their bed, lights dim. This is the transition zone.
+        - Step 4: Lights out ritual (2 min)
+          • Same phrase every night: "Love you, sleep tight, see you in the morning"
+          • Nightlight on. Door cracked (not open, not closed — cracked).
+        - THE RULE: the sequence doesn't change. Ever. Consistency is the whole game.
+      zh: |
+        - 第1步：洗澡（15分钟）
+          • 温水，不是热水。温→凉的体温下降信号睡眠。
+          • 洗澡玩具：只放2-3个。多了=玩耍时间，不是放松时间。
+        - 第2步：穿睡衣+刷牙（10分钟）
+          • 让他们选睡衣（小选择=控制感=更少反抗）
+          • 带计时器的电动牙刷——消除"我刷完了吗"的争论
+        - 第3步：故事（15分钟）
+          • 最多2本书。让他们选哪2本。
+          • 在他们床上读，灯光调暗。这是过渡区。
+        - 第4步：熄灯仪式（2分钟）
+          • 每晚同样的话："爱你，好好睡，早上见"
+          • 夜灯开着。门留缝（不是开着，不是关着——留缝）。
+        - 规则：程序不变。永远不变。一致性是全部。
+    links: []
+    category: "routine"
+    priority: "high"
+    applies_to: "all"
+    chat_prompt: { en: "What's a good bedtime routine for kids ages 3-8?", zh: "3-8岁孩子的好睡前程序是什么？" }
+
+  - id: "stall-tactics"
+    title: { en: "Defeating the Stall Tactics", zh: "破解拖延战术" }
+    description: { en: "'I need water.' 'One more hug.' 'I heard a noise.' Sound familiar? Here's how to shut it down.", zh: "'我要喝水。''再抱一下。''我听到声音了。'听起来熟悉吗？以下是如何终结它。" }
+    details:
+      en: |
+        - "I need water" → Water bottle on the nightstand. Pre-loaded. Done.
+        - "I'm hungry" → Small bedtime snack DURING the routine (banana, crackers). Eliminates the excuse.
+        - "One more hug" → Build "bonus hug" into the routine. Give 2 hugs, call it the "double hug special."
+        - "I heard a noise" → Acknowledge, don't dismiss. "That's the house settling. It does that every night. You're safe."
+        - "I'm scared" → Legitimate. Monster spray (water in a spray bottle with a label). Spray under the bed together.
+        - "I need to tell you something" → "Tell me at breakfast. I'll remember."
+        - The nuclear stall: getting out of bed repeatedly. Walk them back silently. No talking, no engagement. Boring = effective.
+      zh: |
+        - "我要喝水" → 床头柜上放水壶。提前装好。完毕。
+        - "我饿了" → 例行程序期间给小零食（香蕉、饼干）。消除借口。
+        - "再抱一下" → 把"奖励拥抱"加入程序。给2个拥抱，叫"双倍拥抱特别版"。
+        - "我听到声音了" → 承认，不要否认。"那是房子在响。每晚都这样。你很安全。"
+        - "我害怕" → 合理的。怪兽喷雾（喷壶装水贴标签）。一起喷床底下。
+        - "我要告诉你一件事" → "早餐时告诉我。我会记得。"
+        - 终极拖延：反复下床。沉默地带他们回去。不说话、不互动。无聊=有效。
+    links: []
+    category: "tactics"
+    priority: "high"
+    applies_to: "all"
+    chat_prompt: { en: "How do I stop my kid from stalling at bedtime?", zh: "怎么阻止孩子在睡前拖延？" }
+
+  - id: "sibling-sync"
+    title: { en: "The Sibling Sync Problem", zh: "兄弟姐妹同步问题" }
+    description: { en: "Different ages, different bedtimes, one parent. The logistics are brutal. Here's a working system.", zh: "不同年龄、不同就寝时间、一个家长。后勤很残酷。这是一个可行的系统。" }
+    details:
+      en: |
+        - Stagger by 20-30 minutes, not more
+          • Younger kid: 7:00pm routine → 7:30pm lights out
+          • Older kid: 7:20pm routine → 7:50pm lights out
+        - The overlap trick: bath time together (saves 15 min), then split for stories
+        - Older kid gets "quiet reading time" in bed while you do the younger one's story
+        - NEVER let the older kid's later bedtime become a flex ("I get to stay up later")
+        - If they share a room: younger kid falls asleep first. Older kid reads with a book light.
+        - Two-parent divide: each parent "owns" one kid's bedtime. Swap weekly so nobody feels stuck.
+      zh: |
+        - 间隔20-30分钟，不要更多
+          • 小的：7:00开始→7:30熄灯
+          • 大的：7:20开始→7:50熄灯
+        - 重叠技巧：一起洗澡（省15分钟），然后分开讲故事
+        - 大孩子在你给小的讲故事时在床上"安静阅读"
+        - 永远不要让大孩子晚睡变成炫耀（"我可以晚睡"）
+        - 如果共享房间：小的先睡。大的用阅读灯看书。
+        - 双亲分工：每个家长"负责"一个孩子的就寝。每周轮换。
+    links: []
+    category: "logistics"
+    priority: "medium"
+    applies_to: "all"
+    chat_prompt: { en: "How do I manage bedtime with kids of different ages?", zh: "怎么管理不同年龄孩子的就寝时间？" }
+
+  - id: "parent-reward"
+    title: { en: "8:00pm — Your Reward (protect this hour)", zh: "晚上8:00——你的奖励（保护这个小时）" }
+    description: { en: "They're asleep. The house is quiet. This is YOUR time. Don't waste it on chores.", zh: "他们睡了。家里安静了。这是你的时间。别浪费在家务上。" }
+    details:
+      en: |
+        - The first 15 minutes after kids sleep: do NOTHING. Just sit. Decompress. Stare at a wall. It's fine.
+        - Then choose ONE thing that recharges you:
+          • Read a book (a real one, not your phone)
+          • Watch one episode of YOUR show
+          • Take a walk around the block alone (summer evenings in Great Neck are gorgeous)
+          • Call a friend
+          • A glass of wine on the porch
+        - What NOT to do: start a deep-clean, catch up on work emails, doom-scroll
+        - The trap: "I'll just quickly..." NO. This hour is sacred. Chores can wait.
+        - Set a "parent bedtime" alarm too. You need sleep as much as they do.
+      zh: |
+        - 孩子睡后的前15分钟：什么都不做。坐着。减压。盯着墙。没关系。
+        - 然后选一件给你充电的事：
+          • 读书（真正的书，不是手机）
+          • 看一集你的节目
+          • 一个人绕街区散步（大颈的夏天傍晚很美）
+          • 打电话给朋友
+          • 在门廊喝杯酒
+        - 不要做的事：开始大扫除、回复工作邮件、刷手机
+        - 陷阱："我就快速..." 不。这个小时是神圣的。家务可以等。
+        - 也给自己设个"家长就寝"闹钟。你和他们一样需要睡眠。
+    links: []
+    category: "self-care"
+    priority: "medium"
+    applies_to: "all"
+    chat_prompt: { en: "What's a relaxing evening activity near Great Neck?", zh: "大颈附近有什么放松的晚间活动？" }

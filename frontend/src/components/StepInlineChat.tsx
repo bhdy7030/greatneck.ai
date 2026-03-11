@@ -13,6 +13,9 @@ interface Message {
 interface StepInlineChatProps {
   chatPrompt: string;
   stepTitle: string;
+  guideTitle?: string;
+  stepDescription?: string;
+  stepDetails?: string;
   guideId: string;
   stepId: string;
   onContinueInChat: () => void;
@@ -21,6 +24,9 @@ interface StepInlineChatProps {
 export default function StepInlineChat({
   chatPrompt,
   stepTitle,
+  guideTitle,
+  stepDescription,
+  stepDetails,
   guideId,
   stepId,
   onContinueInChat,
@@ -57,7 +63,11 @@ export default function StepInlineChat({
       setStreaming(true);
       setStreamText("");
 
-      const systemHint = `[You are answering a quick question about "${stepTitle}" for a Great Neck resident. Keep answers concise: 2-3 sentences max, under 120 words. Be specific and actionable.]`;
+      const contextParts = [`You are answering a question about "${stepTitle}"${guideTitle ? ` from the playbook "${guideTitle}"` : ""} for a Great Neck resident.`];
+      if (stepDescription) contextParts.push(`Step overview: ${stepDescription}`);
+      if (stepDetails) contextParts.push(`Step details:\n${stepDetails}`);
+      contextParts.push("Keep answers concise: 2-3 sentences max, under 120 words. Be specific and actionable.");
+      const systemHint = `[${contextParts.join(" ")}]`;
 
       const history = messages.map((m) => ({
         role: m.role,
@@ -114,14 +124,17 @@ export default function StepInlineChat({
   }, []);
 
   const handleContinue = () => {
-    // Pass last exchange context + guide return info
-    const lastQ =
-      messages.filter((m) => m.role === "user").pop()?.content || chatPrompt;
-    localStorage.setItem("gn_draft", lastQ);
+    // Pass full inline chat history + guide return info
     localStorage.setItem(
       "gn_return_guide",
       JSON.stringify({ guideId, stepId })
     );
+    // Store entire conversation so full chat can seed it
+    if (messages.length > 0) {
+      localStorage.setItem("gn_inline_messages", JSON.stringify(messages));
+    }
+    // Clear draft — full chat will use inline messages instead
+    localStorage.removeItem("gn_draft");
     onContinueInChat();
   };
 

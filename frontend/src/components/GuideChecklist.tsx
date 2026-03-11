@@ -10,6 +10,7 @@ import StepReels from "./StepReels";
 
 interface GuideChecklistProps {
   guideId: string;
+  guideTitle?: string;
   steps: GuideStep[];
   color?: string;
   initialStepId?: string | null;
@@ -24,7 +25,7 @@ const STATUS_LABEL_KEYS: Record<StepStatus, string> = {
   skipped: "guides.status.skipped",
 };
 
-export default function GuideChecklist({ guideId, steps: initialSteps, color, initialStepId }: GuideChecklistProps) {
+export default function GuideChecklist({ guideId, guideTitle, steps: initialSteps, color, initialStepId }: GuideChecklistProps) {
   const router = useRouter();
   const { t } = useLanguage();
   const [steps, setSteps] = useState(initialSteps);
@@ -97,39 +98,7 @@ export default function GuideChecklist({ guideId, steps: initialSteps, color, in
 
   return (
     <div className="space-y-0">
-      {/* Segmented progress bar */}
-      <div className="flex items-center gap-2 mb-4">
-        <div className="flex items-center gap-1 flex-1">
-          {steps.map((s, i) => {
-            const isActive = i === activeIdx;
-            let bgColor = "rgb(var(--color-surface-300))";
-            if (s.status === "done") bgColor = color || "rgb(var(--color-sage))";
-            else if (s.status === "in_progress") bgColor = "rgb(245 158 11)";
-            else if (s.status === "skipped") bgColor = "rgb(var(--color-surface-400))";
-            return (
-              <button
-                key={s.id}
-                onClick={() => setActiveIdx(i)}
-                className={`flex-1 rounded-full transition-all duration-200 min-h-[28px] ${
-                  isActive
-                    ? "h-3 ring-2 ring-offset-2 scale-y-110"
-                    : "h-2 hover:h-2.5 opacity-70 hover:opacity-100"
-                }`}
-                style={{
-                  backgroundColor: bgColor,
-                  ...(isActive ? { "--tw-ring-color": color || "rgb(var(--color-sage))" } as React.CSSProperties : {}),
-                }}
-                aria-label={`Step ${i + 1}`}
-              />
-            );
-          })}
-        </div>
-        <span className="text-[11px] font-medium text-text-500 whitespace-nowrap">
-          {activeIdx + 1}/{steps.length}
-        </span>
-      </div>
-
-      {/* Reel view */}
+      {/* Reel view — includes bottom nav bar with progress + prev/next */}
       <StepReels
         steps={steps}
         activeIdx={activeIdx}
@@ -206,6 +175,9 @@ export default function GuideChecklist({ guideId, steps: initialSteps, color, in
                   <StepInlineChat
                     chatPrompt={step.chat_prompt}
                     stepTitle={step.title}
+                    guideTitle={guideTitle}
+                    stepDescription={step.description}
+                    stepDetails={step.details}
                     guideId={guideId}
                     stepId={step.id}
                     onContinueInChat={() => handleContinueInChat(step.chat_prompt)}

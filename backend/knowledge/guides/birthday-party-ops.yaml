@@ -1,0 +1,182 @@
+id: "birthday-party-ops"
+type: "onboarding"
+title:
+  en: "Birthday Party Ops: Plan It Without Losing Your Mind"
+  zh: "生日派对行动：不崩溃地策划"
+description:
+  en: "Your kid wants a party. 15 kids, a theme, goody bags, and a venue — and it's 3 weeks away. Breathe. We've got this."
+  zh: "你的孩子想办派对。15个孩子、一个主题、礼品袋和场地——还有3周。深呼吸。我们搞定。"
+icon: "heart"
+color: "#E91E63"
+active: true
+
+steps:
+  - id: "venue-decision"
+    title: { en: "The Venue Decision Tree", zh: "场地决策树" }
+    description: { en: "Home, park, or venue? Each has trade-offs. Here's how to decide in 5 minutes.", zh: "在家、公园还是场地？各有利弊。5分钟做决定。" }
+    details:
+      en: |
+        - Under 8 kids → Home party (manageable, cheapest, most personal)
+        - 8-15 kids → Park or venue (you need space and someone else doing cleanup)
+        - 15+ kids → Venue only (you are not equipped. accept it.)
+        - Home party pros: total control, no time limits, kids know the space
+        - Home party cons: your house will be destroyed, you're the staff
+        - Park party pros: free, tons of space, kids entertain themselves
+        - Park party cons: weather gamble, no outlets, bathrooms may be far
+        - Venue pros: they handle everything, you show up with a cake
+        - Venue cons: $$$, time slots feel rushed, less personal
+      zh: |
+        - 8个孩子以下 → 家庭派对（可控、最便宜、最个人化）
+        - 8-15个孩子 → 公园或场地（你需要空间和别人负责清理）
+        - 15个以上 → 只能场地（你没有这个能力。接受吧。）
+        - 家庭派对优点：完全控制、没有时间限制、孩子们熟悉环境
+        - 家庭派对缺点：你的房子会被摧毁、你就是工作人员
+        - 公园派对优点：免费、大量空间、孩子们自己玩
+        - 公园派对缺点：天气赌博、没有插座、厕所可能很远
+        - 场地优点：他们处理一切、你带蛋糕出现就行
+        - 场地缺点：$$$、时间段感觉仓促、不那么个人化
+    links: []
+    category: "planning"
+    priority: "high"
+    applies_to: "all"
+    chat_prompt: { en: "What are good birthday party venues near Great Neck?", zh: "大颈附近有什么好的生日派对场地？" }
+
+  - id: "local-venues"
+    title: { en: "Great Neck Venue Cheat Sheet", zh: "大颈场地速查表" }
+    description: { en: "Tested by local parents. Here's what works, what doesn't, and what costs what.", zh: "经本地家长验证。什么好用、什么不好用、花多少钱。" }
+    details:
+      en: |
+        - Bowling (Herrill Lanes): $20-25/kid, 2 hours, includes shoes + pizza. Ages 4+. Easy.
+        - Gymnastics centers: $25-35/kid, structured play + free time. Ages 3-10. High energy burn.
+        - Art studios: $30-40/kid, they make something and take it home. Ages 5+. Calm and creative.
+        - Trampoline parks: $25-30/kid, pure chaos but they LOVE it. Ages 6+. Bring advil for yourself.
+        - Park party (Firefighters Park): FREE venue, you supply food/decorations. Reserve the pavilion through Park District.
+        - At-home with hired entertainment:
+          • Magician: $250-400 for 45 min
+          • Face painter: $150-200/hour
+          • Bounce house rental: $200-350 for the day
+        - Budget rule of thumb: $15-35 per kid all-in is the Great Neck sweet spot
+      zh: |
+        - 保龄球（Herrill Lanes）：$20-25/孩子，2小时，含鞋+披萨。4岁+。简单。
+        - 体操中心：$25-35/孩子，结构化游戏+自由时间。3-10岁。高能量消耗。
+        - 美术工作室：$30-40/孩子，做个东西带回家。5岁+。安静有创意。
+        - 蹦床公园：$25-30/孩子，纯混乱但他们超爱。6岁+。给自己带止痛药。
+        - 公园派对（消防员公园）：场地免费，你供应食物/装饰。通过公园管理区预约凉亭。
+        - 在家请表演者：
+          • 魔术师：$250-400/45分钟
+          • 面部彩绘：$150-200/小时
+          • 充气城堡租赁：$200-350/天
+        - 预算经验法则：每孩子全包$15-35是大颈的甜蜜点
+    links:
+      - label: { en: "GN Park District Pavilion Rental", zh: "大颈公园管理区凉亭租赁" }
+        url: "https://www.greatneckparkdistrict.com"
+    category: "venues"
+    priority: "high"
+    applies_to: "all"
+    chat_prompt: { en: "How do I reserve a pavilion at a Great Neck park for a birthday party?", zh: "怎么预约大颈公园的凉亭办生日派对？" }
+
+  - id: "goody-bags"
+    title: { en: "Goody Bags That Don't Suck", zh: "不烂的礼品袋" }
+    description: { en: "Nobody wants another bag of candy and a plastic whistle. Here are goody bags parents actually appreciate.", zh: "没人想要又一袋糖果和塑料哨子。以下是家长真正感激的礼品袋。" }
+    details:
+      en: |
+        - The "consumable" approach (best — nothing comes home to clutter):
+          • Custom cookie + juice box + small candy bag. Done. Total: $3-4/kid.
+          • Mini Play-Doh + a coloring book. Under $3/kid.
+        - The "experience" approach:
+          • A book! Scholastic book orders = $2-3/book. Each kid gets one.
+          • Seeds + a small pot for planting. Under $3/kid. Parents love this.
+        - The "no bag" approach:
+          • Skip the bag entirely. Extra cake slice in a box to take home.
+          • A craft they made at the party IS the goody bag.
+        - What to NEVER include:
+          • Slime (your enemy's carpet thanks you)
+          • Whistles, horns, or anything noisy (the ride home)
+          • Loose glitter (banned in 43 countries, probably)
+      zh: |
+        - "消耗品"方式（最好——没有东西带回家添乱）：
+          • 定制饼干+果汁盒+小糖果袋。完毕。总计：$3-4/孩子。
+          • 迷你培乐多+涂色书。不到$3/孩子。
+        - "体验"方式：
+          • 一本书！Scholastic图书订购=$2-3/本。每个孩子一本。
+          • 种子+小花盆用来种植。不到$3/孩子。家长们爱这个。
+        - "无袋"方式：
+          • 完全跳过袋子。多一块蛋糕装盒子带走。
+          • 在派对上做的手工就是礼品袋。
+        - 永远不要放的东西：
+          • 史莱姆（你朋友的地毯感谢你）
+          • 哨子、喇叭或任何会响的东西（回家路上）
+          • 散装闪粉（大概被43个国家禁止了）
+    links: []
+    category: "details"
+    priority: "medium"
+    applies_to: "all"
+    chat_prompt: { en: "What are creative goody bag ideas for kids' birthday parties?", zh: "儿童生日派对有什么有创意的礼品袋想法？" }
+
+  - id: "day-of-timeline"
+    title: { en: "Day-Of Timeline (print this)", zh: "当天时间线（打印这个）" }
+    description: { en: "A minute-by-minute plan so you're not panicking when 15 kids show up at once.", zh: "逐分钟计划，这样15个孩子同时出现时你不会慌。" }
+    details:
+      en: |
+        - T-60 min: Set up decorations, lay out food, test any tech (speakers, etc.)
+        - T-30 min: Put out a "free play" activity for early arrivals (coloring table, playground)
+        - T-0 to T+15: Arrival window. Greet parents. Confirm pickup time.
+        - T+15 to T+45: Main activity (the thing you booked or planned)
+        - T+45 to T+60: Free play / open time. Let the energy be chaotic.
+        - T+60: CAKE. Sing. Blow out candles. This is the photo moment.
+        - T+60 to T+75: Eat cake, open presents (optional — many skip this now)
+        - T+75 to T+90: Goody bags handed out. Parents start arriving.
+        - T+90: Done. You survived. Drink wine.
+        - The #1 mistake: no buffer between activities. Kids need transition time.
+      zh: |
+        - 前60分钟：布置装饰、摆放食物、测试技术（音箱等）
+        - 前30分钟：为早到的孩子准备"自由玩耍"活动（涂色桌、游乐场）
+        - 0到+15分钟：到达时间窗。迎接家长。确认接送时间。
+        - +15到+45分钟：主要活动（你预订或计划的东西）
+        - +45到+60分钟：自由玩耍/开放时间。让能量混乱吧。
+        - +60分钟：蛋糕。唱歌。吹蜡烛。这是拍照时刻。
+        - +60到+75分钟：吃蛋糕、拆礼物（可选——现在很多人跳过）
+        - +75到+90分钟：发礼品袋。家长们开始到达。
+        - +90分钟：结束。你活下来了。喝酒。
+        - 第一大错误：活动之间没有缓冲。孩子需要过渡时间。
+    links: []
+    category: "execution"
+    priority: "high"
+    applies_to: "all"
+    chat_prompt: { en: "Where can I order a custom birthday cake near Great Neck?", zh: "大颈附近哪里可以订制生日蛋糕？" }
+
+  - id: "cake-food"
+    title: { en: "Cake & Food — Keep It Simple", zh: "蛋糕和食物——保持简单" }
+    description: { en: "Nobody remembers the organic quinoa bites. They remember the pizza and the cake. Lean in.", zh: "没人记得有机藜麦小食。他们记得披萨和蛋糕。顺势而为。" }
+    details:
+      en: |
+        - Food that works at every party:
+          • Pizza (2 pies per 8 kids). Order from where your kid likes — it's THEIR day.
+          • Fruit platter (the one healthy thing — parents appreciate it)
+          • Juice boxes + water bottles. Skip the soda drama.
+          • Chips in bowls. Don't overthink this.
+        - Cake options near Great Neck:
+          • Costco sheet cake: $20, feeds 48. The stealth MVP.
+          • Local bakeries do custom themes: $40-80 for a good one
+          • Cupcakes instead of cake: easier to serve, no cutting, less mess
+          • Ice cream cake from Carvel: kids go insane for Cookie Puss
+        - Allergy protocol: ASK on the invite. "Any food allergies?" Keep a fruit/veggie tray for safe eating.
+        - Hot tip: paper plates, plastic forks, and a trash bag on a chair. Don't use real dishes. You're not hosting a gala.
+      zh: |
+        - 每个派对都管用的食物：
+          • 披萨（每8个孩子2个）。从你孩子喜欢的地方点——这是他们的日子。
+          • 水果拼盘（唯一的健康食品——家长们感激）
+          • 果汁盒+瓶装水。跳过汽水争论。
+          • 碗装薯片。别想太多。
+        - 大颈附近的蛋糕选择：
+          • Costco大蛋糕：$20，够48人吃。隐藏MVP。
+          • 本地面包店做定制主题：好的$40-80
+          • 杯子蛋糕代替蛋糕：更容易分发、不用切、更少混乱
+          • Carvel冰淇淋蛋糕：孩子们为Cookie Puss疯狂
+        - 过敏协议：在邀请函上问。"有没有食物过敏？"准备水果/蔬菜盘以供安全食用。
+        - 热门提示：纸盘、塑料叉、垃圾袋挂椅子上。别用真碗碟。你不是在办晚宴。
+    links: []
+    category: "food"
+    priority: "medium"
+    applies_to: "all"
+    chat_prompt: { en: "Where can I order pizza and cake for a kids' party near Great Neck?", zh: "大颈附近哪里可以订披萨和蛋糕办儿童派对？" }

@@ -2,19 +2,7 @@
 
 import { useLanguage } from "@/components/LanguageProvider";
 import type { RawGuideData, BilingualText } from "@/lib/api";
-
-const ICONS: Record<string, string> = {
-  home: "\u{1F3E0}",
-  snowflake: "\u{2744}\u{FE0F}",
-  flower: "\u{1F338}",
-  sun: "\u{2600}\u{FE0F}",
-  leaf: "\u{1F342}",
-  star: "\u{2B50}",
-  briefcase: "\u{1F4BC}",
-  heart: "\u{2764}\u{FE0F}",
-  book: "\u{1F4D6}",
-  tools: "\u{1F6E0}\u{FE0F}",
-};
+import OpenMojiIcon from "./OpenMojiIcon";
 
 function loc(obj: BilingualText | string | undefined, lang: string): string {
   if (!obj) return "";
@@ -28,7 +16,6 @@ interface GuidePreviewProps {
 
 export default function GuidePreview({ guide }: GuidePreviewProps) {
   const { language } = useLanguage();
-  const emoji = ICONS[guide.icon] || "\u{1F4CB}";
 
   return (
     <div className="rounded-2xl overflow-hidden bg-surface-50 border border-surface-200">
@@ -40,7 +27,7 @@ export default function GuidePreview({ guide }: GuidePreviewProps) {
         }}
       >
         <div className="flex items-start gap-3">
-          <span className="text-4xl">{emoji}</span>
+          <OpenMojiIcon icon={guide.icon} size={48} />
           <div className="flex-1 min-w-0">
             <h2 className="text-base font-bold leading-tight">
               {loc(guide.title, language)}

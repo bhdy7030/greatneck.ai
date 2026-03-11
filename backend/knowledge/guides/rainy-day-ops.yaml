@@ -1,0 +1,190 @@
+id: "rainy-day-ops"
+type: "onboarding"
+title:
+  en: "Rainy Day Ops: The Indoor Survival Playbook"
+  zh: "雨天行动：室内生存手册"
+description:
+  en: "It's pouring, the kids are bouncing off walls, and screen time guilt is real. Here are 6 hours of indoor wins within 10 minutes of your door."
+  zh: "外面暴雨，孩子们在家闹翻天，屏幕时间的负罪感很真实。以下是距你家门口10分钟内的6小时室内活动。"
+icon: "umbrella"
+color: "#5C6BC0"
+active: true
+
+steps:
+  - id: "morning-library"
+    title: { en: "Hour 1-2: Great Neck Library — Storytime + Craft Lab", zh: "第1-2小时：大颈图书馆——故事时间+手工实验室" }
+    description: { en: "Free, warm, dry, and they'll actually learn something. The children's floor is a rainy day goldmine.", zh: "免费、温暖、干燥，他们还能真正学到东西。儿童楼层是雨天的金矿。" }
+    details:
+      en: |
+        - Children's room (1st floor): toddler storytime most mornings, check calendar
+        - Craft station is self-serve — paper, crayons, glue sticks always out
+        - Ages 5+: computer stations with educational games (30-min slots)
+        - Puzzle corner has 200+ puzzles that never get old for the under-6 crowd
+        - Pro tip: grab a stack of books and camp in the beanbag corner. You get 45 min of peace.
+        - Check if they're running a special program — LEGO club, science demo, etc.
+      zh: |
+        - 儿童室（1楼）：大多数早上有幼儿故事时间，查看日历
+        - 手工台自助——纸、蜡笔、胶棒随时可用
+        - 5岁以上：有教育游戏的电脑台（30分钟一轮）
+        - 拼图角有200+拼图，6岁以下永远玩不腻
+        - 小窍门：拿一摞书在豆袋角安营。你能获得45分钟的安宁。
+        - 看看是否有特别活动——乐高俱乐部、科学演示等
+    links:
+      - label: { en: "Library Events Calendar", zh: "图书馆活动日历" }
+        url: "https://www.greatnecklibrary.org/events"
+    category: "morning"
+    priority: "high"
+    applies_to: "all"
+    chat_prompt: { en: "What's happening at Great Neck Library today?", zh: "今天大颈图书馆有什么活动？" }
+
+  - id: "bowling"
+    title: { en: "Hour 2-3: Bowling — The Reliable Classic", zh: "第2-3小时：保龄球——可靠的经典" }
+    description: { en: "Bumper lanes, glow bowling, and shoes that smell like 1997. Kids love it. Every. Single. Time.", zh: "带保险杠的球道、荧光保龄球，还有闻起来像1997年的鞋。孩子们每次都爱。" }
+    details:
+      en: |
+        - Herrill Lanes in New Hyde Park — 15 min drive, worth it
+        - Bumper bowling for kids under 8 — they can't lose, everyone wins
+        - Cosmic bowling (glow lanes + music) on weekends — kids think it's a nightclub
+        - Cost: ~$6-8/game, $4 shoe rental. Budget $25-30 for two kids + parent
+        - The snack bar hot dogs are surprisingly not terrible
+        - Go before noon — less crowded, no wait for lanes
+        - Ages 3+ can bowl with a ramp (ask at the counter)
+      zh: |
+        - New Hyde Park的Herrill Lanes——15分钟车程，值得
+        - 8岁以下有保险杠保龄——他们不会输，人人都赢
+        - 周末有宇宙保龄（荧光球道+音乐）——孩子们觉得是在夜店
+        - 费用：每局约$6-8，鞋子租金$4。两个孩子+家长预算$25-30
+        - 小吃吧的热狗出人意料地还不错
+        - 中午前去——人少，不用等球道
+        - 3岁以上可以用斜坡打（问柜台）
+    links: []
+    category: "activity"
+    priority: "high"
+    applies_to: "all"
+    chat_prompt: { en: "Where can I go bowling near Great Neck?", zh: "大颈附近哪里可以打保龄球？" }
+
+  - id: "indoor-play"
+    title: { en: "Hour 3-4: Indoor Play Space Blitz", zh: "第3-4小时：室内游乐场闪击战" }
+    description: { en: "Let them climb, jump, and burn energy in a padded room while you sit and drink coffee. Parenting perfected.", zh: "让他们在软垫房间里爬、跳、消耗能量，而你坐着喝咖啡。完美育儿。" }
+    details:
+      en: |
+        - Indoor playgrounds within driving range:
+          • Billy Beez (various locations) — massive, multi-level, ages 2-12
+          • Local gymnastic centers often have open play hours — call ahead
+        - Trampoline parks: Sky Zone, Bounce — socks required, waiver required
+        - Pro tip: bring a change of clothes. Sweaty kids in car seats = regret
+        - Cost: $15-25/kid for 1-2 hours. Worth every penny on a rainy day.
+        - Most have a parent seating area with WiFi. Bring your laptop. Double win.
+        - Check Groupon/LivingSocial before you go — there's always a deal
+      zh: |
+        - 驾车范围内的室内游乐场：
+          • Billy Beez（多个地点）——巨大、多层、适合2-12岁
+          • 本地体操中心通常有开放游玩时段——提前电话确认
+        - 蹦床公园：Sky Zone, Bounce——需要袜子和免责声明
+        - 小窍门：带换洗衣服。出汗的孩子坐安全座椅=后悔
+        - 费用：每个孩子$15-25/1-2小时。雨天值每一分钱
+        - 大多数有家长休息区和WiFi。带上笔记本电脑。双赢。
+        - 去之前查Groupon/LivingSocial——总有优惠
+    links: []
+    category: "activity"
+    priority: "medium"
+    applies_to: "all"
+    chat_prompt: { en: "What indoor play spaces are near Great Neck?", zh: "大颈附近有哪些室内游乐场？" }
+
+  - id: "baking-mission"
+    title: { en: "Hour 4-5: The Baking Mission (aka kitchen destruction)", zh: "第4-5小时：烘焙任务（又名厨房破坏行动）" }
+    description: { en: "Give them a whisk and a mission. Yes, the kitchen will be destroyed. But they'll be quiet for 45 minutes.", zh: "给他们一个打蛋器和一个任务。是的，厨房会被毁。但他们会安静45分钟。" }
+    details:
+      en: |
+        - The rule: pick ONE recipe, prep all ingredients in advance (mise en place)
+        - Foolproof rainy day recipes:
+          • Chocolate chip cookies (ages 3+) — measuring + mixing + eating raw dough
+          • Pizza dough from scratch (ages 5+) — punching dough is therapeutic
+          • Rice krispie treats (ages 2+) — literally impossible to mess up
+          • Banana bread (ages 4+) — mashing bananas = primal satisfaction
+        - Give each kid a job: one measures, one stirs, one decorates
+        - Put a towel on the floor under the mixing area. You'll thank yourself.
+        - The finished product is tomorrow's school snack. Efficiency.
+      zh: |
+        - 规则：选一个食谱，提前准备好所有材料
+        - 雨天万无一失食谱：
+          • 巧克力曲奇（3岁+）——量杯+搅拌+偷吃生面团
+          • 从零做披萨面团（5岁+）——捶面团很治愈
+          • 米花糖（2岁+）——真的不可能搞砸
+          • 香蕉面包（4岁+）——捣香蕉=原始满足感
+        - 给每个孩子一个任务：一个量，一个搅，一个装饰
+        - 在搅拌区下面铺条毛巾。你会感谢自己的。
+        - 成品就是明天的学校零食。效率。
+    links: []
+    category: "home"
+    priority: "medium"
+    applies_to: "all"
+    chat_prompt: { en: "What are easy baking recipes to do with kids?", zh: "有什么简单的亲子烘焙食谱？" }
+
+  - id: "movie-marathon"
+    title: { en: "Hour 5-6: The No-Guilt Movie Marathon", zh: "第5-6小时：无负罪感电影马拉松" }
+    description: { en: "It's 3pm, everyone's tired, and you've earned this. Make it an event, not just screen time.", zh: "下午3点了，所有人都累了，你值得。把它做成一个仪式，不只是屏幕时间。" }
+    details:
+      en: |
+        - The upgrade: make it a "home theater" experience
+          • Close blinds, fairy lights or flashlights for ambiance
+          • Popcorn in a real bowl (not the bag)
+          • Blanket fort optional but highly recommended
+        - Movie picks by age:
+          • 2-4: Bluey episodes marathon, Totoro
+          • 5-7: Paddington 1&2, Luca, Encanto
+          • 8-10: Spider-Verse, How to Train Your Dragon, Princess Bride
+          • 10+: Back to the Future, Indiana Jones, anything Miyazaki
+        - OR: Squire Cinemas kids' matinee — $6 tickets, get out of the house for round 2
+        - The "one more episode" trap: set a timer BEFORE you start. Non-negotiable.
+      zh: |
+        - 升级版：做成"家庭影院"体验
+          • 关百叶窗，用小灯串或手电筒营造氛围
+          • 爆米花装在真碗里（不是袋子）
+          • 毯子堡垒可选但强烈推荐
+        - 按年龄选电影：
+          • 2-4岁：Bluey系列马拉松，龙猫
+          • 5-7岁：帕丁顿1&2，夏日友晴天，魔法满屋
+          • 8-10岁：蜘蛛侠平行宇宙，驯龙高手，公主新娘
+          • 10岁+：回到未来，夺宝奇兵，宫崎骏任意
+        - 或者：Squire Cinemas儿童日场——$6门票，离开家进行第二轮
+        - "再看一集"陷阱：开始前设好计时器。不可谈判。
+    links: []
+    category: "home"
+    priority: "low"
+    applies_to: "all"
+    chat_prompt: { en: "What movies are playing at Squire Cinemas in Great Neck?", zh: "大颈Squire Cinemas在放什么电影？" }
+
+  - id: "emergency-kit"
+    title: { en: "The Rainy Day Emergency Kit (prep this now)", zh: "雨天应急包（现在就准备）" }
+    description: { en: "Stock these items BEFORE the next rainy day. Future you will be grateful.", zh: "在下一个雨天之前囤好这些东西。未来的你会感激现在的你。" }
+    details:
+      en: |
+        - The box (keep in a closet, grab when it rains):
+          • Play-Doh (new containers — dried out ones cause tantrums)
+          • Watercolor paint set + thick paper
+          • LEGO base plates + random brick bags
+          • Card games: Uno, Go Fish, Spot It (all under $8)
+          • Sticker books (Dollar Tree has surprisingly good ones)
+          • Kinetic sand + a baking sheet (contains the mess)
+        - The pantry: popcorn kernels, hot cocoa mix, cookie mix, marshmallows
+        - The digital backup: downloaded movies/shows on iPad (no WiFi excuse)
+        - Total investment: ~$40. Covers 5-6 rainy days easily.
+        - Replenish after each use. The box only works if it's stocked.
+      zh: |
+        - 盒子（放衣柜里，下雨时拿出来）：
+          • 培乐多彩泥（新的——干了的会引发崩溃）
+          • 水彩颜料套装+厚纸
+          • 乐高底板+随机积木袋
+          • 纸牌游戏：Uno、Go Fish、Spot It（都不到$8）
+          • 贴纸书（Dollar Tree有意外不错的）
+          • 动力沙+烤盘（控制混乱范围）
+        - 食品柜：爆米花粒、热可可粉、饼干粉、棉花糖
+        - 数字备份：iPad上下载好的电影/节目（没有WiFi借口）
+        - 总投资：约$40。轻松覆盖5-6个雨天。
+        - 每次用完后补充。盒子只有在有货的时候才管用。
+    links: []
+    category: "prep"
+    priority: "high"
+    applies_to: "all"
+    chat_prompt: { en: "Where's the nearest Dollar Tree or craft store to Great Neck?", zh: "离大颈最近的Dollar Tree或手工店在哪？" }

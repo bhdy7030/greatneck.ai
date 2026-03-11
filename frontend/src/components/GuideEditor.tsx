@@ -3,19 +3,8 @@
 import { useState, useCallback } from "react";
 import { useLanguage } from "@/components/LanguageProvider";
 import type { RawGuideData, RawGuideStep, BilingualText } from "@/lib/api";
-
-const ICONS: Record<string, string> = {
-  home: "\u{1F3E0}",
-  snowflake: "\u{2744}\u{FE0F}",
-  flower: "\u{1F338}",
-  sun: "\u{2600}\u{FE0F}",
-  leaf: "\u{1F342}",
-  star: "\u{2B50}",
-  briefcase: "\u{1F4BC}",
-  heart: "\u{2764}\u{FE0F}",
-  book: "\u{1F4D6}",
-  tools: "\u{1F6E0}\u{FE0F}",
-};
+import { ICON_KEYS } from "@/lib/playbook-icons";
+import OpenMojiIcon from "./OpenMojiIcon";
 
 const COLOR_PRESETS = [
   "#4A90D9", "#D94A4A", "#4AD97A", "#D9A84A",
@@ -123,17 +112,17 @@ export default function GuideEditor({ guide, onChange }: GuideEditorProps) {
       <div>
         <label className="block text-xs font-medium text-text-500 mb-2">Icon</label>
         <div className="flex flex-wrap gap-2">
-          {Object.entries(ICONS).map(([key, emoji]) => (
+          {ICON_KEYS.map((key) => (
             <button
               key={key}
               onClick={() => update({ icon: key })}
-              className={`w-10 h-10 rounded-xl flex items-center justify-center text-xl transition-all ${
+              className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${
                 guide.icon === key
                   ? "bg-sage/20 ring-2 ring-sage scale-110"
                   : "bg-surface-100 hover:bg-surface-200"
               }`}
             >
-              {emoji}
+              <OpenMojiIcon icon={key} size={28} />
             </button>
           ))}
         </div>

@@ -9,7 +9,7 @@ from zoneinfo import ZoneInfo
 _ET = ZoneInfo("America/New_York")
 from typing import Any, Callable, Awaitable, Optional
 
-from llm.provider import llm_call_with_tools
+from llm.provider import llm_call_with_tools, llm_call_streaming
 from tools.registry import Tool, execute_tool
 
 # Callback type for streaming pipeline events
@@ -93,6 +93,83 @@ class BaseAgent:
 
         # Hit max iterations — return whatever we have
         return AgentResponse(content="I need more information to answer this fully.", tool_calls_made=calls_made)
+
+    async def run_streaming(
+        self,
+        query: str,
+        context: dict[str, Any] | None = None,
+        search_plan: str | None = None,
+        critic_feedback: str | None = None,
+        model_role_override: str | None = None,
+        on_event: EventCallback = None,
+    ):
+        """Like run(), but streams final answer tokens via SSE.
+
+        Tool-call iterations use non-streaming. After all tool calls complete,
+        the final answer is generated with true token-level streaming.
+
+        Yields tuples:
+          ("tool_event", event_dict)   — during tool loop
+          ("token", text_chunk)        — streaming final answer
+          ("done", full_content, calls_made) — when complete
+        """
+        messages = self._build_messages(query, context, search_plan=search_plan, critic_feedback=critic_feedback)
+        tool_schemas = [t.to_openai_tool() for t in self.tools]
+        calls_made: list[dict] = []
+        effective_role = model_role_override or self.model_role
+
+        for iteration in range(self.max_iterations):
+            response = await llm_call_with_tools(
+                messages=messages,
+                tools=tool_schemas,
+                role=effective_role,
+            )
+
+            # No tool calls = final answer
+            if not response.tool_calls:
+                # Stream the final answer with true token-level streaming.
+                # This makes a second LLM call but gives real-time token output
+                # which is the biggest perceived speed win for users.
+                full_content = ""
+                async for chunk in llm_call_streaming(
+                    messages=messages,
+                    role=effective_role,
+                ):
+                    full_content += chunk
+                    yield ("token", chunk)
+
+                yield ("done", full_content, calls_made)
+                return
+
+            # Process tool calls (same as run())
+            messages.append(response.model_dump())
+            for tc in response.tool_calls:
+                fn_name = tc.function.name
+                args = json.loads(tc.function.arguments)
+
+                if on_event:
+                    await on_event({"type": "tool_call", "tool": fn_name, "args": args})
+
+                result = await execute_tool(fn_name, args)
+                calls_made.append({"tool": fn_name, "args": args, "result_preview": result[:2000]})
+
+                if on_event:
+                    is_empty = "no relevant" in result.lower()[:100] or "not found" in result.lower()[:100]
+                    await on_event({
+                        "type": "tool_result",
+                        "tool": fn_name,
+                        "preview": result[:200],
+                        "has_results": not is_empty,
+                    })
+
+                messages.append({
+                    "role": "tool",
+                    "tool_call_id": tc.id,
+                    "content": result,
+                })
+
+        # Hit max iterations
+        yield ("done", "I need more information to answer this fully.", calls_made)
 
     def _build_messages(
         self,

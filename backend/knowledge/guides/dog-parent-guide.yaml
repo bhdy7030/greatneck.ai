@@ -1,0 +1,178 @@
+id: "dog-parent-guide"
+type: "onboarding"
+title:
+  en: "The Great Neck Dog Parent's Playbook"
+  zh: "大颈狗爸妈实用手册"
+description:
+  en: "You got the dog. Now you need the vet, the walks, the groomer, and the secret off-leash spots. Welcome to the pack."
+  zh: "你有狗了。现在你需要兽医、散步路线、美容师和秘密的自由奔跑地点。欢迎加入。"
+icon: "heart"
+color: "#795548"
+active: true
+
+steps:
+  - id: "vet-setup"
+    title: { en: "Find Your Vet (before you need one urgently)", zh: "找到你的兽医（在紧急需要之前）" }
+    description: { en: "Waiting until your dog eats a sock to find a vet is not a strategy. Set this up now.", zh: "等到你的狗吃了袜子再找兽医不是策略。现在就设置好。" }
+    details:
+      en: |
+        - Schedule a "new patient" visit at a local vet within the first week
+        - What to bring: vaccination records, any meds, previous vet records if transferring
+        - Ask about: emergency hours, after-hours protocol, cost of basic checkup
+        - Emergency vet (for after hours): know the nearest 24-hour animal hospital location
+        - Vet visit tip: morning appointments = shorter wait, calmer waiting room
+        - Budget: annual checkup + vaccines = $200-400. Budget for it.
+        - Get pet insurance in the first 30 days if it's a puppy. Pre-existing conditions aren't covered later.
+      zh: |
+        - 第一周内在本地兽医那里预约"新患者"就诊
+        - 带什么：疫苗记录、任何药物、转院时的既往病历
+        - 要问的：急诊时间、非工作时间的协议、基本检查费用
+        - 急诊兽医（非工作时间）：知道最近的24小时动物医院位置
+        - 就诊提示：早上预约=等待时间短、候诊室更安静
+        - 预算：年度检查+疫苗=$200-400。提前规划
+        - 如果是小狗，前30天内购买宠物保险。之后既往症不承保。
+    links: []
+    category: "essentials"
+    priority: "high"
+    applies_to: "all"
+    chat_prompt: { en: "What are the best vets near Great Neck?", zh: "大颈附近最好的兽医有哪些？" }
+
+  - id: "walk-routes"
+    title: { en: "The Walk Route Tier List", zh: "散步路线排行榜" }
+    description: { en: "Not every sidewalk is created equal when you're holding a leash and a poop bag.", zh: "当你一手牵绳一手拿便便袋时，并不是每条人行道都一样。" }
+    details:
+      en: |
+        - Tier 1 — The Quick Loop (15 min):
+          • Your block + one block over. Morning and late-night standard.
+        - Tier 2 — The Park Circuit (30 min):
+          • Steppingstone Park path: waterfront, great scenery, other dogs to meet
+          • Kings Point Park area: quieter, shady, less traffic
+        - Tier 3 — The Adventure Walk (45-60 min):
+          • Udall's Cove: nature trails, creek access, sniff heaven for dogs
+          • Bar Beach to Steppingstone path: the full coastal loop
+        - Sidewalk tips:
+          • Middle Neck Road: too busy, too narrow. Avoid during rush hour.
+          • Side streets off Arrandale: wide, quiet, great for leash training
+        - Weather gear: dog booties in winter salt season (paws crack), reflective collar/leash for evening walks
+      zh: |
+        - 第1级——快速环线（15分钟）：
+          • 你的街区+隔壁街区。早晨和深夜标准。
+        - 第2级——公园环线（30分钟）：
+          • Steppingstone公园步道：水景、好风景、可以遇到其他狗
+          • Kings Point公园区域：更安静、有树荫、交通更少
+        - 第3级——冒险散步（45-60分钟）：
+          • Udall's Cove：自然小径、小溪、狗的嗅觉天堂
+          • Bar Beach到Steppingstone路线：完整海岸环线
+        - 人行道提示：
+          • Middle Neck路：太忙、太窄。高峰期避免。
+          • Arrandale附近的小路：宽敞、安静、适合牵引训练
+        - 天气装备：冬天撒盐季节的狗鞋（爪垫会裂）、晚间散步的反光项圈/牵引绳
+    links: []
+    category: "walks"
+    priority: "high"
+    applies_to: "all"
+    chat_prompt: { en: "What are the best dog walking routes in Great Neck?", zh: "大颈最好的遛狗路线有哪些？" }
+
+  - id: "grooming"
+    title: { en: "Grooming & Supplies on Lock", zh: "美容和用品搞定" }
+    description: { en: "A groomed dog is a happy dog (and a less smelly couch). Set up a grooming schedule.", zh: "打理好的狗是快乐的狗（沙发也不那么臭）。制定美容计划。" }
+    details:
+      en: |
+        - Grooming frequency by coat type:
+          • Short coat (lab, beagle): every 6-8 weeks
+          • Long/curly (poodle, doodle): every 4-6 weeks
+          • Double coat (husky, golden): seasonal — more in spring/fall shed season
+        - DIY between visits: brush 2-3x/week, nail clip monthly, ear check weekly
+        - Supplies to keep stocked:
+          • Poop bags (bulk buy on Amazon — never run out)
+          • Treats for training (small, soft, smelly = most effective)
+          • A good brush for your coat type (slicker brush for long coats, bristle for short)
+          • Enzymatic cleaner (for the inevitable accident — Nature's Miracle works)
+        - Pet stores nearby for emergency supply runs: check local shops and major chains
+      zh: |
+        - 按毛发类型的美容频率：
+          • 短毛（拉布拉多、比格）：每6-8周
+          • 长/卷毛（贵宾、泰迪）：每4-6周
+          • 双层毛（哈士奇、金毛）：季节性——春秋换毛季更频繁
+        - 两次美容之间DIY：每周梳2-3次、每月剪指甲、每周检查耳朵
+        - 常备物品：
+          • 便便袋（Amazon批量买——永远不要用完）
+          • 训练零食（小、软、味道大=最有效）
+          • 适合你毛发类型的好刷子（长毛用针梳、短毛用鬃毛刷）
+          • 酶清洁剂（用于不可避免的事故——Nature's Miracle有用）
+        - 附近的宠物店供紧急采购：查看本地店铺和大型连锁
+    links: []
+    category: "care"
+    priority: "medium"
+    applies_to: "all"
+    chat_prompt: { en: "Where are the best dog groomers near Great Neck?", zh: "大颈附近最好的狗美容师在哪？" }
+
+  - id: "dog-social"
+    title: { en: "The Dog Social Scene", zh: "狗的社交圈" }
+    description: { en: "Your dog needs friends. You'll accidentally make friends too. That's the deal.", zh: "你的狗需要朋友。你也会意外交到朋友。这就是交易。" }
+    details:
+      en: |
+        - Dog parks and off-leash spots:
+          • Check local parks for designated off-leash hours (usually early morning)
+          • Unofficial off-leash culture: early morning before 8am at most parks, dogs run free by mutual agreement
+        - The "dog park regulars" — these people become your friends:
+          • 6:30am crew: retirees and WFH parents. The most chill humans.
+          • 5:30pm crew: post-work crowd. More social, sometimes wine is involved.
+        - Dog park etiquette:
+          • Always ask before approaching another dog
+          • Pick up after yours (ALWAYS — the community will judge you)
+          • If your dog is reactive, use a yellow leash/bandana (universal signal)
+          • Small dogs and big dogs sometimes need separate play time
+        - Daycare: useful if you work long hours. Socialization + tired dog = quiet evening.
+      zh: |
+        - 狗公园和放绳地点：
+          • 查看本地公园指定的放绳时间（通常是清晨）
+          • 非官方放绳文化：大多数公园早上8点前，狗狗们在默契中自由奔跑
+        - "狗公园常客"——这些人会成为你的朋友：
+          • 6:30am团队：退休人士和居家办公的家长。最轻松的人类。
+          • 5:30pm团队：下班人群。更社交，有时会有酒。
+        - 狗公园礼仪：
+          • 接近别的狗之前一定要问
+          • 清理你的狗（永远——社区会评判你）
+          • 如果你的狗有攻击性，用黄色牵引绳/围巾（通用信号）
+          • 小狗和大狗有时需要分开玩
+        - 日托：如果你工作时间长很有用。社交+累了的狗=安静的晚上。
+    links: []
+    category: "social"
+    priority: "medium"
+    applies_to: "all"
+    chat_prompt: { en: "Are there any dog parks or off-leash areas in Great Neck?", zh: "大颈有狗公园或放绳区域吗？" }
+
+  - id: "dog-rules"
+    title: { en: "Local Rules You Need to Know", zh: "你需要知道的本地规定" }
+    description: { en: "Leash laws, license requirements, and the neighbor situation. Don't learn these the hard way.", zh: "牵绳法规、登记要求和邻居情况。别用困难方式学这些。" }
+    details:
+      en: |
+        - Nassau County leash law: dogs must be leashed in all public spaces (yes, really)
+        - Dog license: required by Nassau County. Register through Town of North Hempstead.
+          • Proof of rabies vaccination needed
+          • Spayed/neutered = cheaper license fee
+          • Renew annually — they do send reminders
+        - Noise: barking complaints are real. If your dog barks excessively, neighbors can report it.
+          • Training tip: "quiet" command + treat reward. Consistency over weeks.
+          • Consider a bark collar as last resort (vibration, not shock)
+        - Waste: pick it up. Every time. Fines exist but social pressure is the real enforcement.
+        - Apartment/condo: check your lease/HOA rules. Some have breed or weight restrictions.
+      zh: |
+        - 拿骚县牵绳法：所有公共场所狗必须牵绳（是的，真的）
+        - 狗证：拿骚县要求。通过北亨普斯特德镇注册。
+          • 需要狂犬疫苗证明
+          • 绝育=更便宜的证件费
+          • 每年续期——他们会发提醒
+        - 噪音：叫声投诉是真实的。如果你的狗过度吠叫，邻居可以举报。
+          • 训练提示："安静"口令+零食奖励。持续几周。
+          • 考虑止吠项圈作为最后手段（震动型，不是电击型）
+        - 便便：捡起来。每次。罚款存在但社会压力才是真正的执行力。
+        - 公寓/共管：查看你的租约/物业规定。有些有品种或体重限制。
+    links:
+      - label: { en: "Nassau County Dog License", zh: "拿骚县狗证" }
+        url: "https://www.nassaucountyny.gov"
+    category: "rules"
+    priority: "high"
+    applies_to: "all"
+    chat_prompt: { en: "What are the dog leash laws and license requirements in Great Neck?", zh: "大颈的狗牵绳法规和登记要求是什么？" }

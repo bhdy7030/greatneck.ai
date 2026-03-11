@@ -1,7 +1,7 @@
 "use client";
 
 import { Suspense, useState, useEffect, useCallback, useRef } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useLanguage } from "@/components/LanguageProvider";
 import {
   getGuides,
@@ -18,7 +18,8 @@ import {
 import GuideChecklist from "@/components/GuideChecklist";
 import GuideEditor from "@/components/GuideEditor";
 import ExploreCard from "@/components/ExploreCard";
-import PlaybookPeekSheet from "@/components/PlaybookPeekSheet";
+import StepReels from "@/components/StepReels";
+import StepInlineChat from "@/components/StepInlineChat";
 
 export default function GuidesPage() {
   return (
@@ -30,13 +31,18 @@ export default function GuidesPage() {
 
 function GuidesPageInner() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { language, t } = useLanguage();
-  const [tab, setTab] = useState<"wallet" | "browse">("browse");
+  const [tab, setTab] = useState<"wallet" | "browse">(() =>
+    searchParams.get("tab") === "wallet" ? "wallet" : "browse"
+  );
   const [walletGuides, setWalletGuides] = useState<Guide[]>([]);
   const [allGuides, setAllGuides] = useState<Guide[]>([]);
   const [expandedGuide, setExpandedGuide] = useState<Guide | null>(null);
   const [returnStepId, setReturnStepId] = useState<string | null>(null);
   const [peekGuide, setPeekGuide] = useState<Guide | null>(null);
+  const [previewIdx, setPreviewIdx] = useState(0);
+  const [previewChatIdx, setPreviewChatIdx] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [editingGuide, setEditingGuide] = useState<RawGuideData | null>(null);
   const [editingGuideId, setEditingGuideId] = useState<string | null>(null);
@@ -189,84 +195,223 @@ function GuidesPageInner() {
     const isOwnGuide = expandedGuide.id.startsWith("ug-");
 
     return (
-      <div className="flex-1 overflow-y-auto">
-        <div className="max-w-2xl mx-auto px-4 py-4">
-          {/* Back button */}
-          <button
-            onClick={() => {
-              if (editingGuide) { handleEditDone(); return; }
-              setExpandedGuide(null); setReturnStepId(null); fetchData();
-            }}
-            className="flex items-center gap-1 text-xs text-text-500 hover:text-sage mb-3 transition-colors"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-            {editingGuide ? t("guides.edit.done") : t("guides.backToWallet")}
-          </button>
+      <div className="fixed inset-0 z-50 bg-surface-100 flex flex-col animate-fullscreenSlideUp">
+        {/* Compact top bar: back + title + actions */}
+        <div
+          className="shrink-0 px-3 py-2 border-b border-surface-200 bg-surface-100/95 backdrop-blur-sm"
+          style={{ borderBottomColor: expandedGuide.color + "40" }}
+        >
+          <div className="flex items-center gap-2 max-w-2xl mx-auto">
+            {/* Color accent + title */}
+            <div className="flex-1 min-w-0 flex items-center gap-2">
+              <div className="w-1 h-5 rounded-full shrink-0" style={{ backgroundColor: expandedGuide.color }} />
+              <h1 className="text-sm font-bold text-text-900 truncate">{expandedGuide.title}</h1>
+            </div>
 
-          {/* Guide header */}
-          <div className="mb-4">
-            <div
-              className="h-1.5 rounded-full mb-3"
-              style={{ backgroundColor: expandedGuide.color }}
-            />
-            <div className="flex items-start justify-between">
-              <div className="flex-1">
-                <h1 className="text-lg font-bold text-text-900 mb-1">
-                  {expandedGuide.title}
-                </h1>
-                <p className="text-xs text-text-500">{expandedGuide.description}</p>
-              </div>
-              {isOwnGuide && !editingGuide && (
+            {/* Actions */}
+            {isOwnGuide && !editingGuide && (
+              <button
+                onClick={() => handleEditStart(expandedGuide.id)}
+                className="shrink-0 px-2.5 py-1 text-[11px] font-medium text-sage border border-sage/30 rounded-lg hover:bg-sage/5 transition-colors"
+              >
+                {t("guides.edit")}
+              </button>
+            )}
+            {editingGuide && editSaved && (
+              <span className="shrink-0 text-[11px] text-green-600 flex items-center gap-1">
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                {t("guides.edit.saved")}
+              </span>
+            )}
+
+            {/* Close button */}
+            <button
+              onClick={() => {
+                if (editingGuide) { handleEditDone(); return; }
+                setExpandedGuide(null); setReturnStepId(null); fetchData();
+              }}
+              className="shrink-0 w-8 h-8 flex items-center justify-center rounded-full bg-surface-200 hover:bg-surface-300 active:bg-surface-400 transition-colors"
+              aria-label="Close"
+            >
+              <svg className="w-4 h-4 text-text-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        {/* Scrollable content */}
+        <div className="flex-1 overflow-y-auto">
+          <div className="max-w-2xl mx-auto px-4 pt-3 pb-4">
+            {/* Guide description */}
+            <p className="text-xs text-text-500 mb-3">{expandedGuide.description}</p>
+
+            {/* Edit mode or Checklist */}
+            {editingGuide ? (
+              <GuideEditor guide={editingGuide} onChange={handleEditChange} />
+            ) : (
+              <GuideChecklist
+                guideId={expandedGuide.id}
+                guideTitle={expandedGuide.title}
+                steps={expandedGuide.steps}
+                color={expandedGuide.color}
+                initialStepId={returnStepId}
+              />
+            )}
+
+            {/* Bottom actions */}
+            <div className="mt-6 pt-4 border-t border-surface-300 flex items-center gap-4 pb-8">
+              {!isOwnGuide && (
                 <button
-                  onClick={() => handleEditStart(expandedGuide.id)}
-                  className="ml-3 px-3 py-1.5 text-xs font-medium text-sage border border-sage/30 rounded-lg hover:bg-sage/5 transition-colors min-h-[44px]"
+                  onClick={() => { handleUnsave(expandedGuide.id); setExpandedGuide(null); }}
+                  className="text-xs text-text-500 hover:text-red-500 transition-colors min-h-[44px] flex items-center"
                 >
-                  {t("guides.edit")}
+                  {t("guides.removeFromWallet")}
                 </button>
               )}
-              {editingGuide && editSaved && (
-                <span className="ml-3 text-xs text-green-600 flex items-center gap-1 min-h-[44px]">
-                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                  {t("guides.edit.saved")}
-                </span>
+              {isOwnGuide && (
+                <button
+                  onClick={() => handleDelete(expandedGuide.id)}
+                  className="text-xs text-red-500 hover:text-red-700 transition-colors min-h-[44px] flex items-center"
+                >
+                  {t("guides.delete")}
+                </button>
               )}
             </div>
           </div>
+        </div>
+      </div>
+    );
+  }
 
-          {/* Edit mode or Checklist */}
-          {editingGuide ? (
-            <GuideEditor guide={editingGuide} onChange={handleEditChange} />
-          ) : (
-            <GuideChecklist
-              guideId={expandedGuide.id}
-              steps={expandedGuide.steps}
-              color={expandedGuide.color}
-              initialStepId={returnStepId}
+  // Preview view — read-only fullscreen for explore playbooks
+  if (peekGuide) {
+    const step = peekGuide.steps[previewIdx];
+
+    return (
+      <div className="fixed inset-0 z-50 bg-surface-100 flex flex-col animate-fullscreenSlideUp">
+        {/* Compact top bar: back + title */}
+        <div
+          className="shrink-0 px-3 py-2 border-b border-surface-200 bg-surface-100/95 backdrop-blur-sm"
+          style={{ borderBottomColor: peekGuide.color + "40" }}
+        >
+          <div className="flex items-center gap-2 max-w-2xl mx-auto">
+            <div className="flex-1 min-w-0 flex items-center gap-2">
+              <div className="w-1 h-5 rounded-full shrink-0" style={{ backgroundColor: peekGuide.color }} />
+              <h1 className="text-sm font-bold text-text-900 truncate">{peekGuide.title}</h1>
+            </div>
+            <button
+              onClick={() => { setPeekGuide(null); setPreviewIdx(0); setPreviewChatIdx(null); }}
+              className="shrink-0 w-8 h-8 flex items-center justify-center rounded-full bg-surface-200 hover:bg-surface-300 active:bg-surface-400 transition-colors"
+              aria-label="Close"
+            >
+              <svg className="w-4 h-4 text-text-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        {/* Scrollable content */}
+        <div className="flex-1 overflow-y-auto">
+          <div className="max-w-2xl mx-auto px-4 pt-3 pb-4">
+            {/* Guide description */}
+            <p className="text-xs text-text-500 mb-3">{peekGuide.description}</p>
+
+            {/* Read-only step reels */}
+            <StepReels
+              steps={peekGuide.steps}
+              activeIdx={previewIdx}
+              color={peekGuide.color}
+              mode="fit"
+              onNav={setPreviewIdx}
+              renderContent={(i) => {
+                const s = peekGuide.steps[i];
+                return (
+                  <div className="space-y-2.5">
+                    {/* Description + Details */}
+                    <div className="bg-surface-100/60 rounded-xl px-3.5 py-3 border border-surface-200">
+                      <p className="text-xs text-text-700 leading-relaxed">{s.description}</p>
+                      {s.details && (
+                        <div className="text-text-600 whitespace-pre-line text-[11px] mt-2 leading-relaxed">
+                          {s.details}
+                        </div>
+                      )}
+                      {s.links.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5 mt-2.5 pt-2.5 border-t border-surface-200">
+                          {s.links.map((link, j) => (
+                            <a
+                              key={j}
+                              href={link.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 text-[10px] text-sage hover:text-sage-dark bg-sage/10 px-2 py-1 rounded-full"
+                            >
+                              <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                              </svg>
+                              {link.label}
+                            </a>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Inline chat */}
+                    {previewChatIdx === i && s.chat_prompt && (
+                      <div className="bg-surface-100/60 rounded-xl px-3.5 py-3 border border-surface-200">
+                        <StepInlineChat
+                          chatPrompt={s.chat_prompt}
+                          stepTitle={s.title}
+                          guideTitle={peekGuide.title}
+                          stepDescription={s.description}
+                          stepDetails={s.details}
+                          guideId={peekGuide.id}
+                          stepId={s.id}
+                          onContinueInChat={() => {
+                            localStorage.setItem("gn_draft", s.chat_prompt);
+                            router.push("/chat/");
+                          }}
+                        />
+                      </div>
+                    )}
+
+                    {/* Chat with AI button */}
+                    {s.chat_prompt && (
+                      <button
+                        onClick={() => setPreviewChatIdx(previewChatIdx === i ? null : i)}
+                        className="w-full min-h-[44px] text-[12px] font-medium rounded-xl bg-surface-100/60 border border-surface-200 text-text-600 hover:bg-surface-200 flex items-center justify-center gap-2 transition-colors"
+                      >
+                        <span>✨</span>
+                        Chat with AI about this
+                      </button>
+                    )}
+                  </div>
+                );
+              }}
             />
-          )}
 
-          {/* Bottom actions */}
-          <div className="mt-6 pt-4 border-t border-surface-300 flex items-center gap-4">
-            {!isOwnGuide && (
+            {/* Save CTA */}
+            <div className="mt-6 bg-surface-50 rounded-2xl border border-surface-300 px-4 py-5 text-center space-y-3">
+              <p className="text-[13px] text-text-700 leading-relaxed">
+                Like what you see? <strong>Grab your own copy</strong> — check off steps, add notes, skip what doesn&apos;t apply. Your playbook, your rules.
+              </p>
               <button
-                onClick={() => { handleUnsave(expandedGuide.id); setExpandedGuide(null); }}
-                className="text-xs text-text-500 hover:text-red-500 transition-colors min-h-[44px] flex items-center"
+                onClick={() => {
+                  handleFork(peekGuide.id);
+                  setPeekGuide(null);
+                  setPreviewIdx(0);
+                  setPreviewChatIdx(null);
+                }}
+                className="w-full py-3 min-h-[44px] rounded-xl font-semibold text-sm bg-sage text-white hover:bg-sage-dark active:scale-[0.98] transition-colors"
               >
-                {t("guides.removeFromWallet")}
+                Save to My Playbooks
               </button>
-            )}
-            {isOwnGuide && (
-              <button
-                onClick={() => handleDelete(expandedGuide.id)}
-                className="text-xs text-red-500 hover:text-red-700 transition-colors min-h-[44px] flex items-center"
-              >
-                {t("guides.delete")}
-              </button>
-            )}
+            </div>
+
+            <div className="h-8" />
           </div>
         </div>
       </div>
@@ -384,15 +529,6 @@ function GuidesPageInner() {
         </div>
       </div>
 
-      {/* Peek sheet */}
-      {peekGuide && (
-        <PlaybookPeekSheet
-          guide={peekGuide}
-          onClose={() => setPeekGuide(null)}
-          onSave={handleSave}
-          onFork={handleFork}
-        />
-      )}
     </div>
   );
 }

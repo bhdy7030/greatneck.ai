@@ -367,16 +367,16 @@ body {
 }
 
 /* ── Reel slide transitions ── */
-@keyframes reelSlideUp {
-  from { transform: translateY(40px); opacity: 0; }
-  to   { transform: translateY(0); opacity: 1; }
+@keyframes reelSlideLeft {
+  from { transform: translateX(40px); opacity: 0; }
+  to   { transform: translateX(0); opacity: 1; }
 }
-@keyframes reelSlideDown {
-  from { transform: translateY(-40px); opacity: 0; }
-  to   { transform: translateY(0); opacity: 1; }
+@keyframes reelSlideRight {
+  from { transform: translateX(-40px); opacity: 0; }
+  to   { transform: translateX(0); opacity: 1; }
 }
-.animate-reelSlideUp { animation: reelSlideUp 0.3s ease-out both; }
-.animate-reelSlideDown { animation: reelSlideDown 0.3s ease-out both; }
+.animate-reelSlideLeft { animation: reelSlideLeft 0.3s ease-out both; }
+.animate-reelSlideRight { animation: reelSlideRight 0.3s ease-out both; }
 
 @keyframes expandContentIn {
   from { opacity: 0; transform: translateY(8px); }
@@ -387,13 +387,25 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .animate-reelSlideUp,
-  .animate-reelSlideDown,
+  .animate-reelSlideLeft,
+  .animate-reelSlideRight,
   .animate-expandContentIn {
     animation: none;
     opacity: 1;
     transform: none;
   }
+}
+
+/* ── Fullscreen playbook open ── */
+@keyframes fullscreenSlideUp {
+  from { opacity: 0; transform: translateY(40px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+.animate-fullscreenSlideUp {
+  animation: fullscreenSlideUp 0.3s cubic-bezier(0.2, 0.9, 0.3, 1) both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .animate-fullscreenSlideUp { animation: none; opacity: 1; transform: none; }
 }
 
 /* Auto-growing textarea reset */

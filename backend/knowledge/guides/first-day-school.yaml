@@ -1,0 +1,188 @@
+id: "first-day-school"
+type: "seasonal"
+title:
+  en: "First Day of School Survival Kit"
+  zh: "开学第一天生存包"
+description:
+  en: "New backpack, new teacher anxiety, and a drop-off line that stretches to Flushing. Here's how to crush it — for kids AND parents."
+  zh: "新书包、对新老师的焦虑、一直排到法拉盛的送行队伍。以下是攻略——给孩子和家长的。"
+icon: "book"
+color: "#FF6F00"
+active: true
+
+season:
+  months: [8, 9]
+  label: { en: "Back to School", zh: "返校季" }
+
+steps:
+  - id: "supply-run"
+    title: { en: "The Supply Run (do it early, skip the panic)", zh: "采购（早点去，跳过恐慌）" }
+    description: { en: "Supply lists drop in August. By the third week, Target shelves look like a hurricane hit. Don't be that parent.", zh: "物品清单8月出。到第三周，Target货架像被飓风扫过。别做那个家长。" }
+    details:
+      en: |
+        - Check school website early August for supply lists — they're usually posted by grade
+        - Do the bulk run at Target, Staples, or Costco in the FIRST week of August
+        - Essentials every list has: #2 pencils, folders (specific colors!), glue sticks, scissors, tissues, Clorox wipes
+        - Label EVERYTHING with your kid's name. A Sharpie works. Fancy labels optional.
+        - Backpack sizing: kindergartners don't need the 50L camping pack. Keep it manageable.
+        - The shoe trap: buy school shoes in August, NOT July. Feet grow. Trust.
+        - Budget tip: Dollar Tree has surprisingly decent supplies for everything except the backpack
+      zh: |
+        - 8月初查学校网站的物品清单——通常按年级发布
+        - 8月第一周在Target、Staples或Costco大采购
+        - 每个清单都有的必需品：2号铅笔、文件夹（指定颜色！）、胶棒、剪刀、纸巾、消毒湿巾
+        - 所有东西都写上孩子名字。Sharpie就行。花式标签可选。
+        - 书包尺寸：幼儿园生不需要50升登山包。保持合理。
+        - 鞋子陷阱：8月买学鞋，不是7月。脚会长。相信我。
+        - 省钱提示：Dollar Tree的学习用品出乎意料地不错，除了书包
+    links: []
+    category: "prep"
+    priority: "high"
+    applies_to: "all"
+    chat_prompt: { en: "Where can I find school supply lists for Great Neck schools?", zh: "在哪里找大颈学校的物品清单？" }
+
+  - id: "morning-routine"
+    title: { en: "The Morning Routine (practice it BEFORE day 1)", zh: "早晨程序（第一天前练习）" }
+    description: { en: "The first morning of school is not the time to figure out your system. Do a dry run.", zh: "开学第一天早上不是摸索系统的时候。先做模拟演练。" }
+    details:
+      en: |
+        - One week before school: start the school wake-up time. Shift by 15 min/day.
+        - The night-before prep (do this every school night):
+          • Clothes laid out (let kids pick the night before to avoid morning battles)
+          • Backpack packed and by the door
+          • Lunch containers clean and ready
+        - Morning timeline (adjust for your school start):
+          • 6:30: Wake up, get dressed
+          • 6:50: Breakfast (keep it simple — cereal, toast, fruit)
+          • 7:10: Teeth, hair, shoes
+          • 7:20: Grab backpack, out the door
+          • 7:25: In the car / walking
+        - The #1 time killer: looking for shoes. Designate a "shoe spot" by the door. Non-negotiable.
+        - Do one full rehearsal the weekend before. Time it. Adjust.
+      zh: |
+        - 开学前一周：开始学校起床时间。每天提前15分钟。
+        - 前一晚准备（每个上学晚上都做）：
+          • 衣服摆好（让孩子前一晚选，避免早上的战争）
+          • 书包装好放门口
+          • 午餐盒清洗好准备好
+        - 早晨时间线（根据你的学校时间调整）：
+          • 6:30：起床、穿衣
+          • 6:50：早餐（简单——麦片、吐司、水果）
+          • 7:10：刷牙、梳头、穿鞋
+          • 7:20：拿书包、出门
+          • 7:25：上车/走路
+        - 第一大时间杀手：找鞋子。门口指定一个"鞋子位"。不可谈判。
+        - 前一个周末做一次完整预演。计时。调整。
+    links: []
+    category: "routine"
+    priority: "high"
+    applies_to: "all"
+    chat_prompt: { en: "What time does school start in Great Neck?", zh: "大颈学校几点开始上课？" }
+
+  - id: "drop-off"
+    title: { en: "Drop-Off Decoded (the line, the tears, the wave)", zh: "送行解密（队伍、眼泪、挥手）" }
+    description: { en: "The drop-off line has unwritten rules. Break them and you'll get The Look from other parents.", zh: "送行队伍有不成文的规则。违反了你会得到其他家长的死亡凝视。" }
+    details:
+      en: |
+        - Car line rules:
+          • Pull ALL the way forward before stopping
+          • Kid should be ready to exit: backpack on, unbuckled, on the curb side
+          • Do NOT get out of the car. Wave from the window. Be brave.
+          • The line moves. KEEP MOVING. No 5-minute goodbyes blocking traffic.
+        - Walking drop-off:
+          • Walk them to the door (kindergarten), gate (1st-2nd), or general area (3rd+)
+          • The goodbye: quick hug, "have a great day," WALK AWAY
+          • Do not linger. Lingering makes it harder for BOTH of you.
+        - If they cry:
+          • Normal. Expected. The teacher handles it. They're fine 5 minutes later.
+          • YOUR job: don't cry in front of them. Save it for the car.
+          • Transition object: a small family photo in the backpack, a heart drawn on their hand
+        - Pro tip: drive a different route home. The silence hits different.
+      zh: |
+        - 车队规则：
+          • 停车前一直往前开到尽头
+          • 孩子应该准备好下车：书包背好、安全带解开、在路边一侧
+          • 不要下车。从窗户挥手。勇敢点。
+          • 队伍在动。保持移动。不要5分钟的告别堵住交通。
+        - 步行送行：
+          • 送到门口（幼儿园）、大门（1-2年级）、或大致区域（3年级+）
+          • 告别：快速拥抱、"祝你有美好的一天"、转身走
+          • 不要逗留。逗留对你们双方都更难。
+        - 如果他们哭了：
+          • 正常。预料之中。老师会处理。5分钟后他们就没事了。
+          • 你的任务：不要在他们面前哭。留到车里。
+          • 过渡物品：书包里放张全家照、手上画个爱心
+        - 小窍门：走不同的路线回家。那个安静的感觉很不一样。
+    links: []
+    category: "logistics"
+    priority: "high"
+    applies_to: "all"
+    chat_prompt: { en: "What are the drop-off and pickup procedures at Great Neck schools?", zh: "大颈学校的接送程序是什么？" }
+
+  - id: "lunch-game"
+    title: { en: "The Lunch Packing Game Plan", zh: "午餐打包攻略" }
+    description: { en: "You will pack roughly 180 lunches this year. Systemize it or lose your mind by October.", zh: "今年你大约要打包180份午餐。系统化或者到10月就崩溃。" }
+    details:
+      en: |
+        - The formula: 1 main + 1 fruit + 1 veggie + 1 snack + water bottle. Done.
+        - Weekly meal prep Sunday night: cut veggies, portion snacks into bags, make a batch of something
+        - The rotation (5 lunches, repeat):
+          • Monday: Turkey sandwich + apple slices
+          • Tuesday: Pasta salad + grapes
+          • Wednesday: PB&J + carrots + hummus
+          • Thursday: Quesadilla + berries
+          • Friday: Leftover night (whatever's in the fridge, wrap it up)
+        - Bento box > brown bag. Compartments prevent everything from becoming a soggy mess.
+        - The ice pack is non-negotiable from May-October. Food safety.
+        - Let them help pack on Sunday. If they assembled it, they'll actually eat it.
+        - Note: check school allergy policy. Many are nut-free. SunButter is your friend.
+      zh: |
+        - 公式：1个主食+1种水果+1种蔬菜+1个零食+水壶。完毕。
+        - 每周日晚上准备：切蔬菜、零食分装、做一批什么
+        - 轮换（5份午餐，重复）：
+          • 周一：火鸡三明治+苹果片
+          • 周二：意面沙拉+葡萄
+          • 周三：花生酱果酱三明治+胡萝卜+鹰嘴豆泥
+          • 周四：墨西哥饼+莓果
+          • 周五：剩菜夜（冰箱里有什么包起来）
+        - 便当盒>棕色纸袋。分格防止所有东西变成湿乎乎的一团。
+        - 5月到10月冰袋不可谈判。食品安全。
+        - 让他们周日帮忙打包。如果是他们装的，他们真的会吃。
+        - 注意：查看学校过敏政策。很多是无坚果的。SunButter是你的朋友。
+    links: []
+    category: "daily"
+    priority: "medium"
+    applies_to: "all"
+    chat_prompt: { en: "Does my Great Neck school have a lunch program or do I pack lunch?", zh: "我的大颈学校有午餐计划还是需要自带？" }
+
+  - id: "parent-network"
+    title: { en: "Build Your Parent Network (week 1 is key)", zh: "建立你的家长网络（第一周是关键）" }
+    description: { en: "The class parent group chat will become your lifeline. Get in it immediately.", zh: "班级家长群聊会成为你的生命线。立即加入。" }
+    details:
+      en: |
+        - Day 1: introduce yourself to 2-3 parents at drop-off. That's it. Low bar.
+        - Day 2-3: exchange numbers with at least one parent in your kid's class
+        - Week 1: join or start the class group chat (WhatsApp or text)
+        - The group chat is where you'll learn:
+          • "Is there school tomorrow?" (snow days, half days, random closures)
+          • "What's the homework?" (when your kid says "we didn't have any")
+          • "Is this normal?" (yes, it always is)
+        - PTA: attend the first meeting even if you don't join. You'll meet people and learn the vibe.
+        - The class parent volunteer: befriend this person. They know everything.
+        - Don't worry about "fitting in." Everyone is equally confused in September.
+      zh: |
+        - 第一天：送行时向2-3个家长自我介绍。就这样。低门槛。
+        - 第2-3天：至少和你孩子班上的一个家长交换号码
+        - 第一周：加入或创建班级群聊（WhatsApp或短信）
+        - 群聊是你会了解到的地方：
+          • "明天有学校吗？"（雪天、半天、随机停课）
+          • "作业是什么？"（当你孩子说"我们没有作业"的时候）
+          • "这正常吗？"（是的，总是正常的）
+        - PTA：参加第一次会议，即使你不加入。你会认识人并了解氛围。
+        - 班级家长志愿者：和这个人搞好关系。他们什么都知道。
+        - 不用担心"融入"。9月份每个人都同样困惑。
+    links: []
+    category: "social"
+    priority: "medium"
+    applies_to: "all"
+    chat_prompt: { en: "How do I connect with other parents at my Great Neck school?", zh: "怎么和大颈学校的其他家长联系？" }

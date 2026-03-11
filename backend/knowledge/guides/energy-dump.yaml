@@ -1,0 +1,156 @@
+id: "energy-dump"
+type: "seasonal"
+title:
+  en: "The Saturday Morning Energy Dump Protocol"
+  zh: "周六早晨遛娃耗能计划"
+description:
+  en: "A field-tested, minute-by-minute plan to exhaust your kids by noon so you can actually enjoy the afternoon."
+  zh: "经过实战检验的分钟级计划，中午前耗尽孩子精力，让你真正享受下午时光。"
+icon: "baby"
+color: "#FF6B35"
+active: true
+
+season:
+  months: [3, 4, 5, 6, 9, 10]
+  label: { en: "Weekend Survival", zh: "周末生存指南" }
+
+steps:
+  - id: "pre-game"
+    title: { en: "7:30am — Pre-Game: Fuel & Shoes", zh: "7:30 — 准备：吃饱穿好" }
+    description: { en: "High-protein breakfast, shoes on, snack bag packed. Do NOT open the iPad.", zh: "高蛋白早餐，穿好鞋，零食包备好。千万别打开iPad。" }
+    details:
+      en: |
+        - Scrambled eggs or PB toast — carbs + protein = sustained energy
+        - Pack: water bottles, goldfish crackers, wipes, one change of clothes
+        - Layer up in spring/fall — mornings are deceptively cold near the water
+        - Pro tip: put shoes by the door the night before. Morning shoe hunts kill momentum.
+      zh: |
+        - 炒蛋或花生酱吐司 — 碳水+蛋白质=持久能量
+        - 打包：水壶、小鱼饼干、湿巾、一套换洗衣服
+        - 春秋季分层穿衣——水边的早晨比你想象的冷
+        - 小窍门：头天晚上把鞋放门口，早上找鞋会毁掉所有节奏
+    links: []
+    category: "prep"
+    priority: "high"
+    applies_to: "all"
+    chat_prompt: { en: "What should I pack for a morning out with toddlers in Great Neck?", zh: "带幼儿出门一上午该准备什么？" }
+
+  - id: "park-round-1"
+    title: { en: "8:15am — Steppingstone Park: The Big Burn", zh: "8:15 — Steppingstone公园：大消耗" }
+    description: { en: "Hit the playground before the crowds. 45 minutes of full-throttle climbing, sliding, running.", zh: "趁人少赶到游乐场。45分钟全力攀爬、滑梯、奔跑。" }
+    details:
+      en: |
+        - Steppingstone Park playground is best for ages 2-8
+        - Arrive before 9am and you'll have it nearly to yourselves
+        - The hill behind the playground is a secret weapon — make them run up it 5 times
+        - Parking lot fills up by 10am on nice Saturdays
+        - Alternative: Baker Hill playground (smaller, fenced — better for runners/bolters)
+        - Alternative: Firefighters Memorial Park for toddlers (fully fenced, rubberized surface)
+      zh: |
+        - Steppingstone公园游乐场最适合2-8岁
+        - 9点前到，基本包场
+        - 游乐场后面的小山是秘密武器——让他们跑上去5次
+        - 好天气的周六10点停车场就满了
+        - 备选：Baker Hill游乐场（较小、有围栏——适合爱跑的孩子）
+        - 备选：消防员纪念公园适合幼儿（全围栏、橡胶地面）
+    links:
+      - label: { en: "Steppingstone Park", zh: "Steppingstone公园" }
+        url: "https://www.greatneckparkdistrict.com/steppingstone-park"
+    category: "outdoor"
+    priority: "high"
+    applies_to: "all"
+    chat_prompt: { en: "What are the best playgrounds in Great Neck for toddlers?", zh: "大颈最好的幼儿游乐场有哪些？" }
+
+  - id: "bagel-stop"
+    title: { en: "9:15am — Bagel Pit Stop (You've Earned It)", zh: "9:15 — 百吉饼补给站（你值得拥有）" }
+    description: { en: "Gotta Getta Bagel on Middle Neck Road. Order ahead unless you enjoy lines.", zh: "Middle Neck路上的Gotta Getta Bagel。提前点单，除非你喜欢排队。" }
+    details:
+      en: |
+        - Gotta Getta Bagel: best bagels in Great Neck, but Saturday morning line can be 15 min
+        - Pro move: call ahead (516-466-4552) or use their app
+        - Kids love the mini bagels with plain cream cheese
+        - Alternative: Bagel Boss on Northern Blvd if you're closer to that side
+        - Get an iced coffee. You need it. You've been parenting for 2 hours already.
+      zh: |
+        - Gotta Getta Bagel：大颈最好的百吉饼，但周六早上可能排15分钟
+        - 专业操作：提前电话(516-466-4552)或用app点单
+        - 孩子们喜欢迷你百吉饼配原味奶油奶酪
+        - 备选：Northern Blvd的Bagel Boss
+        - 给自己来杯冰咖啡，你需要它——你已经带了2小时娃了
+    links:
+      - label: { en: "Gotta Getta Bagel", zh: "Gotta Getta Bagel" }
+        url: "https://www.gottagettabagel.com"
+    category: "food"
+    priority: "medium"
+    applies_to: "all"
+    chat_prompt: { en: "Where are the best bagel shops in Great Neck?", zh: "大颈最好的百吉饼店在哪？" }
+
+  - id: "active-play"
+    title: { en: "10:00am — Round 2: Structured Energy Burn", zh: "10:00 — 第二轮：有组织的消耗" }
+    description: { en: "Switch to a structured activity — gymnastics, soccer in the field, or the library's movement class.", zh: "切换到有组织的活动——体操、草地足球或图书馆运动课。" }
+    details:
+      en: |
+        - Great Neck Gymnastics Center: drop-in open gym sessions on Saturday mornings
+        - Kick a soccer ball at the Great Neck South fields — open and empty before noon
+        - If it's raining: Great Neck Library has Saturday morning storytimes + crafts (ages 2-5)
+        - The library trick: they sit still for 30 minutes. It feels like a miracle.
+        - Rainy day backup: Target in Lake Success — let them push the mini cart, counts as exercise
+      zh: |
+        - 大颈体操中心：周六早上有开放体操课
+        - 在Great Neck South球场踢足球——中午前空旷无人
+        - 下雨天：大颈图书馆周六早上有故事时间+手工（2-5岁）
+        - 图书馆诀窍：他们会安静坐30分钟，感觉像奇迹
+        - 雨天备选：Lake Success的Target——让他们推小推车，算运动
+    links:
+      - label: { en: "Great Neck Library Events", zh: "大颈图书馆活动" }
+        url: "https://www.greatnecklibrary.org/events"
+      - label: { en: "GN Gymnastics", zh: "大颈体操" }
+        url: "https://www.greatneckgymnastics.com"
+    category: "activities"
+    priority: "high"
+    applies_to: "all"
+    chat_prompt: { en: "What indoor activities are good for kids on rainy days in Great Neck?", zh: "大颈雨天有什么适合孩子的室内活动？" }
+
+  - id: "wind-down"
+    title: { en: "11:15am — The Deceleration Zone", zh: "11:15 — 减速区" }
+    description: { en: "Transition from chaos to calm. Snack, slow walk, maybe feed the ducks.", zh: "从混乱过渡到平静。吃零食、慢步走、也许喂喂鸭子。" }
+    details:
+      en: |
+        - Walk to the duck pond area at Steppingstone (bring old bread or duck food from the pet store)
+        - Let them collect rocks, sticks, leaves — nature scavenger hunt vibes
+        - This is the "golden hour" — they're tired but not melting down yet
+        - Avoid screens! The car ride home will handle the final shutdown.
+        - If you skipped the bagel: Pizza Pronto for a quick slice
+      zh: |
+        - 走到Steppingstone的鸭子池塘（带旧面包或宠物店买的鸭食）
+        - 让他们捡石头、树枝、树叶——自然寻宝游戏
+        - 这是"黄金时刻"——他们累了但还没崩溃
+        - 别给看屏幕！回家的车程会完成最后的关机
+        - 如果跳过了百吉饼：Pizza Pronto快速来一片
+    links: []
+    category: "outdoor"
+    priority: "medium"
+    applies_to: "all"
+    chat_prompt: { en: "Where can you feed ducks near Great Neck?", zh: "大颈附近哪里可以喂鸭子？" }
+
+  - id: "drive-home"
+    title: { en: "Noon — The Drive Home (They're Asleep)", zh: "中午 — 开车回家（他们睡着了）" }
+    description: { en: "They'll be out before you hit Middle Neck Road. Mission accomplished.", zh: "还没到Middle Neck路他们就睡着了。任务完成。" }
+    details:
+      en: |
+        - Drive the long way home if needed — the extra 5 minutes seals the nap
+        - Transfer sleeping kid to bed/couch. Do NOT unbuckle aggressively.
+        - You now have 1-2 hours. Guard this time with your life.
+        - Suggested victory activities: nap, read, scroll in silence, eat lunch sitting down
+        - If they don't nap: quiet time in their room with books. You tried. You succeeded. The afternoon will be calmer regardless.
+      zh: |
+        - 如果需要，绕远路回家——多5分钟确保午睡
+        - 把睡着的孩子转移到床上/沙发，解安全带别太猛
+        - 你现在有1-2小时，用生命守护这段时间
+        - 建议的胜利活动：午睡、读书、安静刷手机、坐着吃午饭
+        - 如果他们不睡：让他们在房间安静看书。你已经尽力了。下午不管怎样都会平静些。
+    links: []
+    category: "wrap-up"
+    priority: "low"
+    applies_to: "all"
+    chat_prompt: { en: "What are some tips for getting toddlers to nap after morning activities?", zh: "早上活动后如何让幼儿午睡？" }

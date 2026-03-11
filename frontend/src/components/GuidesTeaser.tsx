@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useLanguage } from "./LanguageProvider";
 import { getGuides, type Guide } from "@/lib/api";
+import OpenMojiIcon from "./OpenMojiIcon";
 
 export default function GuidesTeaser() {
   const { language, t } = useLanguage();
@@ -25,10 +26,6 @@ export default function GuidesTeaser() {
 
   if (guides.length === 0) return null;
 
-  const ICONS: Record<string, string> = {
-    home: "\u{1F3E0}", snowflake: "\u{2744}\u{FE0F}", flower: "\u{1F338}", sun: "\u{2600}\u{FE0F}", leaf: "\u{1F342}",
-  };
-
   return (
     <div className="max-w-2xl mx-auto mb-8">
       <div className="flex items-center justify-between mb-2 px-1">
@@ -46,7 +43,7 @@ export default function GuidesTeaser() {
             href="/guides/"
             className="flex items-center gap-3 bg-surface-50/80 backdrop-blur-sm border border-surface-300/60 rounded-lg px-3 py-2.5 hover:border-sage/40 transition-colors"
           >
-            <span className="text-lg">{ICONS[guide.icon] || "\u{1F4CB}"}</span>
+            <OpenMojiIcon icon={guide.icon} size={24} />
             <div className="flex-1 min-w-0">
               <h4 className="text-xs font-semibold text-text-900 truncate">{guide.title}</h4>
               <p className="text-[10px] text-text-500 truncate">{guide.description}</p>

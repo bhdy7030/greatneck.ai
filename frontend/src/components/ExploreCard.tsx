@@ -1,14 +1,7 @@
 "use client";
 
 import { useRef, useState, useCallback, useEffect } from "react";
-
-const ICONS: Record<string, string> = {
-  home: "\u{1F3E0}",
-  snowflake: "\u{2744}\u{FE0F}",
-  flower: "\u{1F338}",
-  sun: "\u{2600}\u{FE0F}",
-  leaf: "\u{1F342}",
-};
+import OpenMojiIcon from "./OpenMojiIcon";
 
 interface ExploreCardProps {
   title: string;
@@ -40,7 +33,7 @@ export default function ExploreCard({
   const cardRef = useRef<HTMLDivElement>(null);
   const [tiltStyle, setTiltStyle] = useState<React.CSSProperties>({});
   const [visible, setVisible] = useState(false);
-  const emoji = ICONS[icon] || "\u{1F4CB}";
+  const [hovered, setHovered] = useState(false);
 
   // Scroll entrance via IntersectionObserver
   useEffect(() => {
@@ -64,10 +57,10 @@ export default function ExploreCard({
     if (!rect) return;
     const x = (e.clientX - rect.left) / rect.width;
     const y = (e.clientY - rect.top) / rect.height;
-    const rotateX = (0.5 - y) * 4;
-    const rotateY = (x - 0.5) * 4;
+    const rotateX = (0.5 - y) * 6;
+    const rotateY = (x - 0.5) * 6;
     setTiltStyle({
-      transform: `perspective(800px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(0.97)`,
+      transform: `perspective(800px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(0.96)`,
     });
   }, []);
 
@@ -77,6 +70,7 @@ export default function ExploreCard({
 
   const handlePointerLeave = useCallback(() => {
     setTiltStyle({});
+    setHovered(false);
   }, []);
 
   const delay = Math.min(index * 80, 600);
@@ -84,7 +78,7 @@ export default function ExploreCard({
   return (
     <div
       ref={cardRef}
-      className={`relative aspect-[3/4] rounded-2xl overflow-hidden cursor-pointer select-none ${
+      className={`relative aspect-[3/4] rounded-2xl overflow-hidden cursor-pointer select-none group ${
         visible ? "animate-exploreCardIn" : "opacity-0"
       }`}
       style={{
@@ -92,14 +86,18 @@ export default function ExploreCard({
         animationFillMode: "both",
         willChange: "transform",
         transformStyle: "preserve-3d",
-        transition: "transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)",
+        transition: "transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease",
         touchAction: "manipulation",
         WebkitTapHighlightColor: "transparent",
+        boxShadow: hovered
+          ? `0 8px 30px ${color}40, 0 0 0 1px ${color}20`
+          : "0 2px 8px rgba(0,0,0,0.1)",
         ...tiltStyle,
       }}
       onClick={onTap}
       onPointerDown={handlePointerDown}
       onPointerUp={handlePointerUp}
+      onPointerEnter={() => setHovered(true)}
       onPointerLeave={handlePointerLeave}
     >
       {/* Gradient background */}
@@ -107,6 +105,16 @@ export default function ExploreCard({
         className="absolute inset-0"
         style={{
           background: `linear-gradient(160deg, ${color}ee 0%, ${color}bb 50%, ${color}88 100%)`,
+        }}
+      />
+
+      {/* Animated shimmer overlay on hover */}
+      <div
+        className="absolute inset-0 z-[1] opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
+        style={{
+          background: "linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.15) 50%, transparent 60%)",
+          backgroundSize: "200% 100%",
+          animation: hovered ? "shimmer 1.5s ease-in-out infinite" : "none",
         }}
       />
 
@@ -126,16 +134,26 @@ export default function ExploreCard({
         </div>
       )}
 
-      {/* Large centered emoji */}
-      <div className="absolute inset-0 flex items-center justify-center z-[1]" style={{ paddingBottom: "30%" }}>
-        <span className="text-5xl drop-shadow-md">{emoji}</span>
+      {/* OpenMoji icon — floats up on hover */}
+      <div
+        className="absolute inset-0 flex items-center justify-center z-[2] transition-transform duration-300 ease-out"
+        style={{
+          paddingBottom: "30%",
+          transform: hovered ? "translateY(-4px) scale(1.08)" : "translateY(0) scale(1)",
+        }}
+      >
+        <OpenMojiIcon
+          icon={icon}
+          size={64}
+          className="drop-shadow-lg"
+        />
       </div>
 
       {/* Bottom dark overlay for text */}
-      <div className="absolute bottom-0 left-0 right-0 h-2/5 bg-gradient-to-t from-black/60 via-black/30 to-transparent z-[2]" />
+      <div className="absolute bottom-0 left-0 right-0 h-2/5 bg-gradient-to-t from-black/60 via-black/30 to-transparent z-[3]" />
 
       {/* Text content */}
-      <div className="absolute bottom-0 left-0 right-0 p-3 z-[3]">
+      <div className="absolute bottom-0 left-0 right-0 p-3 z-[4]">
         <h3 className="text-sm font-bold text-white drop-shadow-sm leading-tight mb-0.5 line-clamp-2">
           {title}
         </h3>

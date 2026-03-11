@@ -221,7 +221,7 @@ export default function UpcomingEvents({ village, dateRange, setDateRange, onCou
 
   if (loading) {
     return (
-      <div className="w-full max-w-2xl mx-auto mt-3 animate-fadeSlideUp">
+      <div className="w-full animate-fadeSlideUp">
         <h3 className="text-xs font-semibold text-text-500 uppercase tracking-wider mb-2 px-1">
           {t("events.upcoming")}
         </h3>

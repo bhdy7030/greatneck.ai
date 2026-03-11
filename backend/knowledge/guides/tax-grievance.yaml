@@ -1,0 +1,208 @@
+id: "tax-grievance"
+type: "onboarding"
+title:
+  en: "The \"Property Tax Sticker Shock\" Grievance Playbook"
+  zh: "房产税\"天价账单\"申诉攻略"
+description:
+  en: "Your assessment is wrong and you're not crazy. Here's exactly how to grieve it in Nassau County — step by step, deadline by deadline."
+  zh: "你的评估有误，你没疯。这里是在Nassau County逐步申诉的完整指南——每一步、每个截止日期。"
+icon: "money"
+color: "#2E7D32"
+active: true
+
+steps:
+  - id: "understand-assessment"
+    title: { en: "Understand your assessment (it's probably inflated)", zh: "了解你的评估（很可能被高估了）" }
+    description: { en: "Learn the difference between assessed value and market value — and why they almost never match in Nassau County.", zh: "了解评估价值和市场价值的区别——以及为什么在Nassau County它们几乎从不匹配。" }
+    details:
+      en: |
+        - Nassau County reassessed all properties in 2020 — many Great Neck homes saw big jumps
+        - Your "assessed value" is NOT what your home would sell for
+        - The county uses a ratio to convert assessed value to market value
+        - Check your Tentative Assessment Roll (published every January)
+        - If your assessed value implies a market value higher than your home's worth, you have a case
+        - Most Great Neck homeowners who grieve get a reduction. Seriously. Most.
+      zh: |
+        - Nassau County 2020年重新评估了所有房产——许多大颈房屋大幅上涨
+        - 你的"评估价值"不是你的房子能卖多少钱
+        - 县政府使用一个比率将评估价值转换为市场价值
+        - 查看你的临时评估名册（每年1月公布）
+        - 如果你的评估价值暗示的市场价值高于你的房屋价值，你有理由申诉
+        - 大多数大颈房主申诉后都获得了减免。真的。大多数。
+    links:
+      - label: { en: "Nassau County Assessment Lookup", zh: "Nassau County评估查询" }
+        url: "https://www.nassaucountyny.gov/1808/Assessment-Information"
+    category: "research"
+    priority: "high"
+    applies_to: "all"
+    chat_prompt: { en: "How do Nassau County property tax assessments work?", zh: "Nassau County的房产税评估是怎么运作的？" }
+
+  - id: "pull-comps"
+    title: { en: "Pull comparable sales (your ammo)", zh: "拉取可比销售数据（你的弹药）" }
+    description: { en: "Find 3-5 recent sales of similar homes in your area that sold for less than your assessed market value.", zh: "找到3-5个附近类似房屋的近期成交价低于你的评估市场价值的案例。" }
+    details:
+      en: |
+        - Use the Nassau County Land Records portal to search recent sales
+        - Filter: same village, similar square footage (±15%), similar lot size, sold in last 12 months
+        - Zillow/Redfin sold prices work too, but county records are what the reviewers trust
+        - You want homes that sold for LESS than what the county says YOUR home is worth
+        - Save/print at least 3 good comps — more is better
+        - Include the addresses, sale dates, and sale prices
+      zh: |
+        - 使用Nassau County土地记录门户搜索近期销售
+        - 筛选：同村、类似面积（±15%）、类似地块、过去12个月内成交
+        - Zillow/Redfin的成交价也可以，但县记录是审查员信任的
+        - 你需要成交价低于县政府说你的房子值多少的房屋
+        - 保存/打印至少3个好的可比案例——越多越好
+        - 包括地址、成交日期和成交价格
+    links:
+      - label: { en: "Nassau County Land Records", zh: "Nassau County土地记录" }
+        url: "https://lrms.nassaucountyny.gov/"
+      - label: { en: "Zillow Great Neck Sold", zh: "Zillow大颈成交记录" }
+        url: "https://www.zillow.com/great-neck-ny/sold/"
+    category: "research"
+    priority: "high"
+    applies_to: "all"
+    chat_prompt: { en: "How do I find comparable home sales in Great Neck for a tax grievance?", zh: "如何找到大颈的可比房屋销售数据用于税务申诉？" }
+
+  - id: "diy-vs-firm"
+    title: { en: "DIY or hire a grievance firm?", zh: "自己申诉还是请专业公司？" }
+    description: { en: "Both work. Firms charge ~40-50% of your first year's savings but handle everything. Here's how to decide.", zh: "两种都行。专业公司收取第一年节省金额的40-50%，但全程代办。以下帮你决定。" }
+    details:
+      en: |
+        - DIY grievance: free, takes 2-3 hours of work, you attend the hearing yourself
+        - Grievance firms (Maidenbaum, Heller & Consultants, etc.): no upfront cost, they take a % of savings
+        - Typical firm fee: 40-50% of the first year's tax reduction
+        - If your reduction is $2,000/year, the firm takes $800-$1,000 — but it recurs every year with no additional fee
+        - Firms have a higher success rate because they do this thousands of times
+        - If you're comfortable with paperwork and showing up to a hearing: DIY
+        - If you want zero hassle: hire a firm. Most Great Neck neighbors use one.
+      zh: |
+        - 自己申诉：免费，需要2-3小时工作，你自己参加听证会
+        - 申诉公司（Maidenbaum、Heller & Consultants等）：无前期费用，收取节省金额的百分比
+        - 典型公司费用：第一年税收减免的40-50%
+        - 如果你的减免是$2,000/年，公司收$800-$1,000——但以后每年都有减免不再收费
+        - 公司成功率更高，因为他们做过上千次
+        - 如果你擅长文书工作和出席听证会：自己来
+        - 如果你想零麻烦：请公司。大多数大颈邻居都是这么做的。
+    links:
+      - label: { en: "Maidenbaum Property Tax", zh: "Maidenbaum房产税" }
+        url: "https://www.maidenbaum.com"
+    category: "decision"
+    priority: "high"
+    applies_to: "all"
+    chat_prompt: { en: "Should I grieve my property taxes myself or hire a firm in Nassau County?", zh: "Nassau County我应该自己申诉房产税还是请公司？" }
+
+  - id: "file-grievance"
+    title: { en: "File with the Assessment Review Commission (ARC)", zh: "向评估审查委员会（ARC）提交申诉" }
+    description: { en: "The actual filing. Deadline is usually March 1. Miss it and you wait a whole year.", zh: "正式提交。截止日期通常是3月1日。错过就要等一整年。" }
+    details:
+      en: |
+        - Filing is done online through the Nassau County ARC portal
+        - Deadline: typically March 1st (check exact date — it shifts slightly)
+        - You'll need: your Section/Block/Lot number (on your tax bill), your comps, and your argument
+        - The form asks what you believe the market value should be — use your comps to justify
+        - You can file even without a firm — the form is straightforward
+        - After filing, you'll receive a hearing date (usually April-June)
+        - SET A CALENDAR REMINDER for late January to start this process next year
+      zh: |
+        - 通过Nassau County ARC在线门户提交
+        - 截止日期：通常3月1日（查看确切日期——会略有变动）
+        - 你需要：Section/Block/Lot号码（在税单上）、可比数据和你的论点
+        - 表格会问你认为市场价值应该是多少——用你的可比数据来论证
+        - 即使没有公司也可以自己提交——表格很简单
+        - 提交后会收到听证日期（通常4-6月）
+        - 设置日历提醒：明年1月底开始这个流程
+    links:
+      - label: { en: "ARC Online Filing", zh: "ARC在线申诉" }
+        url: "https://www.nassaucountyny.gov/4566/Assessment-Review-Commission"
+    category: "action"
+    priority: "high"
+    applies_to: "all"
+    chat_prompt: { en: "How do I file a property tax grievance in Nassau County?", zh: "如何在Nassau County提交房产税申诉？" }
+
+  - id: "hearing-prep"
+    title: { en: "Survive the hearing (it's less scary than you think)", zh: "通过听证会（没你想的那么可怕）" }
+    description: { en: "Show up, present your comps, and be polite. That's genuinely 90% of it.", zh: "到场，展示你的可比数据，礼貌一些。这真的就是90%的全部。" }
+    details:
+      en: |
+        - Hearings are at the Nassau County Assessment Review office in Mineola
+        - Dress business casual — not a courtroom, more like an HR meeting
+        - Bring: printed comps, your assessment notice, photos of any issues (old roof, dated kitchen, etc.)
+        - The reviewer will ask why you think the value is too high
+        - Be specific: "My assessed market value is $X, but these 3 comparable homes sold for $Y, $Y, $Y"
+        - Be polite and factual. Don't get emotional or argue. They do this all day.
+        - You'll get a decision by mail in 2-4 weeks
+        - If approved: your next tax bill reflects the reduction
+      zh: |
+        - 听证会在Mineola的Nassau County评估审查办公室
+        - 穿商务休闲——不是法庭，更像HR会议
+        - 带：打印的可比数据、评估通知、任何问题的照片（旧屋顶、老旧厨房等）
+        - 审查员会问你为什么认为价值过高
+        - 具体说："我的评估市场价值是$X，但这3个可比房屋成交价为$Y、$Y、$Y"
+        - 礼貌且基于事实。别激动或争论。他们整天都在做这个。
+        - 2-4周内会收到邮件决定
+        - 如果批准：下一张税单反映减免
+    links: []
+    category: "action"
+    priority: "medium"
+    applies_to: "all"
+    chat_prompt: { en: "What should I expect at a Nassau County tax grievance hearing?", zh: "Nassau County税务申诉听证会是什么样的？" }
+
+  - id: "scar-appeal"
+    title: { en: "If denied: SCAR — the nuclear option", zh: "如果被拒：SCAR——终极手段" }
+    description: { en: "Small Claims Assessment Review. It costs $30 and gives you another shot. Most people win here too.", zh: "小额索赔评估审查。费用$30，再给你一次机会。大多数人在这里也能赢。" }
+    details:
+      en: |
+        - If ARC denies your grievance, you can file a SCAR petition with Nassau County Supreme Court
+        - Filing fee: ~$30
+        - Deadline: typically 30 days after the ARC decision
+        - SCAR is a more formal proceeding but still relatively simple
+        - Many grievance firms include SCAR in their fee — ask upfront
+        - Success rates at SCAR are quite high for reasonable claims
+        - This is your last administrative remedy before you'd need a full tax certiorari (lawyer territory)
+      zh: |
+        - 如果ARC拒绝了你的申诉，可以向Nassau County最高法院提交SCAR申请
+        - 申请费：约$30
+        - 截止日期：通常在ARC决定后30天
+        - SCAR是更正式的程序，但仍然相对简单
+        - 许多申诉公司的费用包含SCAR——提前问清楚
+        - SCAR对合理诉求的成功率相当高
+        - 这是你在需要完整税务诉讼（律师领域）之前的最后行政救济手段
+    links: []
+    category: "fallback"
+    priority: "low"
+    applies_to: "all"
+    chat_prompt: { en: "What is SCAR and how does it work for property tax appeals?", zh: "什么是SCAR，它如何用于房产税上诉？" }
+
+  - id: "next-year-reminder"
+    title: { en: "Set it and forget it: next year's reminder", zh: "设好提醒：明年的申诉" }
+    description: { en: "This isn't one-and-done. Set a January reminder to grieve every single year.", zh: "这不是一次性的。设置一月提醒，每年都申诉。" }
+    details:
+      en: |
+        - Property values and assessments change every year
+        - Even if you won this year, you should grieve again next year
+        - The process is the same — and faster the second time since you know the drill
+        - If using a firm, most will automatically re-file for you — confirm this
+        - Key dates to save:
+          • January: Tentative Assessment Roll published
+          • February: Gather comps
+          • March 1: Filing deadline (approx)
+          • April-June: Hearing
+        - Tap "Remind Me" below and we'll ping you in January
+      zh: |
+        - 房产价值和评估每年都在变
+        - 即使今年赢了，明年也应该再次申诉
+        - 流程相同——第二次会更快因为你已经知道怎么做了
+        - 如果用公司，大多数会自动重新提交——确认一下
+        - 关键日期：
+          • 一月：临时评估名册公布
+          • 二月：收集可比数据
+          • 三月一日：申诉截止（大约）
+          • 四至六月：听证会
+        - 点击下方"提醒我"，我们会在一月提醒你
+    links: []
+    category: "recurring"
+    priority: "medium"
+    applies_to: "all"
+    chat_prompt: { en: "When should I start the property tax grievance process each year?", zh: "每年应该什么时候开始房产税申诉流程？" }

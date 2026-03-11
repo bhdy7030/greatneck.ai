@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState, useCallback } from "react";
+import OpenMojiIcon from "./OpenMojiIcon";
 
 interface WalletCardProps {
   title: string;
@@ -14,14 +15,6 @@ interface WalletCardProps {
   isExpanding?: boolean;
   onClick?: () => void;
 }
-
-const ICONS: Record<string, string> = {
-  home: "\u{1F3E0}",
-  snowflake: "\u{2744}\u{FE0F}",
-  flower: "\u{1F338}",
-  sun: "\u{2600}\u{FE0F}",
-  leaf: "\u{1F342}",
-};
 
 export default function WalletCard({
   title,
@@ -37,7 +30,6 @@ export default function WalletCard({
   const cardRef = useRef<HTMLDivElement>(null);
   const [tiltStyle, setTiltStyle] = useState<React.CSSProperties>({});
   const progress = totalCount > 0 ? (doneCount / totalCount) * 100 : 0;
-  const emoji = ICONS[icon] || "\u{1F4CB}";
 
   const handlePointerDown = useCallback((e: React.PointerEvent) => {
     const rect = cardRef.current?.getBoundingClientRect();
@@ -86,7 +78,7 @@ export default function WalletCard({
 
       <div className="px-4 py-3">
         <div className="flex items-center gap-2 mb-1.5">
-          <span className="text-base">{emoji}</span>
+          <OpenMojiIcon icon={icon} size={24} />
           <h3 className="text-sm font-semibold text-text-900 truncate flex-1">
             {title}
           </h3>

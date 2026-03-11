@@ -45,10 +45,33 @@ function ChatPageInner() {
   const [fastMode, setFastMode] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [tierModal, setTierModal] = useState<"trial_exhausted" | "must_sign_in" | null>(null);
+  const [streamingContent, setStreamingContent] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const draftSentRef = useRef(false);
   const [returnGuideId, setReturnGuideId] = useState<string | null>(null);
+
+  // Restore chat messages from sessionStorage (survives login redirect)
+  useEffect(() => {
+    const saved = sessionStorage.getItem("gn_chat_messages");
+    if (saved) {
+      try {
+        const msgs = JSON.parse(saved) as ChatMessageType[];
+        if (msgs.length > 0) {
+          setMessages(msgs);
+          draftSentRef.current = true; // Don't auto-send draft over restored messages
+        }
+      } catch { /* ignore */ }
+      sessionStorage.removeItem("gn_chat_messages");
+    }
+  }, []);
+
+  // Save chat messages to sessionStorage on every change (so login redirect doesn't lose them)
+  useEffect(() => {
+    if (messages.length > 0) {
+      sessionStorage.setItem("gn_chat_messages", JSON.stringify(messages));
+    }
+  }, [messages]);
 
   // Load village and web search mode from localStorage
   useEffect(() => {
@@ -84,7 +107,7 @@ function ChatPageInner() {
         if (event.source_id) parts.push(`Event ID: ${event.source_id}`);
         else if (event.id) parts.push(`Event ID: ${event.id}`);
         const msg = parts.join("\n");
-        setTimeout(() => handleSend(msg), 100);
+        queueMicrotask(() => handleSend(msg));
       } catch {
         // Ignore bad JSON
       }
@@ -98,15 +121,52 @@ function ChatPageInner() {
       setReturnGuideId(returnGuide);
     }
 
+    // Check for inline chat messages (from playbook step → full chat)
+    const inlineMessages = localStorage.getItem("gn_inline_messages");
+    if (inlineMessages) {
+      localStorage.removeItem("gn_inline_messages");
+      localStorage.removeItem("gn_draft");
+      draftSentRef.current = true;
+      try {
+        const msgs = JSON.parse(inlineMessages) as { role: "user" | "assistant"; content: string }[];
+        // Seed the chat with inline conversation history (start fresh, don't load old convo)
+        setMessages(msgs.map((m) => ({
+          role: m.role,
+          content: m.content,
+        })));
+      } catch {
+        // Ignore bad JSON
+      }
+      return;
+    }
+
     // Check for text draft (typed query from landing page)
     const draft = localStorage.getItem("gn_draft");
     if (draft) {
       localStorage.removeItem("gn_draft");
       draftSentRef.current = true;
-      // Small delay to let the page fully render
-      setTimeout(() => handleSend(draft), 100);
+
+      // If there's an active conversation from a previous session, load it first
+      const activeConvo = localStorage.getItem("gn_active_convo");
+      const urlId = searchParams.get("id");
+      if (activeConvo && !urlId && user) {
+        loadConversation(activeConvo).then(() => {
+          queueMicrotask(() => handleSend(draft));
+        }).catch(() => {
+          queueMicrotask(() => handleSend(draft));
+        });
+      } else {
+        queueMicrotask(() => handleSend(draft));
+      }
     }
   }, [village]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Persist active conversation ID for carry-over
+  useEffect(() => {
+    if (conversationId) {
+      localStorage.setItem("gn_active_convo", conversationId);
+    }
+  }, [conversationId]);
 
   // Load conversation from URL ?id=
   useEffect(() => {
@@ -163,13 +223,15 @@ function ChatPageInner() {
     }
     // Default: scroll to bottom (loading states, user messages, pipeline events)
     scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-  }, [messages, isLoading, pipelineEvents]);
+  }, [messages, isLoading, pipelineEvents, streamingContent]);
 
   const handleNewChat = useCallback(() => {
     setMessages([]);
     setConversationId(null);
     setPipelineEvents([]);
     setError(null);
+    setStreamingContent("");
+    localStorage.removeItem("gn_active_convo");
     // Update URL without reload
     const params = new URLSearchParams(window.location.search);
     params.delete("id");
@@ -212,6 +274,7 @@ function ChatPageInner() {
       setError(null);
       setPipelineEvents([]);
       pipelineEventsRef.current = [];
+      setStreamingContent("");
 
       // Build history for context (exclude images to keep payload small)
       const history = messages.map((m) => ({
@@ -252,7 +315,10 @@ function ChatPageInner() {
           webSearchMode,
           language,
           fastMode,
-          imageMime
+          imageMime,
+          (tokenText) => {
+            setStreamingContent((prev) => prev + tokenText);
+          },
         );
 
         // Update conversation_id from response if we didn't have one
@@ -264,6 +330,8 @@ function ChatPageInner() {
             `${window.location.pathname}?id=${response.conversation_id}`
           );
         }
+
+        setStreamingContent(""); // Clear streaming before adding final message
 
         const assistantMessage: ChatMessageType = {
           role: "assistant",
@@ -522,8 +590,15 @@ function ChatPageInner() {
               </div>
             )}
 
-            {/* Simple loading indicator (before any pipeline events) */}
-            {isLoading && pipelineEvents.length === 0 && (
+            {/* Streaming response (tokens arriving in real-time) */}
+            {isLoading && streamingContent && (
+              <div data-msg-idx="streaming">
+                <ChatMessage message={{ role: "assistant", content: streamingContent }} />
+              </div>
+            )}
+
+            {/* Simple loading indicator (before any pipeline events or streaming) */}
+            {isLoading && pipelineEvents.length === 0 && !streamingContent && (
               <div className="flex justify-start mb-4">
                 <div className="bg-surface-50 border border-surface-300 rounded-2xl rounded-bl-md px-4 py-3">
                   <div className="flex items-center gap-2">

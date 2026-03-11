@@ -3,14 +3,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { useLanguage } from "@/components/LanguageProvider";
 import type { Guide } from "@/lib/api";
-
-const ICONS: Record<string, string> = {
-  home: "\u{1F3E0}",
-  snowflake: "\u{2744}\u{FE0F}",
-  flower: "\u{1F338}",
-  sun: "\u{2600}\u{FE0F}",
-  leaf: "\u{1F342}",
-};
+import OpenMojiIcon from "./OpenMojiIcon";
 
 const MAX_PREVIEW_STEPS = 4;
 
@@ -32,7 +25,6 @@ export default function PlaybookPeekSheet({
   const sheetRef = useRef<HTMLDivElement>(null);
   const dragStartY = useRef<number | null>(null);
   const [dragOffset, setDragOffset] = useState(0);
-  const emoji = ICONS[guide.icon] || "\u{1F4CB}";
   const previewSteps = guide.steps.slice(0, MAX_PREVIEW_STEPS);
   const remainingCount = guide.steps.length - MAX_PREVIEW_STEPS;
 
@@ -107,7 +99,7 @@ export default function PlaybookPeekSheet({
 
           {/* Header */}
           <div className="flex items-start gap-3 mb-4">
-            <span className="text-3xl">{emoji}</span>
+            <OpenMojiIcon icon={guide.icon} size={40} />
             <div className="flex-1 min-w-0">
               <h2 className="text-base font-bold text-text-900 leading-tight">
                 {guide.title}

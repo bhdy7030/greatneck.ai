@@ -1,0 +1,232 @@
+id: "camp-war-room"
+type: "seasonal"
+title:
+  en: "The \"Summer Camp Signup\" War Room"
+  zh: "\"夏令营报名\"作战室"
+description:
+  en: "Camp registration has deadlines in January, waitlists that fill overnight, and nobody warned you. This is your battle plan."
+  zh: "夏令营注册截止日在一月，候补名单一夜满员，没人提醒过你。这是你的作战计划。"
+icon: "star"
+color: "#7B1FA2"
+active: true
+
+season:
+  months: [11, 12, 1, 2, 3]
+  label: { en: "Camp Registration Season", zh: "夏令营注册季" }
+
+steps:
+  - id: "camp-landscape"
+    title: { en: "Know the camp landscape (it's bigger than you think)", zh: "了解夏令营全景（比你想的大得多）" }
+    description: { en: "Great Neck has 4 tiers of camps. Each has different timelines, costs, and vibes.", zh: "大颈有4个层级的夏令营。每个有不同的时间线、费用和氛围。" }
+    details:
+      en: |
+        - Tier 1: Town of North Hempstead day camps — affordable, solid, local kids
+        - Tier 2: Great Neck Park District programs — sports, swimming, arts, by the week
+        - Tier 3: Private day camps (Long Island) — more polished, bus service, pricey
+        - Tier 4: Specialty camps — STEM, robotics, art, theater, coding, travel
+        - There are also sleepaway feeder camps for ages 8+ if you're thinking ahead
+        - The vibe difference: municipal camps are scrappy and fun; private camps are Instagram-ready
+        - Most Great Neck families mix tiers — 3 weeks municipal + 2 weeks specialty is a common formula
+      zh: |
+        - 第一层：北亨普斯特德镇日间营——价格亲民、靠谱、本地孩子
+        - 第二层：大颈公园管理区项目——运动、游泳、艺术，按周报名
+        - 第三层：私立日间营（长岛）——更精致、有校车、较贵
+        - 第四层：专项营——STEM、机器人、美术、戏剧、编程、旅行
+        - 8岁以上还有住宿营预备营
+        - 氛围差异：市政营接地气有趣；私立营Instagram风格
+        - 大多数大颈家庭混合搭配——3周市政+2周专项是常见组合
+    links:
+      - label: { en: "Town of North Hempstead Camps", zh: "北亨普斯特德镇夏令营" }
+        url: "https://www.northhempsteadny.gov"
+      - label: { en: "GN Park District Programs", zh: "大颈公园管理区项目" }
+        url: "https://www.greatneckparkdistrict.com"
+    category: "research"
+    priority: "high"
+    applies_to: "all"
+    chat_prompt: { en: "What types of summer camps are available in and around Great Neck?", zh: "大颈及周边有哪些类型的夏令营？" }
+
+  - id: "timeline"
+    title: { en: "The timeline that actually matters", zh: "真正重要的时间线" }
+    description: { en: "Some camps open registration in November. Yes, November. Here's when to act for each tier.", zh: "有些夏令营11月就开放注册。没错，11月。以下是每个层级的行动时间。" }
+    details:
+      en: |
+        - November-December: Private day camps hold open houses and early-bird registration
+        - January: Town/Park District camps announce summer schedules
+        - January-February: Popular private camps fill (especially for youngest age groups)
+        - February: Park District registration opens — this goes FAST for popular weeks
+        - March: Specialty camps (STEM, art, etc.) still have spots but the best weeks are taken
+        - April+: You're in waitlist territory for the popular options
+        - The #1 mistake: thinking "it's only January, I have plenty of time." You don't.
+      zh: |
+        - 11-12月：私立日间营举办开放日和早鸟注册
+        - 1月：镇/公园管理区营公布暑期时间表
+        - 1-2月：热门私立营满员（特别是最小年龄组）
+        - 2月：公园管理区注册开放——热门周次非常快满
+        - 3月：专项营（STEM、美术等）还有位置但最好的周次已被占
+        - 4月+：热门选项进入候补名单领域
+        - 第一大错误：觉得"才一月，时间还很多"。没有。
+    links: []
+    category: "timeline"
+    priority: "high"
+    applies_to: "all"
+    chat_prompt: { en: "When does summer camp registration open in Great Neck?", zh: "大颈夏令营什么时候开始注册？" }
+
+  - id: "age-picks"
+    title: { en: "Age-gated picks: toddler vs. elementary vs. tween", zh: "分龄推荐：幼儿 vs 小学 vs 青少年" }
+    description: { en: "The best camp for a 3-year-old is NOT the best camp for a 10-year-old. Here's the breakdown.", zh: "最适合3岁的夏令营不是最适合10岁的。以下是详细分类。" }
+    details:
+      en: |
+        - Ages 2-4 (toddler/pre-K):
+          • Half-day programs are best — full day is too long
+          • Park District "Tiny Tot" programs
+          • Look for low ratios (1:4 or better) and outdoor time
+        - Ages 5-8 (elementary):
+          • Full-day camps work well now
+          • This is the sweet spot for municipal camps — great bang for buck
+          • Consider adding 1 specialty week (coding, art, sports)
+        - Ages 9-12 (tween):
+          • They want independence and friend groups
+          • CIT (Counselor-in-Training) programs start at some camps
+          • Sports-specific camps or travel camps keep them engaged
+          • This is when sleepaway camp enters the conversation
+        - Sibling strategy: find a camp that takes both age ranges, or coordinate drop-off/pickup times
+      zh: |
+        - 2-4岁（幼儿/学前）：
+          • 半天项目最好——全天太长
+          • 公园管理区"小小班"项目
+          • 寻找低师生比（1:4或更好）和户外时间
+        - 5-8岁（小学）：
+          • 全天营现在可以了
+          • 这是市政营的最佳年龄段——性价比最高
+          • 考虑加1周专项（编程、美术、运动）
+        - 9-12岁（青少年）：
+          • 他们想要独立和朋友圈
+          • 一些营有CIT（实习辅导员）项目
+          • 运动专项营或旅行营能保持他们的兴趣
+          • 这是住宿营进入讨论的时候
+        - 兄弟姐妹策略：找一个接收两个年龄段的营，或协调接送时间
+    links: []
+    category: "selection"
+    priority: "high"
+    applies_to: "all"
+    chat_prompt: { en: "What's the best summer camp for my child's age in Great Neck?", zh: "大颈最适合我孩子年龄的夏令营是什么？" }
+
+  - id: "budget-check"
+    title: { en: "The budget reality check", zh: "预算现实检查" }
+    description: { en: "Camp costs range from $200/week to $2,000/week. Here's what you're actually paying for.", zh: "夏令营费用从每周$200到$2,000不等。以下是你实际在为什么付费。" }
+    details:
+      en: |
+        - Municipal/Park District: $200-400/week — best value, no frills, great for younger kids
+        - Private day camps: $800-1,500/week — includes bus, lunch sometimes, more structured
+        - Specialty camps: $400-900/week — shorter sessions (often half-day), very focused
+        - Hidden costs to ask about:
+          • Bus service (often $300-500 extra for the summer)
+          • Extended day / before-after care ($50-100/week)
+          • Lunch (included? or pack your own?)
+          • Field trip fees
+          • Required gear (swimsuits, specific shoes, etc.)
+        - Financial aid: many private camps offer it — ask directly, they don't always advertise
+        - The math: 8 weeks of summer × $400-1000/week = $3,200-$8,000 per kid. Budget accordingly.
+      zh: |
+        - 市政/公园管理区：$200-400/周——最具价值、朴素、适合低龄
+        - 私立日间营：$800-1,500/周——包含校车、有时包含午餐、更有组织
+        - 专项营：$400-900/周——时间较短（通常半天）、非常专注
+        - 要问的隐藏费用：
+          • 校车服务（通常整个夏天额外$300-500）
+          • 延时/营前营后托管（$50-100/周）
+          • 午餐（包含？还是自带？）
+          • 实地考察费
+          • 必需装备（泳衣、指定鞋子等）
+        - 经济援助：许多私立营提供——直接问，他们不总是宣传
+        - 算账：暑假8周 × $400-1000/周 = 每个孩子$3,200-$8,000。提前预算。
+    links: []
+    category: "budget"
+    priority: "medium"
+    applies_to: "all"
+    chat_prompt: { en: "How much do summer camps cost in the Great Neck area?", zh: "大颈地区夏令营费用是多少？" }
+
+  - id: "waitlist-hustle"
+    title: { en: "The waitlist hustle", zh: "候补名单攻略" }
+    description: { en: "You're on a waitlist. Don't panic. Here's how to actually get off one.", zh: "你在候补名单上。别慌。以下是真正脱离候补的方法。" }
+    details:
+      en: |
+        - Waitlists move more than you think — families change plans constantly
+        - The big movement windows: mid-April (family vacations finalize) and early June (last-minute switches)
+        - Call the camp directly — don't just wait for an email. A polite phone call puts a face to the name.
+        - Ask: "Can I be notified for ANY opening, even partial weeks?"
+        - Sign up for multiple waitlists — don't put all eggs in one basket
+        - If you get a spot for Week 4 but wanted Week 2, TAKE IT. You can swap later.
+        - Some camps have a "last-minute enrollment" page they update weekly — bookmark it
+      zh: |
+        - 候补名单比你想的流动性大——家庭不断改变计划
+        - 主要流动窗口：4月中旬（家庭假期敲定）和6月初（最后一刻变动）
+        - 直接给营地打电话——不要只等邮件。礼貌的电话让他们记住你
+        - 问："任何空位都可以通知我吗，包括不完整的周次？"
+        - 报多个候补名单——别把鸡蛋放一个篮子里
+        - 如果你拿到第4周但想要第2周的位置，先拿下！之后可以换
+        - 一些营有"最后一刻招生"页面每周更新——收藏它
+    links: []
+    category: "tactics"
+    priority: "medium"
+    applies_to: "all"
+    chat_prompt: { en: "How do I get off a summer camp waitlist in Great Neck?", zh: "如何从大颈夏令营候补名单上脱离？" }
+
+  - id: "plan-b"
+    title: { en: "Plan B: The DIY \"Camp-at-Home\" Week", zh: "B计划：DIY\"在家夏令营\"周" }
+    description: { en: "Got shut out for a week? Don't panic. Frankenstein your own camp week from local daily activities.", zh: "有一周没报上？别慌。用本地日常活动拼凑你自己的夏令营周。" }
+    details:
+      en: |
+        - Monday: Great Neck Library summer reading + craft session (free, 10am)
+        - Tuesday: Park District pool day — pack lunch, stay till 2pm
+        - Wednesday: Bowling at Herrill Lanes + pizza lunch
+        - Thursday: Bike ride on the Little Neck path + ice cream at Lickety Split
+        - Friday: Movie morning at Squire Cinemas ($6 summer kids' shows) + playground
+        - Structure is key: write the schedule on a whiteboard so kids know what's coming
+        - Invite a neighborhood kid or two — instant friend group, shared supervision
+        - Total cost for the week: roughly $80-120 vs. $500+ for camp
+      zh: |
+        - 周一：大颈图书馆暑期阅读+手工课（免费，上午10点）
+        - 周二：公园管理区泳池日——带午餐，待到下午2点
+        - 周三：Herrill Lanes保龄球+披萨午餐
+        - 周四：Little Neck路径骑车+Lickety Split冰淇淋
+        - 周五：Squire Cinemas电影早场（$6暑期儿童场）+游乐场
+        - 结构是关键：把日程写在白板上让孩子知道要做什么
+        - 邀请一两个邻居家的孩子——即时朋友圈，共同看管
+        - 全周总费用：大约$80-120 vs 夏令营$500+
+    links:
+      - label: { en: "Great Neck Library Events", zh: "大颈图书馆活动" }
+        url: "https://www.greatnecklibrary.org/events"
+      - label: { en: "GN Park District Pools", zh: "大颈公园管理区泳池" }
+        url: "https://www.greatneckparkdistrict.com"
+    category: "backup"
+    priority: "medium"
+    applies_to: "all"
+    chat_prompt: { en: "What can I do with my kids in Great Neck during summer if we missed camp registration?", zh: "如果错过了夏令营注册，暑假在大颈可以带孩子做什么？" }
+
+  - id: "next-year"
+    title: { en: "Set reminders for next year's war room", zh: "为明年的作战室设置提醒" }
+    description: { en: "Never get caught off guard again. Here's your annual camp calendar.", zh: "再也不要措手不及。以下是你的年度夏令营日历。" }
+    details:
+      en: |
+        - October: Start researching camps. Attend fall open houses.
+        - November: Early-bird registration opens for private camps. Sign up.
+        - December: Holiday break = time to compare and decide
+        - January: Park District/municipal schedules drop. Register immediately.
+        - February: Fill any remaining weeks. Specialty camps.
+        - March: Confirm everything. Handle payments. Arrange carpools.
+        - Tap "Remind Me" below — we'll ping you in October to start the cycle.
+        - Pro tip: join a Great Neck parents Facebook group. Other parents share camp intel like stock tips.
+      zh: |
+        - 10月：开始调研夏令营。参加秋季开放日。
+        - 11月：私立营早鸟注册开放。立即报名。
+        - 12月：寒假=比较和决定的时间
+        - 1月：公园管理区/市政时间表发布。立即注册。
+        - 2月：填补剩余周次。专项营。
+        - 3月：确认一切。处理付款。安排拼车。
+        - 点击下方"提醒我"——我们会在10月提醒你开始这个循环。
+        - 小窍门：加入大颈家长Facebook群。其他家长分享夏令营情报就像分享股票内幕一样。
+    links: []
+    category: "planning"
+    priority: "medium"
+    applies_to: "all"
+    chat_prompt: { en: "When should I start planning summer camp for next year?", zh: "什么时候应该开始规划明年的夏令营？" }

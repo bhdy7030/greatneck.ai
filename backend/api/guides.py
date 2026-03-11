@@ -51,7 +51,7 @@ def _format_guide(guide: dict, lang: str, saved_ids: set, step_status_map: dict)
         sid = step["id"]
         ss = step_status_map.get(sid, {})
         status = ss.get("status", "todo")
-        if status == "done":
+        if status in ("done", "skipped"):
             done_count += 1
         steps.append({
             "id": sid,
