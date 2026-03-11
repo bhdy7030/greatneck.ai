@@ -51,15 +51,24 @@ function ChatPageInner() {
   const draftSentRef = useRef(false);
   const [returnGuideId, setReturnGuideId] = useState<string | null>(null);
 
-  // Restore chat messages from sessionStorage (survives login redirect)
+  // Restore chat messages from sessionStorage (survives login redirect only)
   useEffect(() => {
+    // If user is arriving from landing page with new content, skip restoration
+    const hasDraft = localStorage.getItem("gn_draft");
+    const hasEvent = localStorage.getItem("gn_event_context");
+    const hasInline = localStorage.getItem("gn_inline_messages");
+    if (hasDraft || hasEvent || hasInline) {
+      sessionStorage.removeItem("gn_chat_messages");
+      return;
+    }
+
     const saved = sessionStorage.getItem("gn_chat_messages");
     if (saved) {
       try {
         const msgs = JSON.parse(saved) as ChatMessageType[];
         if (msgs.length > 0) {
           setMessages(msgs);
-          draftSentRef.current = true; // Don't auto-send draft over restored messages
+          draftSentRef.current = true;
         }
       } catch { /* ignore */ }
       sessionStorage.removeItem("gn_chat_messages");
