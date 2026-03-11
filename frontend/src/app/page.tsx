@@ -345,120 +345,6 @@ export default function Home() {
               </div>
             )}
 
-            {/* Playbooks — frosted card */}
-            {(landingGuides.length > 0 || walletGuidesLanding.length > 0) && showChatBox && (
-              <div className="mt-2 w-full animate-fadeSlideUp bg-surface-50/10 backdrop-blur-sm border-y border-surface-300/50 px-4 py-3">
-                {/* Section header */}
-                <div className="flex items-center justify-between mb-1.5">
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-xs font-semibold text-text-500 uppercase tracking-wider">
-                      {t("nav.guides")}
-                    </h3>
-                    {walletGuidesLanding.length > 0 && (
-                      <div className="flex items-center gap-0.5 text-[10px]">
-                        <button
-                          onClick={() => setPlaybookTab("mine")}
-                          className={`px-2 py-0.5 rounded-full transition-colors ${
-                            playbookTab === "mine"
-                              ? "bg-sage/15 text-sage font-semibold"
-                              : "text-text-400 hover:text-text-600"
-                          }`}
-                        >
-                          {t("guides.tab.wallet")}
-                        </button>
-                        <button
-                          onClick={() => setPlaybookTab("explore")}
-                          className={`px-2 py-0.5 rounded-full transition-colors ${
-                            playbookTab === "explore"
-                              ? "bg-sage/15 text-sage font-semibold"
-                              : "text-text-400 hover:text-text-600"
-                          }`}
-                        >
-                          {t("guides.tab.browse")}
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                  <a
-                    href={playbookTab === "mine" ? "/guides/?tab=wallet" : "/guides/"}
-                    className="text-[10px] text-sage hover:text-sage-dark transition-colors"
-                  >
-                    {t("landing.playbooks.seeAll")} &rarr;
-                  </a>
-                </div>
-                {/* Fun subtitle */}
-                <p className="text-[11px] text-text-500 mb-2">
-                  {playbookTab === "mine"
-                    ? t("landing.playbooks.subtitleMine")
-                    : t("landing.playbooks.subtitleExplore")}
-                </p>
-                {/* Cards row */}
-                <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-                  {(playbookTab === "mine" && walletGuidesLanding.length > 0
-                    ? walletGuidesLanding
-                    : landingGuides
-                  ).map((guide, i) => (
-                    <a
-                      key={guide.id}
-                      href={playbookTab === "mine" ? "/guides/?tab=wallet" : "/guides/"}
-                      className="flex-shrink-0 w-[96px] aspect-[3/4] flex flex-col rounded-lg overflow-hidden cursor-pointer select-none group animate-miniCardIn bg-surface-50/60 border border-surface-300/50 hover:border-surface-400 transition-all duration-200 hover:-translate-y-0.5"
-                      style={{ animationDelay: `${i * 80}ms` }}
-                    >
-                      {/* Color accent strip */}
-                      <div
-                        className="h-[3px] w-full shrink-0"
-                        style={{ backgroundColor: guide.color }}
-                      />
-
-                      {/* Icon */}
-                      <div className="flex items-center justify-center pt-3 pb-1 shrink-0 transition-transform duration-200 group-hover:scale-110">
-                        <OpenMojiIcon icon={guide.icon} size={32} />
-                      </div>
-
-                      {/* Title */}
-                      <div className="px-2 flex-1">
-                        <p className="text-[9px] font-semibold text-text-700 leading-tight line-clamp-3">
-                          {guide.title}
-                        </p>
-                      </div>
-
-                      {/* Progress — pinned to bottom */}
-                      {guide.total_count > 0 && (
-                        <div className="px-2 pb-1.5 shrink-0 flex items-center gap-1">
-                          <div className="flex-1 h-1 bg-surface-300/50 rounded-full overflow-hidden">
-                            <div
-                              className="h-full rounded-full"
-                              style={{
-                                width: `${((playbookTab === "mine" ? guide.done_count : 0) / guide.total_count) * 100}%`,
-                                backgroundColor: guide.color,
-                              }}
-                            />
-                          </div>
-                          <span className="text-[7px] text-text-500 tabular-nums">
-                            {playbookTab === "mine" ? `${guide.done_count}/${guide.total_count}` : `${guide.total_count} steps`}
-                          </span>
-                        </div>
-                      )}
-                    </a>
-                  ))}
-                  {/* Create card */}
-                  <a
-                    href="/guides/create"
-                    className="flex-shrink-0 w-[96px] aspect-[3/4] relative rounded-lg overflow-hidden cursor-pointer select-none group border border-dashed border-surface-300/60 hover:border-sage/40 transition-all duration-200 hover:-translate-y-0.5 animate-miniCardIn flex flex-col items-center justify-center gap-1.5"
-                    style={{ animationDelay: `${Math.min((landingGuides.length) * 80, 480)}ms` }}
-                  >
-                    <div className="w-7 h-7 rounded-full bg-surface-200/60 group-hover:bg-sage/10 flex items-center justify-center transition-colors duration-200">
-                      <svg className="w-3.5 h-3.5 text-text-500 group-hover:text-sage transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                      </svg>
-                    </div>
-                    <p className="text-[9px] font-semibold text-text-500 group-hover:text-sage px-2 text-center leading-tight transition-colors">
-                      {t("landing.playbooks.create")}
-                    </p>
-                  </a>
-                </div>
-              </div>
-            )}
           </div>
 
           {/* Scroll hint arrow */}
@@ -470,6 +356,118 @@ export default function Home() {
             </div>
           )}
         </div>
+
+        {/* Playbooks — outside hero, always visible */}
+        {(landingGuides.length > 0 || walletGuidesLanding.length > 0) && showChatBox && (
+          <div className="w-full animate-fadeSlideUp bg-surface-50/10 backdrop-blur-sm border-y border-surface-300/50 px-4 py-3">
+            {/* Section header */}
+            <div className="flex items-center justify-between mb-1.5">
+              <div className="flex items-center gap-2">
+                <h3 className="text-xs font-semibold text-text-500 uppercase tracking-wider">
+                  {t("nav.guides")}
+                </h3>
+                {walletGuidesLanding.length > 0 && (
+                  <div className="flex items-center gap-0.5 text-[10px]">
+                    <button
+                      onClick={() => setPlaybookTab("mine")}
+                      className={`px-2 py-0.5 rounded-full transition-colors ${
+                        playbookTab === "mine"
+                          ? "bg-sage/15 text-sage font-semibold"
+                          : "text-text-400 hover:text-text-600"
+                      }`}
+                    >
+                      {t("guides.tab.wallet")}
+                    </button>
+                    <button
+                      onClick={() => setPlaybookTab("explore")}
+                      className={`px-2 py-0.5 rounded-full transition-colors ${
+                        playbookTab === "explore"
+                          ? "bg-sage/15 text-sage font-semibold"
+                          : "text-text-400 hover:text-text-600"
+                      }`}
+                    >
+                      {t("guides.tab.browse")}
+                    </button>
+                  </div>
+                )}
+              </div>
+              <a
+                href={playbookTab === "mine" ? "/guides/?tab=wallet" : "/guides/"}
+                className="text-[10px] text-sage hover:text-sage-dark transition-colors"
+              >
+                {t("landing.playbooks.seeAll")} &rarr;
+              </a>
+            </div>
+            {/* Fun subtitle */}
+            <p className="text-[11px] text-text-500 mb-2">
+              {playbookTab === "mine"
+                ? t("landing.playbooks.subtitleMine")
+                : t("landing.playbooks.subtitleExplore")}
+            </p>
+            {/* Cards row */}
+            <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+              {(playbookTab === "mine" && walletGuidesLanding.length > 0
+                ? walletGuidesLanding
+                : landingGuides
+              ).map((guide, i) => (
+                <a
+                  key={guide.id}
+                  href={playbookTab === "mine" ? "/guides/?tab=wallet" : "/guides/"}
+                  className="flex-shrink-0 w-[96px] aspect-[3/4] flex flex-col rounded-lg overflow-hidden cursor-pointer select-none group animate-miniCardIn bg-surface-50/60 border border-surface-300/50 hover:border-surface-400 transition-all duration-200 hover:-translate-y-0.5"
+                  style={{ animationDelay: `${i * 80}ms` }}
+                >
+                  {/* Color accent strip */}
+                  <div
+                    className="h-[3px] w-full shrink-0"
+                    style={{ backgroundColor: guide.color }}
+                  />
+                  {/* Icon */}
+                  <div className="flex items-center justify-center pt-3 pb-1 shrink-0 transition-transform duration-200 group-hover:scale-110">
+                    <OpenMojiIcon icon={guide.icon} size={32} />
+                  </div>
+                  {/* Title */}
+                  <div className="px-2 flex-1">
+                    <p className="text-[9px] font-semibold text-text-700 leading-tight line-clamp-3">
+                      {guide.title}
+                    </p>
+                  </div>
+                  {/* Progress — pinned to bottom */}
+                  {guide.total_count > 0 && (
+                    <div className="px-2 pb-1.5 shrink-0 flex items-center gap-1">
+                      <div className="flex-1 h-1 bg-surface-300/50 rounded-full overflow-hidden">
+                        <div
+                          className="h-full rounded-full"
+                          style={{
+                            width: `${((playbookTab === "mine" ? guide.done_count : 0) / guide.total_count) * 100}%`,
+                            backgroundColor: guide.color,
+                          }}
+                        />
+                      </div>
+                      <span className="text-[7px] text-text-500 tabular-nums">
+                        {playbookTab === "mine" ? `${guide.done_count}/${guide.total_count}` : `${guide.total_count} steps`}
+                      </span>
+                    </div>
+                  )}
+                </a>
+              ))}
+              {/* Create card */}
+              <a
+                href="/guides/create"
+                className="flex-shrink-0 w-[96px] aspect-[3/4] relative rounded-lg overflow-hidden cursor-pointer select-none group border border-dashed border-surface-300/60 hover:border-sage/40 transition-all duration-200 hover:-translate-y-0.5 animate-miniCardIn flex flex-col items-center justify-center gap-1.5"
+                style={{ animationDelay: `${Math.min((landingGuides.length) * 80, 480)}ms` }}
+              >
+                <div className="w-7 h-7 rounded-full bg-surface-200/60 group-hover:bg-sage/10 flex items-center justify-center transition-colors duration-200">
+                  <svg className="w-3.5 h-3.5 text-text-500 group-hover:text-sage transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                </div>
+                <p className="text-[9px] font-semibold text-text-500 group-hover:text-sage px-2 text-center leading-tight transition-colors">
+                  {t("landing.playbooks.create")}
+                </p>
+              </a>
+            </div>
+          </div>
+        )}
 
         {/* Pinned chat bar — appears when hero input scrolls away */}
         <div
