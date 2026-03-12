@@ -207,6 +207,8 @@ async def publish_guide_endpoint(
         raise HTTPException(status_code=403, detail="Not your guide")
 
     await run_sync(set_user_guide_published, guide_id, user["id"], body.is_published)
+    from api.chat import invalidate_guide_catalog_cache
+    invalidate_guide_catalog_cache()
     return {"ok": True}
 
 
@@ -231,6 +233,8 @@ async def update_published_endpoint(
     ok = await run_sync(update_published_copy, guide_id, user["id"])
     if not ok:
         raise HTTPException(status_code=500, detail="Failed to update published copy")
+    from api.chat import invalidate_guide_catalog_cache
+    invalidate_guide_catalog_cache()
     return {"ok": True}
 
 

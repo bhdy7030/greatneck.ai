@@ -413,7 +413,7 @@ export default function Home() {
                 <a
                   key={guide.id}
                   href={`/guides/?open=${guide.id}${playbookTab === "mine" ? "&tab=wallet" : ""}`}
-                  className="flex-shrink-0 w-[96px] aspect-[3/4] flex flex-col rounded-lg overflow-hidden cursor-pointer select-none group animate-miniCardIn bg-surface-50/60 border border-surface-300/50 hover:border-surface-400 transition-all duration-200 hover:-translate-y-0.5"
+                  className="flex-shrink-0 w-[130px] aspect-[3/4] flex flex-col rounded-lg overflow-hidden cursor-pointer select-none group animate-miniCardIn bg-surface-50/60 border border-surface-300/50 hover:border-surface-400 transition-all duration-200 hover:-translate-y-0.5"
                   style={{ animationDelay: `${i * 80}ms` }}
                 >
                   {/* Color accent strip */}
@@ -422,18 +422,18 @@ export default function Home() {
                     style={{ backgroundColor: guide.color }}
                   />
                   {/* Icon */}
-                  <div className="flex items-center justify-center pt-3 pb-1 shrink-0 transition-transform duration-200 group-hover:scale-110">
-                    <OpenMojiIcon icon={guide.icon} size={32} />
+                  <div className="flex items-center justify-center pt-3 pb-1.5 shrink-0 transition-transform duration-200 group-hover:scale-110">
+                    <OpenMojiIcon icon={guide.icon} size={40} />
                   </div>
                   {/* Title */}
-                  <div className="px-2 flex-1">
-                    <p className="text-[9px] font-semibold text-text-700 leading-tight line-clamp-3">
+                  <div className="px-2.5 flex-1">
+                    <p className="text-[10px] font-semibold text-text-700 leading-tight line-clamp-3">
                       {guide.title}
                     </p>
                   </div>
                   {/* Progress — pinned to bottom */}
                   {guide.total_count > 0 && (
-                    <div className="px-2 pb-1.5 shrink-0 flex items-center gap-1">
+                    <div className="px-2.5 pb-2 shrink-0 flex items-center gap-1">
                       <div className="flex-1 h-1 bg-surface-300/50 rounded-full overflow-hidden">
                         <div
                           className="h-full rounded-full"
@@ -443,7 +443,7 @@ export default function Home() {
                           }}
                         />
                       </div>
-                      <span className="text-[7px] text-text-500 tabular-nums">
+                      <span className="text-[8px] text-text-500 tabular-nums">
                         {playbookTab === "mine" ? `${guide.done_count}/${guide.total_count}` : `${guide.total_count} steps`}
                       </span>
                     </div>
@@ -453,7 +453,7 @@ export default function Home() {
               {/* Create card */}
               <a
                 href="/guides/create"
-                className="flex-shrink-0 w-[96px] aspect-[3/4] relative rounded-lg overflow-hidden cursor-pointer select-none group border border-dashed border-surface-300/60 hover:border-sage/40 transition-all duration-200 hover:-translate-y-0.5 animate-miniCardIn flex flex-col items-center justify-center gap-1.5"
+                className="flex-shrink-0 w-[130px] aspect-[3/4] relative rounded-lg overflow-hidden cursor-pointer select-none group border border-dashed border-surface-300/60 hover:border-sage/40 transition-all duration-200 hover:-translate-y-0.5 animate-miniCardIn flex flex-col items-center justify-center gap-1.5"
                 style={{ animationDelay: `${Math.min((landingGuides.length) * 80, 480)}ms` }}
               >
                 <div className="w-7 h-7 rounded-full bg-surface-200/60 group-hover:bg-sage/10 flex items-center justify-center transition-colors duration-200">
@@ -461,7 +461,7 @@ export default function Home() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                   </svg>
                 </div>
-                <p className="text-[9px] font-semibold text-text-500 group-hover:text-sage px-2 text-center leading-tight transition-colors">
+                <p className="text-[10px] font-semibold text-text-500 group-hover:text-sage px-2.5 text-center leading-tight transition-colors">
                   {t("landing.playbooks.create")}
                 </p>
               </a>

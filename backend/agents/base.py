@@ -292,6 +292,21 @@ NOTE: These formatting rules apply to your written response ONLY. Do NOT reduce 
         if registry_context:
             system += f"\n\n{registry_context}"
 
+        # Inject playbook catalog so LLM can suggest relevant guides
+        playbook_catalog = (context or {}).get("playbook_catalog")
+        if playbook_catalog:
+            import json as _json
+            catalog_json = _json.dumps(playbook_catalog)
+            system += (
+                "\n\n## Available Playbooks (Step-by-Step Guides)\n"
+                "When the user's question is well-covered by one or more of these guides, "
+                "include a ```playbook-carousel fenced code block with a JSON array of 1-4 matching guides. "
+                "Each entry: {\"id\": ..., \"title\": ..., \"description\": ..., \"icon\": ..., \"color\": ..., \"step_count\": ...}. "
+                "Only include guides that are directly relevant. Do NOT include the carousel for unrelated questions. "
+                "Place the code block at the end of your response, after your text answer.\n\n"
+                f"Catalog:\n{catalog_json}"
+            )
+
         # Inject debug instructions from god mode memory
         debug_instructions = (context or {}).get("debug_instructions", "")
         if debug_instructions:

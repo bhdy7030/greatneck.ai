@@ -35,11 +35,74 @@ from db import (
     get_or_create_usage,
     increment_usage,
     claim_extended_trial,
+    get_published_user_guides,
 )
+from cache.redis_client import redis_get, redis_set, redis_delete
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
+
+_GUIDE_CATALOG_CACHE_KEY = "chat:guide_catalog"
+_GUIDE_CATALOG_TTL = 86400  # 24 hours — invalidated on publish/update
+
+
+def _build_guide_summaries() -> list[dict]:
+    """Fetch published guides from DB and build compact summaries."""
+    rows = get_published_user_guides()
+    summaries = []
+    for row in rows:
+        gd = row.get("guide_data", {})
+        title = gd.get("title", "")
+        if isinstance(title, dict):
+            title = title.get("en", "")
+        desc = gd.get("description", "")
+        if isinstance(desc, dict):
+            desc = desc.get("en", "")
+        steps = gd.get("steps", [])
+        step_titles = []
+        for s in steps:
+            st = s.get("title", "")
+            if isinstance(st, dict):
+                st = st.get("en", "")
+            if st:
+                step_titles.append(st)
+        summaries.append({
+            "id": row["id"],
+            "title": title,
+            "description": desc,
+            "icon": gd.get("icon", ""),
+            "color": gd.get("color", "#6B8F71"),
+            "step_count": len(steps),
+            "steps": step_titles,
+        })
+    return summaries
+
+
+def _fetch_guide_catalog() -> list[dict]:
+    """Fetch published guide summaries, Redis-cached for 24h."""
+    cached = redis_get(_GUIDE_CATALOG_CACHE_KEY)
+    if cached:
+        return cached.get("guides", [])
+
+    summaries = _build_guide_summaries()
+    redis_set(_GUIDE_CATALOG_CACHE_KEY, {"guides": summaries}, ttl=_GUIDE_CATALOG_TTL)
+    return summaries
+
+
+def invalidate_guide_catalog_cache() -> None:
+    """Write-through: rebuild and re-cache immediately so the next chat request is fast."""
+    summaries = _build_guide_summaries()
+    redis_set(_GUIDE_CATALOG_CACHE_KEY, {"guides": summaries}, ttl=_GUIDE_CATALOG_TTL)
+    # Also rebuild the embedding index (non-blocking)
+    from cache.playbook_index import rebuild_index_async
+    rebuild_index_async()
+
+
+def _fetch_relevant_guides(query: str) -> list[dict]:
+    """Return top relevant guides for a chat query via embedding similarity."""
+    from cache.playbook_index import search_relevant
+    return search_relevant(query, top_k=4, threshold=1.0)
 
 
 async def _enforce_tier(request: "ChatRequest", user: dict | None, session_id: str | None) -> dict | None:
@@ -326,6 +389,11 @@ async def _handle_chat_stream(request: ChatRequest, user: dict | None = None) ->
         "history": request.history,
         "language": request.language,
     }
+
+    # Inject relevant playbook guides (embedding similarity, top 4)
+    relevant_guides = await run_sync(_fetch_relevant_guides, request.message)
+    if relevant_guides:
+        context["playbook_catalog"] = relevant_guides
 
     # If an image is provided, add it to context for VisionAgent
     if request.image_base64:
@@ -760,6 +828,11 @@ async def _handle_chat(request: ChatRequest) -> ChatResponse:
         "history": request.history,
         "language": request.language,
     }
+
+    # Inject relevant playbook guides (embedding similarity, top 4)
+    relevant_guides = await run_sync(_fetch_relevant_guides, request.message)
+    if relevant_guides:
+        context["playbook_catalog"] = relevant_guides
 
     # Check internal registry for known answers
     reg_ctx = registry_lookup(request.message, request.village)

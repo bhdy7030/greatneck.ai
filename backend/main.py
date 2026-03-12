@@ -13,7 +13,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from config import settings
-from db import init_db, close_pg_pool, _is_pg, ingest_yaml_guides
+from db import init_db, close_pg_pool, _is_pg
 
 logger = logging.getLogger(__name__)
 
@@ -90,7 +90,6 @@ async def lifespan(app: FastAPI):
     _knowledge_mounted = True
     init_db()
     logger.info("Database initialized (mode=%s)", "PostgreSQL" if _is_pg() else "SQLite")
-    ingest_yaml_guides()
 
     # Start metrics collector background task
     from metrics.collector import collector as metrics_collector
@@ -99,6 +98,10 @@ async def lifespan(app: FastAPI):
     # Start metrics rollup background task
     from metrics.rollup import start_metrics_rollup, stop_metrics_rollup
     await start_metrics_rollup()
+
+    # Build playbook similarity index (for embedding-based guide pre-filter)
+    from cache.playbook_index import rebuild_index as rebuild_playbook_index
+    rebuild_playbook_index()
 
     # Start reminder processor background task
     from reminders.processor import start_reminder_processor, stop_reminder_processor

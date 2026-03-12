@@ -4,6 +4,7 @@ import type { ChatMessage as ChatMessageType } from "@/lib/api";
 import SourceCitation from "./SourceCitation";
 import PermitTimeline, { type PermitPhase } from "./PermitTimeline";
 import EmailDraftCard from "./EmailDraftCard";
+import PlaybookCarousel, { type PlaybookCard } from "./PlaybookCarousel";
 import PipelineSteps from "./PipelineSteps";
 import CalendarCard from "./CalendarCard";
 import ReactMarkdown from "react-markdown";
@@ -119,6 +120,15 @@ const markdownComponents = {
       try {
         const data = JSON.parse(String(children).trim());
         return <EmailDraftCard to={data.to} subject={data.subject} body={data.body} phone={data.phone} />;
+      } catch {
+        // Fall through to normal code rendering if parse fails
+      }
+    }
+    // Render playbook-carousel blocks as horizontal guide carousel
+    if (className === "language-playbook-carousel") {
+      try {
+        const guides: PlaybookCard[] = JSON.parse(String(children).trim());
+        return <PlaybookCarousel guides={guides} />;
       } catch {
         // Fall through to normal code rendering if parse fails
       }
