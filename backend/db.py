@@ -3105,7 +3105,7 @@ _HANDLE_RE = _re.compile(r'^[a-z0-9]([a-z0-9-]{1,18}[a-z0-9])?$')
 
 _RESERVED_HANDLES = {
     "admin", "administrator", "system", "sysadmin", "systemadmin",
-    "greatneck", "greatneckai", "great-neck", "great-neck-ai",
+    "greatneck", "great-neck", "great-neck-ai",
     "moderator", "mod", "support", "help", "info",
     "root", "superuser", "staff", "official",
 }
@@ -3131,6 +3131,15 @@ def check_handle_available(handle: str, exclude_user_id: int | None = None) -> b
     if not _validate_handle(handle):
         return False
     if handle.lower() in _RESERVED_HANDLES:
+        # Allow if the user already owns this handle (e.g. handle change check)
+        if exclude_user_id is not None:
+            current = _exec_one(
+                "SELECT handle FROM users WHERE id=?",
+                "SELECT handle FROM users WHERE id=%s",
+                (exclude_user_id,),
+            )
+            if current and current.get("handle") == handle.lower():
+                return True
         return False
     if exclude_user_id is not None:
         row = _exec_scalar(
