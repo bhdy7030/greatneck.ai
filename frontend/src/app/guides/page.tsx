@@ -13,6 +13,7 @@ import {
   saveUserGuide,
   deleteUserGuide,
   publishUserGuide,
+  updatePublishedCopy,
   getLikeStatus,
   toggleLike,
   type Guide,
@@ -56,6 +57,8 @@ function GuidesPageInner() {
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [likeStatus, setLikeStatus] = useState<Record<string, { liked: boolean; count: number }>>({});
   const [showPublishModal, setShowPublishModal] = useState(false);
+  const [showUpdatePublishedModal, setShowUpdatePublishedModal] = useState(false);
+  const [updatePublishedDone, setUpdatePublishedDone] = useState(false);
 
   const village = typeof window !== "undefined" ? localStorage.getItem("gn_village") || "" : "";
 
@@ -246,10 +249,26 @@ function GuidesPageInner() {
     setShowPublishModal(false);
     try {
       await publishUserGuide(expandedGuide.id, newStatus);
-      setExpandedGuide({ ...expandedGuide, is_published: newStatus });
+      setExpandedGuide({
+        ...expandedGuide,
+        is_published: newStatus,
+        published_copy_id: newStatus ? "pending" : null,
+      });
       fetchData();
     } catch (e) {
       console.error("Failed to toggle publish:", e);
+    }
+  };
+
+  const handleUpdatePublished = async () => {
+    if (!expandedGuide) return;
+    setShowUpdatePublishedModal(false);
+    try {
+      await updatePublishedCopy(expandedGuide.id);
+      setUpdatePublishedDone(true);
+      setTimeout(() => setUpdatePublishedDone(false), 2000);
+    } catch (e) {
+      console.error("Failed to update published copy:", e);
     }
   };
 
@@ -297,7 +316,31 @@ function GuidesPageInner() {
             <div className="flex-1 min-w-0 flex items-center gap-2">
               <div className="w-1 h-5 rounded-full shrink-0" style={{ backgroundColor: expandedGuide.color }} />
               <h1 className="text-sm font-bold text-text-900 truncate">{expandedGuide.title}</h1>
+              {expandedGuide.published_copy_id && (
+                <span className="shrink-0 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide bg-green-100 text-green-700 rounded-full">
+                  Published
+                </span>
+              )}
             </div>
+
+            {/* Update published version */}
+            {isOwnGuide && expandedGuide.published_copy_id && !editingGuide && (
+              updatePublishedDone ? (
+                <span className="shrink-0 text-[11px] text-green-600 flex items-center gap-1">
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  Updated
+                </span>
+              ) : (
+                <button
+                  onClick={() => setShowUpdatePublishedModal(true)}
+                  className="shrink-0 px-2.5 py-1 text-[11px] font-medium text-amber-700 border border-amber-300 rounded-lg hover:bg-amber-50 transition-colors"
+                >
+                  Update Published
+                </button>
+              )
+            )}
 
             {/* Actions */}
             {isOwnGuide && !editingGuide && (
@@ -456,6 +499,32 @@ function GuidesPageInner() {
             </div>
           </div>
         </div>
+
+        {/* Update published version confirmation modal */}
+        {showUpdatePublishedModal && (
+          <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+            <div className="mx-4 max-w-sm w-full bg-surface-50 rounded-2xl shadow-xl p-5 space-y-4 animate-scaleIn">
+              <h2 className="text-base font-bold text-text-900">Update Published Version</h2>
+              <p className="text-xs text-text-600 leading-relaxed">
+                This will update the version the community sees with your latest edits. Are you sure?
+              </p>
+              <div className="flex gap-2 pt-1">
+                <button
+                  onClick={() => setShowUpdatePublishedModal(false)}
+                  className="flex-1 py-2.5 min-h-[44px] rounded-xl text-xs font-medium bg-surface-200 text-text-600 hover:bg-surface-300 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleUpdatePublished}
+                  className="flex-1 py-2.5 min-h-[44px] rounded-xl text-xs font-semibold bg-amber-500 text-white hover:bg-amber-600 transition-colors"
+                >
+                  Update
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Publish / Unpublish confirmation modal */}
         {showPublishModal && (
@@ -784,7 +853,7 @@ function GuidesPageInner() {
                           doneCount={guide.done_count}
                           totalCount={guide.total_count}
                           seasonLabel={guide.season_label}
-                          badge={guide.wallet_category === "published" ? "Published" : guide.wallet_category === "private" ? t("guides.custom") : undefined}
+                          badge={guide.published_copy_id ? "Published" : guide.wallet_category === "private" ? t("guides.custom") : undefined}
                           authorHandle={guide.author_handle}
                           likeCount={likeStatus[guide.id]?.count}
                           index={i}

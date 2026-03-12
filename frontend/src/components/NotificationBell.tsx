@@ -134,6 +134,20 @@ export default function NotificationBell() {
             )}
           </div>
 
+          <div className="border-b border-surface-100">
+            <a
+              href="/reminders/"
+              className="flex items-center gap-2 px-3 py-2 text-xs text-sage hover:bg-sage/5 transition-colors"
+              onClick={() => setOpen(false)}
+            >
+              <span>🔔</span>
+              <span className="font-medium">View all reminders</span>
+              <svg className="w-3 h-3 ml-auto text-text-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </a>
+          </div>
+
           <div className="overflow-y-auto flex-1">
             {loading ? (
               <div className="flex justify-center py-6">

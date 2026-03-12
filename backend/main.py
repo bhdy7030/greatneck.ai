@@ -100,9 +100,14 @@ async def lifespan(app: FastAPI):
     from metrics.rollup import start_metrics_rollup, stop_metrics_rollup
     await start_metrics_rollup()
 
+    # Start reminder processor background task
+    from reminders.processor import start_reminder_processor, stop_reminder_processor
+    await start_reminder_processor()
+
     yield
 
-    # Shutdown: stop rollup, flush metrics, then close DB
+    # Shutdown: stop background tasks, flush metrics, then close DB
+    await stop_reminder_processor()
     await stop_metrics_rollup()
     await metrics_collector.stop()
     close_pg_pool()

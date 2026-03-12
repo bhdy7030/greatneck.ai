@@ -4,7 +4,7 @@ import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useLanguage } from "./LanguageProvider";
 import type { GuideStep, StepStatus } from "@/lib/api";
-import { updateStepStatus } from "@/lib/api";
+import { updateStepStatus, clearStepReminder } from "@/lib/api";
 import StepInlineChat from "./StepInlineChat";
 import StepReels from "./StepReels";
 
@@ -16,13 +16,12 @@ interface GuideChecklistProps {
   initialStepId?: string | null;
 }
 
-const STATUS_OPTIONS: StepStatus[] = ["todo", "in_progress", "done", "skipped"];
+const STATUS_OPTIONS: StepStatus[] = ["todo", "in_progress", "done"];
 
-const STATUS_LABEL_KEYS: Record<StepStatus, string> = {
+const STATUS_LABEL_KEYS: Record<string, string> = {
   todo: "guides.status.todo",
   in_progress: "guides.status.inProgress",
   done: "guides.status.done",
-  skipped: "guides.status.skipped",
 };
 
 export default function GuideChecklist({ guideId, guideTitle, steps: initialSteps, color, initialStepId }: GuideChecklistProps) {
@@ -37,6 +36,8 @@ export default function GuideChecklist({ guideId, guideTitle, steps: initialStep
   const [editingNote, setEditingNote] = useState<number | null>(null);
   const [noteText, setNoteText] = useState("");
   const [inlineChatIdx, setInlineChatIdx] = useState<number | null>(null);
+  const [reminderPickerIdx, setReminderPickerIdx] = useState<number | null>(null);
+  const [reminderDays, setReminderDays] = useState<number | null>(null);
 
 
   const cycleStatus = useCallback(
@@ -74,16 +75,29 @@ export default function GuideChecklist({ guideId, guideTitle, steps: initialStep
   );
 
   const setReminder = useCallback(
-    async (idx: number) => {
+    async (idx: number, remind_at: string) => {
       const step = steps[idx];
-      const remindDate = new Date();
-      remindDate.setDate(remindDate.getDate() + 3);
-      const remind_at = remindDate.toISOString();
       setSteps((prev) =>
         prev.map((s, i) => (i === idx ? { ...s, remind_at } : s))
       );
+      setReminderPickerIdx(null);
       try {
         await updateStepStatus(guideId, step.id, { status: step.status, remind_at });
+      } catch {
+        // silent
+      }
+    },
+    [guideId, steps]
+  );
+
+  const handleClearReminder = useCallback(
+    async (idx: number) => {
+      const step = steps[idx];
+      setSteps((prev) =>
+        prev.map((s, i) => (i === idx ? { ...s, remind_at: null } : s))
+      );
+      try {
+        await clearStepReminder(guideId, step.id);
       } catch {
         // silent
       }
@@ -202,9 +216,6 @@ export default function GuideChecklist({ guideId, guideTitle, steps: initialStep
                         case "done":
                           activeClass = "bg-sage text-white shadow-sm";
                           break;
-                        case "skipped":
-                          activeClass = "bg-surface-300 text-text-500";
-                          break;
                       }
                     }
                     return (
@@ -224,9 +235,19 @@ export default function GuideChecklist({ guideId, guideTitle, steps: initialStep
                 </div>
 
                 <div className="flex gap-2">
-                  {!step.remind_at && (
+                  {step.remind_at ? (
                     <button
-                      onClick={() => setReminder(i)}
+                      onClick={() => handleClearReminder(i)}
+                      className="flex-1 min-h-[44px] text-[11px] rounded-lg bg-amber-100 text-amber-700 hover:bg-amber-200 flex items-center justify-center gap-1.5"
+                    >
+                      <span>🔔</span>
+                      {new Date(step.remind_at).toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "America/New_York" })}{" "}
+                      {new Date(step.remind_at).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZone: "America/New_York" })}
+                      <span className="ml-0.5 text-amber-500 hover:text-red-500">✕</span>
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => setReminderPickerIdx(reminderPickerIdx === i ? null : i)}
                       className="flex-1 min-h-[44px] text-[11px] rounded-lg bg-surface-200/80 text-text-600 hover:bg-surface-200 flex items-center justify-center gap-1.5"
                     >
                       <span>🔔</span>
@@ -250,6 +271,74 @@ export default function GuideChecklist({ guideId, guideTitle, steps: initialStep
                     </button>
                   )}
                 </div>
+
+                {reminderPickerIdx === i && (
+                  <div className="space-y-1.5 pt-1">
+                    {/* Row 1: Date presets */}
+                    <div className="flex gap-1.5">
+                      {[
+                        { label: "Tomorrow", days: 1 },
+                        { label: "3 days", days: 3 },
+                        { label: "1 week", days: 7 },
+                      ].map(({ label, days }) => (
+                        <button
+                          key={label}
+                          onClick={() => setReminderDays(days)}
+                          className={`flex-1 min-h-[36px] text-[11px] rounded-lg border ${
+                            reminderDays === days
+                              ? "bg-amber-200 text-amber-800 border-amber-300"
+                              : "bg-amber-50 text-amber-700 hover:bg-amber-100 border-amber-200"
+                          }`}
+                        >
+                          {label}
+                        </button>
+                      ))}
+                    </div>
+                    {/* Row 2: Time presets (shown after date pick) */}
+                    {reminderDays !== null && (
+                      <div className="flex gap-1.5">
+                        {[
+                          { label: "9 AM", hour: 9 },
+                          { label: "12 PM", hour: 12 },
+                          { label: "5 PM", hour: 17 },
+                          { label: "8 PM", hour: 20 },
+                        ].map(({ label, hour }) => {
+                          const d = new Date();
+                          d.setDate(d.getDate() + reminderDays);
+                          d.setHours(hour, 0, 0, 0);
+                          return (
+                            <button
+                              key={label}
+                              onClick={() => { setReminderDays(null); setReminder(i, d.toISOString()); }}
+                              className="flex-1 min-h-[36px] text-[11px] rounded-lg bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200"
+                            >
+                              {label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                    {/* Row 3: Custom datetime + cancel */}
+                    <div className="flex gap-1.5 items-center">
+                      <input
+                        type="datetime-local"
+                        className="flex-1 min-h-[36px] px-2 text-[11px] rounded-lg border border-surface-300 bg-white focus:outline-none focus:border-sage"
+                        onChange={(e) => {
+                          if (e.target.value) {
+                            setReminderDays(null);
+                            setReminder(i, new Date(e.target.value).toISOString());
+                          }
+                        }}
+                      />
+                      <button
+                        onClick={() => { setReminderPickerIdx(null); setReminderDays(null); }}
+                        className="min-h-[36px] px-3 text-[11px] text-text-400 hover:text-text-600"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           );

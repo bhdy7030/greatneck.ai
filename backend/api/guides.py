@@ -18,8 +18,11 @@ from db import (
     get_step_statuses,
     update_step_status as db_update_step_status,
     get_due_reminders as db_get_due_reminders,
+    clear_step_reminder as db_clear_step_reminder,
+    get_pending_reminders as db_get_pending_reminders,
     get_user_guide,
     get_user_guides_for_owner,
+    get_user_snapshots,
     get_published_user_guides,
     get_liked_guide_ids,
 )
@@ -194,12 +197,32 @@ async def wallet_guides(
         step_map = status_by_guide.get(ug["id"], {})
         formatted = _format_guide(gd, lang, saved_ids, step_map)
         formatted["is_custom"] = True
-        formatted["is_published"] = bool(ug.get("is_published"))
+        formatted["is_published"] = bool(ug.get("published_copy_id"))
+        formatted["published_copy_id"] = ug.get("published_copy_id")
         formatted["saved"] = True
-        formatted["wallet_category"] = "published" if formatted["is_published"] else "private"
+        formatted["wallet_category"] = "private"
         formatted["author_handle"] = own_handle
         result.append(formatted)
         seen_ids.add(ug["id"])
+
+    # 1b) Published snapshots → show as read-only "published" cards
+    if user_id:
+        snapshots = await run_sync(get_user_snapshots, user_id)
+        for snap in snapshots:
+            gd = snap["guide_data"]
+            gd["id"] = snap["id"]
+            if "season" not in gd:
+                gd["season"] = None
+            step_map = status_by_guide.get(snap["id"], {})
+            formatted = _format_guide(gd, lang, saved_ids, step_map)
+            formatted["is_custom"] = True
+            formatted["is_published"] = True
+            formatted["is_snapshot"] = True
+            formatted["saved"] = True
+            formatted["wallet_category"] = "published"
+            formatted["author_handle"] = own_handle
+            result.append(formatted)
+            seen_ids.add(snap["id"])
 
     # 2) Liked guides (replaces old "saved" section)
     if user_id:
@@ -330,3 +353,42 @@ async def get_reminders(
     user_id, session_id = _resolve_identity(user, x_session_id or None)
     reminders = await run_sync(db_get_due_reminders, user_id, session_id)
     return reminders
+
+
+class ClearReminderRequest(BaseModel):
+    guide_id: str
+    step_id: str
+
+
+@router.delete("/guides/step/reminder")
+async def clear_reminder(
+    body: ClearReminderRequest,
+    x_session_id: str = Header(default="", alias="X-Session-ID"),
+    authorization: str | None = Header(default=None),
+):
+    """Clear a step reminder."""
+    user = None
+    if authorization:
+        try:
+            user = await get_optional_user(authorization)
+        except Exception:
+            pass
+    user_id, session_id = _resolve_identity(user, x_session_id or None)
+    await run_sync(db_clear_step_reminder, user_id, session_id, body.guide_id, body.step_id)
+    return {"ok": True}
+
+
+@router.get("/guides/reminders/pending")
+async def get_pending_reminders(
+    x_session_id: str = Header(default="", alias="X-Session-ID"),
+    authorization: str | None = Header(default=None),
+):
+    """Return all steps with reminders set (pending/upcoming), with guide+step titles."""
+    user = None
+    if authorization:
+        try:
+            user = await get_optional_user(authorization)
+        except Exception:
+            pass
+    user_id, session_id = _resolve_identity(user, x_session_id or None)
+    return await run_sync(db_get_pending_reminders, user_id, session_id)

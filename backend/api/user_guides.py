@@ -17,6 +17,7 @@ from db import (
     update_user_guide,
     delete_user_guide,
     set_user_guide_published,
+    update_published_copy,
     get_published_user_guides,
     migrate_user_guide_data,
     save_guide as db_save_guide,
@@ -206,6 +207,30 @@ async def publish_guide_endpoint(
         raise HTTPException(status_code=403, detail="Not your guide")
 
     await run_sync(set_user_guide_published, guide_id, user["id"], body.is_published)
+    return {"ok": True}
+
+
+# ── Update published copy ────────────────────────────────────────
+
+@router.patch("/guides/user/{guide_id}/update-published")
+async def update_published_endpoint(
+    guide_id: str,
+    authorization: str = Header(...),
+):
+    """Push current guide_data to the published snapshot. Requires login."""
+    user = await get_current_user(authorization)
+
+    existing = await run_sync(get_user_guide, guide_id)
+    if not existing:
+        raise HTTPException(status_code=404, detail="Guide not found")
+    if existing.get("user_id") != user["id"]:
+        raise HTTPException(status_code=403, detail="Not your guide")
+    if not existing.get("published_copy_id"):
+        raise HTTPException(status_code=400, detail="Guide is not published")
+
+    ok = await run_sync(update_published_copy, guide_id, user["id"])
+    if not ok:
+        raise HTTPException(status_code=500, detail="Failed to update published copy")
     return {"ok": True}
 
 

@@ -941,7 +941,7 @@ export async function updateUserPromo(
 
 // ── Guides API ──
 
-export type StepStatus = "todo" | "in_progress" | "done" | "skipped";
+export type StepStatus = "todo" | "in_progress" | "done" | "skipped";  // "skipped" kept for backward compat
 
 export interface GuideStep {
   id: string;
@@ -972,6 +972,7 @@ export interface Guide {
   is_custom?: boolean;
   is_community?: boolean;
   is_published?: boolean;
+  published_copy_id?: string | null;
   wallet_category?: "published" | "private" | "liked";
   author_handle?: string;
 }
@@ -1039,6 +1040,33 @@ export async function getReminders(): Promise<
     headers: { ...authHeaders(), ...sessionHeaders() },
   });
   if (!res.ok) throw new Error(`Failed to fetch reminders: ${res.status}`);
+  return res.json();
+}
+
+export async function clearStepReminder(guideId: string, stepId: string): Promise<void> {
+  await fetchWithRefresh(`${BASE_URL}/api/guides/step/reminder`, {
+    method: "DELETE",
+    headers: { "Content-Type": "application/json", ...authHeaders(), ...sessionHeaders() },
+    body: JSON.stringify({ guide_id: guideId, step_id: stepId }),
+  });
+}
+
+export interface PendingReminder {
+  guide_id: string;
+  step_id: string;
+  status: string;
+  remind_at: string;
+  note: string | null;
+  reminder_sent: boolean;
+  guide_title: string;
+  step_title: string;
+}
+
+export async function getPendingReminders(): Promise<PendingReminder[]> {
+  const res = await fetchWithRefresh(`${BASE_URL}/api/guides/reminders/pending`, {
+    headers: { ...authHeaders(), ...sessionHeaders() },
+  });
+  if (!res.ok) throw new Error(`Failed to fetch pending reminders: ${res.status}`);
   return res.json();
 }
 
@@ -1138,6 +1166,14 @@ export async function publishUserGuide(id: string, is_published: boolean): Promi
     body: JSON.stringify({ is_published }),
   });
   if (!res.ok) throw new Error("Failed to publish guide");
+}
+
+export async function updatePublishedCopy(id: string): Promise<void> {
+  const res = await fetchWithRefresh(`${BASE_URL}/api/guides/user/${id}/update-published`, {
+    method: "PATCH",
+    headers: { ...authHeaders() },
+  });
+  if (!res.ok) throw new Error("Failed to update published copy");
 }
 
 export async function generateGuide(description: string, village: string, lang: string): Promise<WizardResponse> {

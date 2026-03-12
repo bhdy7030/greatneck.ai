@@ -832,6 +832,32 @@ def _migrate_user_guides():
         logging.getLogger(__name__).exception("_migrate_user_guides failed")
 
 
+def _migrate_publish_snapshot():
+    """Add is_snapshot and published_copy_id columns to user_guides."""
+    try:
+        if _is_pg():
+            with _PgConnWrapper() as conn:
+                with conn.cursor() as cur:
+                    cur.execute("SELECT column_name FROM information_schema.columns WHERE table_name='user_guides'")
+                    cols = {row[0] for row in cur.fetchall()}
+                    if "is_snapshot" not in cols:
+                        cur.execute("ALTER TABLE user_guides ADD COLUMN is_snapshot BOOLEAN DEFAULT FALSE")
+                    if "published_copy_id" not in cols:
+                        cur.execute("ALTER TABLE user_guides ADD COLUMN published_copy_id TEXT")
+                    conn.commit()
+        else:
+            conn = _get_sqlite_conn()
+            cols = [row[1] for row in conn.execute("PRAGMA table_info(user_guides)").fetchall()]
+            if "is_snapshot" not in cols:
+                conn.execute("ALTER TABLE user_guides ADD COLUMN is_snapshot INTEGER DEFAULT 0")
+            if "published_copy_id" not in cols:
+                conn.execute("ALTER TABLE user_guides ADD COLUMN published_copy_id TEXT")
+            conn.commit()
+    except Exception:
+        import logging
+        logging.getLogger(__name__).exception("_migrate_publish_snapshot failed")
+
+
 def init_db():
     """Create tables if they don't exist."""
     if _is_pg():
@@ -844,6 +870,7 @@ def init_db():
         _migrate_invites()
         _migrate_guides()
         _migrate_user_guides()
+        _migrate_publish_snapshot()
         _migrate_metrics_daily()
         _migrate_page_visits()
         _migrate_waitlist()
@@ -852,6 +879,7 @@ def init_db():
         _migrate_comments()
         _migrate_likes()
         _migrate_notifications()
+        _migrate_reminder_sent()
         return
 
     # SQLite path (existing logic)
@@ -881,6 +909,7 @@ def init_db():
     _migrate_invites()
     _migrate_guides()
     _migrate_user_guides()
+    _migrate_publish_snapshot()
     _migrate_metrics_daily()
     _migrate_page_visits()
     _migrate_waitlist()
@@ -889,6 +918,7 @@ def init_db():
     _migrate_comments()
     _migrate_likes()
     _migrate_notifications()
+    _migrate_reminder_sent()
 
 
 # ── Users ───────────────────────────────────────────────────────
@@ -1942,6 +1972,168 @@ def get_due_reminders(user_id: int | None, session_id: str | None) -> list[dict]
     return []
 
 
+def process_due_reminders() -> int:
+    """Find due reminders (remind_at <= now, not yet sent), create notifications, mark sent. Returns count."""
+    now = datetime.now(_ET).isoformat()
+    if _is_pg():
+        from psycopg2.extras import RealDictCursor
+        with _PgConnWrapper() as conn:
+            with conn.cursor(cursor_factory=RealDictCursor) as cur:
+                cur.execute(
+                    """SELECT gss.id, gss.user_id, gss.guide_id, gss.step_id
+                       FROM guide_step_status gss
+                       WHERE gss.remind_at IS NOT NULL
+                         AND gss.remind_at <= %s
+                         AND (gss.reminder_sent = FALSE OR gss.reminder_sent IS NULL)
+                         AND gss.user_id IS NOT NULL""",
+                    (now,),
+                )
+                rows = [dict(r) for r in cur.fetchall()]
+                if not rows:
+                    return 0
+                for row in rows:
+                    # Look up step title from guide data
+                    step_title = row["step_id"]
+                    cur.execute(
+                        "SELECT guide_data FROM user_guides WHERE id=%s",
+                        (row["guide_id"],),
+                    )
+                    guide_row = cur.fetchone()
+                    if guide_row:
+                        gd = guide_row["guide_data"]
+                        if isinstance(gd, str):
+                            gd = json.loads(gd)
+                        for s in gd.get("steps", []):
+                            if s.get("id") == row["step_id"]:
+                                raw_st = s.get("title", row["step_id"])
+                                step_title = raw_st.get("en", str(raw_st)) if isinstance(raw_st, dict) else str(raw_st)
+                                break
+                    create_notification(
+                        row["user_id"], "reminder", row["user_id"],
+                        "guide", row["guide_id"],
+                        f"Reminder: {step_title}",
+                    )
+                # Mark all as sent
+                ids = [r["id"] for r in rows]
+                cur.execute(
+                    "UPDATE guide_step_status SET reminder_sent = TRUE WHERE id = ANY(%s)",
+                    (ids,),
+                )
+                conn.commit()
+                return len(rows)
+    else:
+        conn = _get_sqlite_conn()
+        rows = conn.execute(
+            """SELECT id, user_id, guide_id, step_id FROM guide_step_status
+               WHERE remind_at IS NOT NULL AND remind_at <= ?
+                 AND (reminder_sent = 0 OR reminder_sent IS NULL)
+                 AND user_id IS NOT NULL""",
+            (now,),
+        ).fetchall()
+        rows = [dict(r) for r in rows]
+        if not rows:
+            return 0
+        for row in rows:
+            step_title = row["step_id"]
+            guide_row = conn.execute("SELECT guide_data FROM user_guides WHERE id=?", (row["guide_id"],)).fetchone()
+            if guide_row:
+                gd = guide_row["guide_data"] if isinstance(guide_row["guide_data"], dict) else json.loads(guide_row["guide_data"])
+                for s in gd.get("steps", []):
+                    if s.get("id") == row["step_id"]:
+                        step_title = s.get("title", row["step_id"])
+                        break
+            create_notification(
+                row["user_id"], "reminder", row["user_id"],
+                "guide", row["guide_id"],
+                f"Reminder: {step_title}",
+            )
+        ids = [r["id"] for r in rows]
+        placeholders = ",".join("?" * len(ids))
+        conn.execute(f"UPDATE guide_step_status SET reminder_sent = 1 WHERE id IN ({placeholders})", ids)
+        conn.commit()
+        return len(rows)
+
+
+def get_pending_reminders(user_id: int | None, session_id: str | None) -> list[dict]:
+    """Return all steps with a remind_at set (pending reminders, future or past unsent)."""
+    if user_id:
+        rows = _exec(
+            """SELECT gss.guide_id, gss.step_id, gss.status, gss.remind_at, gss.note, gss.reminder_sent,
+                      ug.guide_data
+               FROM guide_step_status gss
+               LEFT JOIN user_guides ug ON ug.id = gss.guide_id
+               WHERE gss.user_id=? AND gss.remind_at IS NOT NULL
+               ORDER BY gss.remind_at ASC""",
+            """SELECT gss.guide_id, gss.step_id, gss.status, gss.remind_at, gss.note, gss.reminder_sent,
+                      ug.guide_data
+               FROM guide_step_status gss
+               LEFT JOIN user_guides ug ON ug.id = gss.guide_id
+               WHERE gss.user_id=%s AND gss.remind_at IS NOT NULL
+               ORDER BY gss.remind_at ASC""",
+            (user_id,),
+        )
+    elif session_id:
+        rows = _exec(
+            """SELECT gss.guide_id, gss.step_id, gss.status, gss.remind_at, gss.note, gss.reminder_sent,
+                      ug.guide_data
+               FROM guide_step_status gss
+               LEFT JOIN user_guides ug ON ug.id = gss.guide_id
+               WHERE gss.session_id=? AND gss.remind_at IS NOT NULL
+               ORDER BY gss.remind_at ASC""",
+            """SELECT gss.guide_id, gss.step_id, gss.status, gss.remind_at, gss.note, gss.reminder_sent,
+                      ug.guide_data
+               FROM guide_step_status gss
+               LEFT JOIN user_guides ug ON ug.id = gss.guide_id
+               WHERE gss.session_id=%s AND gss.remind_at IS NOT NULL
+               ORDER BY gss.remind_at ASC""",
+            (session_id,),
+        )
+    else:
+        return []
+    # Enrich with guide title and step title
+    result = []
+    for row in rows:
+        gd = row.get("guide_data")
+        if isinstance(gd, str):
+            gd = json.loads(gd)
+        raw_title = gd.get("title", row["guide_id"]) if gd else row["guide_id"]
+        guide_title = raw_title.get("en", str(raw_title)) if isinstance(raw_title, dict) else str(raw_title)
+        step_title = row["step_id"]
+        if gd:
+            for s in gd.get("steps", []):
+                if s.get("id") == row["step_id"]:
+                    raw_st = s.get("title", row["step_id"])
+                    step_title = raw_st.get("en", str(raw_st)) if isinstance(raw_st, dict) else str(raw_st)
+                    break
+        result.append({
+            "guide_id": row["guide_id"],
+            "step_id": row["step_id"],
+            "status": row["status"],
+            "remind_at": row["remind_at"],
+            "note": row["note"],
+            "reminder_sent": bool(row.get("reminder_sent")),
+            "guide_title": guide_title,
+            "step_title": step_title,
+        })
+    return result
+
+
+def clear_step_reminder(user_id: int | None, session_id: str | None, guide_id: str, step_id: str):
+    """Clear remind_at and reset reminder_sent for a step."""
+    if user_id:
+        _exec_modify(
+            "UPDATE guide_step_status SET remind_at=NULL, reminder_sent=0 WHERE user_id=? AND guide_id=? AND step_id=?",
+            "UPDATE guide_step_status SET remind_at=NULL, reminder_sent=FALSE WHERE user_id=%s AND guide_id=%s AND step_id=%s",
+            (user_id, guide_id, step_id),
+        )
+    elif session_id:
+        _exec_modify(
+            "UPDATE guide_step_status SET remind_at=NULL, reminder_sent=0 WHERE session_id=? AND guide_id=? AND step_id=?",
+            "UPDATE guide_step_status SET remind_at=NULL, reminder_sent=FALSE WHERE session_id=%s AND guide_id=%s AND step_id=%s",
+            (session_id, guide_id, step_id),
+        )
+
+
 def migrate_guide_data(session_id: str, user_id: int):
     """Move anonymous guide data to authenticated user on sign-in."""
     # Move saves
@@ -2002,18 +2194,33 @@ def get_user_guide(guide_id):
     return row
 
 
+def get_user_snapshots(user_id):
+    """Get all published snapshot copies owned by a user."""
+    if not user_id:
+        return []
+    rows = _exec(
+        "SELECT * FROM user_guides WHERE user_id=? AND is_snapshot = 1 ORDER BY updated_at DESC",
+        "SELECT * FROM user_guides WHERE user_id=%s AND is_snapshot = TRUE ORDER BY updated_at DESC",
+        (user_id,),
+    )
+    for r in rows:
+        if isinstance(r.get("guide_data"), str):
+            r["guide_data"] = json.loads(r["guide_data"])
+    return rows
+
+
 def get_user_guides_for_owner(user_id=None, session_id=None):
-    """Get all guides owned by a user or session."""
+    """Get all guides owned by a user or session (excludes snapshot copies)."""
     if user_id:
         rows = _exec(
-            "SELECT * FROM user_guides WHERE user_id=? ORDER BY updated_at DESC",
-            "SELECT * FROM user_guides WHERE user_id=%s ORDER BY updated_at DESC",
+            "SELECT * FROM user_guides WHERE user_id=? AND (is_snapshot = 0 OR is_snapshot IS NULL) ORDER BY updated_at DESC",
+            "SELECT * FROM user_guides WHERE user_id=%s AND (is_snapshot = FALSE OR is_snapshot IS NULL) ORDER BY updated_at DESC",
             (user_id,),
         )
     elif session_id:
         rows = _exec(
-            "SELECT * FROM user_guides WHERE session_id=? AND user_id IS NULL ORDER BY updated_at DESC",
-            "SELECT * FROM user_guides WHERE session_id=%s AND user_id IS NULL ORDER BY updated_at DESC",
+            "SELECT * FROM user_guides WHERE session_id=? AND user_id IS NULL AND (is_snapshot = 0 OR is_snapshot IS NULL) ORDER BY updated_at DESC",
+            "SELECT * FROM user_guides WHERE session_id=%s AND user_id IS NULL AND (is_snapshot = FALSE OR is_snapshot IS NULL) ORDER BY updated_at DESC",
             (session_id,),
         )
     else:
@@ -2045,7 +2252,17 @@ def update_user_guide(guide_id, user_id, session_id, guide_data):
 
 
 def delete_user_guide(guide_id, user_id=None, session_id=None):
-    """Delete an owned guide and cleanup related saves/step_status."""
+    """Delete an owned guide and cleanup related saves/step_status. Also deletes snapshot if present."""
+    # Check for published snapshot to cascade-delete
+    original = get_user_guide(guide_id)
+    if original:
+        snapshot_id = original.get("published_copy_id")
+        if snapshot_id:
+            _exec_modify(
+                "DELETE FROM user_guides WHERE id=?",
+                "DELETE FROM user_guides WHERE id=%s",
+                (snapshot_id,),
+            )
     if user_id:
         _exec_modify(
             "DELETE FROM user_guides WHERE id=? AND user_id=?",
@@ -2081,12 +2298,67 @@ def delete_user_guide(guide_id, user_id=None, session_id=None):
 
 
 def set_user_guide_published(guide_id, user_id, is_published):
-    """Toggle published status. Requires user_id (login required)."""
+    """Publish or unpublish a guide via snapshot copy. Requires user_id."""
+    if is_published:
+        # Fetch original guide data
+        original = get_user_guide(guide_id)
+        if not original or original.get("user_id") != user_id:
+            return
+        guide_json = json.dumps(original["guide_data"]) if isinstance(original["guide_data"], dict) else original["guide_data"]
+        snapshot_id = f"ug-{uuid.uuid4()}"
+        # Create snapshot row
+        if _is_pg():
+            _exec_modify(
+                "",
+                "INSERT INTO user_guides (id, user_id, guide_data, source_guide_id, is_published, is_draft, is_snapshot) VALUES (%s, %s, %s, %s, TRUE, FALSE, TRUE)",
+                (snapshot_id, user_id, guide_json, guide_id),
+            )
+        else:
+            _exec_modify(
+                "INSERT INTO user_guides (id, user_id, guide_data, source_guide_id, is_published, is_draft, is_snapshot) VALUES (?, ?, ?, ?, 1, 0, 1)",
+                "",
+                (snapshot_id, user_id, guide_json, guide_id),
+            )
+        # Update original: set published_copy_id, ensure is_published=FALSE so catalog only shows snapshot
+        _exec_modify(
+            "UPDATE user_guides SET published_copy_id=?, is_published=0, is_draft=0, updated_at=datetime('now') WHERE id=? AND user_id=?",
+            "UPDATE user_guides SET published_copy_id=%s, is_published=FALSE, is_draft=FALSE, updated_at=NOW() WHERE id=%s AND user_id=%s",
+            (snapshot_id, guide_id, user_id),
+        )
+    else:
+        # Unpublish: delete snapshot, clear published_copy_id
+        original = get_user_guide(guide_id)
+        if not original or original.get("user_id") != user_id:
+            return
+        snapshot_id = original.get("published_copy_id")
+        if snapshot_id:
+            _exec_modify(
+                "DELETE FROM user_guides WHERE id=?",
+                "DELETE FROM user_guides WHERE id=%s",
+                (snapshot_id,),
+            )
+        _exec_modify(
+            "UPDATE user_guides SET published_copy_id=NULL, updated_at=datetime('now') WHERE id=? AND user_id=?",
+            "UPDATE user_guides SET published_copy_id=NULL, updated_at=NOW() WHERE id=%s AND user_id=%s",
+            (guide_id, user_id),
+        )
+
+
+def update_published_copy(guide_id, user_id):
+    """Copy current guide_data from original to its published snapshot."""
+    original = get_user_guide(guide_id)
+    if not original or original.get("user_id") != user_id:
+        return False
+    snapshot_id = original.get("published_copy_id")
+    if not snapshot_id:
+        return False
+    guide_json = json.dumps(original["guide_data"]) if isinstance(original["guide_data"], dict) else original["guide_data"]
     _exec_modify(
-        "UPDATE user_guides SET is_published=?, is_draft=0, updated_at=datetime('now') WHERE id=? AND user_id=?",
-        "UPDATE user_guides SET is_published=%s, is_draft=FALSE, updated_at=NOW() WHERE id=%s AND user_id=%s",
-        (int(is_published) if not _is_pg() else is_published, guide_id, user_id),
+        "UPDATE user_guides SET guide_data=?, updated_at=datetime('now') WHERE id=?",
+        "UPDATE user_guides SET guide_data=%s, updated_at=NOW() WHERE id=%s",
+        (guide_json, snapshot_id),
     )
+    return True
 
 
 def get_published_user_guides():
@@ -3094,6 +3366,26 @@ def _migrate_notifications():
             """)
             conn.execute("CREATE INDEX IF NOT EXISTS idx_notif_user_unread ON notifications(user_id, is_read, created_at)")
             conn.execute("CREATE INDEX IF NOT EXISTS idx_notif_created ON notifications(created_at)")
+        conn.commit()
+
+
+def _migrate_reminder_sent():
+    """Add reminder_sent column to guide_step_status."""
+    if _is_pg():
+        with _PgConnWrapper() as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    DO $$ BEGIN
+                        ALTER TABLE guide_step_status ADD COLUMN reminder_sent BOOLEAN DEFAULT FALSE;
+                    EXCEPTION WHEN duplicate_column THEN NULL;
+                    END $$
+                """)
+                conn.commit()
+    else:
+        conn = _get_sqlite_conn()
+        cols = [row[1] for row in conn.execute("PRAGMA table_info(guide_step_status)").fetchall()]
+        if "reminder_sent" not in cols:
+            conn.execute("ALTER TABLE guide_step_status ADD COLUMN reminder_sent INTEGER DEFAULT 0")
         conn.commit()
 
 
