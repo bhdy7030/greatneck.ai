@@ -3111,11 +3111,63 @@ _RESERVED_HANDLES = {
     "root", "superuser", "staff", "official",
 }
 
-_GREAT_NECK_ADJECTIVES = [
-    "harbor", "bayside", "parkside", "meadow", "northshore", "sunny",
-    "coastal", "village", "lakeside", "creek", "maple", "cedar",
-    "willow", "garden", "hilltop", "breezy", "golden", "shore",
-]
+_VIBE_POOLS = {
+    "commuter": [
+        "lirrexpress", "quietcar", "plazaparking",
+        "northernblvd", "portwash", "pennbound",
+        "platform9", "expresslocal", "peakfare",
+        "trainnap", "parkinglot", "morningrush",
+        "metrocard", "tunnelview", "windowseat",
+        "rushhour", "latetrain", "serialcommuter",
+        "proplatformer", "parkingwhisper",
+        "trainbrainner", "exitstrategist",
+        "platformpoet", "commuterchamp",
+    ],
+    "foodie": [
+        "bagelrun", "hmarthaul", "colbehrice",
+        "lugersteak", "cavabowl", "bakeryline",
+        "matcharun", "dimsum", "pizzaslice",
+        "deliorder", "brunchwait", "sushispot",
+        "coffeedrip", "tacotruck", "ramenbowl",
+        "bodegacat", "croissant", "bobadrop",
+        "snackarchitect", "brunchstrategist",
+        "menuscholar", "samplechamp", "tastescout",
+        "leftoverkng", "sauceboss", "spicesensei",
+    ],
+    "family": [
+        # school life
+        "southhigh", "northhigh", "ptachair",
+        "schooldrop", "lunchpack", "fieldtrip",
+        "backpackhero", "permissionslip",
+        # little kids
+        "storytime", "playground", "naptime",
+        "strategicstroller", "napnegotiator",
+        "snackdistributor", "goldstarparent",
+        # logistics & chaos
+        "carpooldiplomat", "camplotteryking",
+        "recitalsurvivor", "schedulejuggler",
+        "snowdaychamp", "laundryolympian",
+        # parks & weekends
+        "steppingstone", "parkwoodrink",
+        "parkbench", "splashpad", "picnicpro",
+        "sundayscooter", "bikelaner",
+        # enrichment & milestones
+        "pianopractice", "matholympian",
+        "sciencefairpro", "spellingbeecoach",
+    ],
+    "homebody": [
+        "kingspoint", "saddlerock", "westegg",
+        "kensington", "lakesuccess", "villagecode",
+        "porchlife", "lawncare", "sunsetview",
+        "culdesac", "yardsale", "blockparty",
+        "frontporch", "gardenhose", "sprinkler",
+        "firepit", "hammock", "backyard",
+        "couchmayor", "pillowfort", "blanketceo",
+        "remotecontroller", "deliveryloyalist",
+        "thermostatking", "porchphilospher",
+        "zonecodewarrior", "leafblowerhero",
+    ],
+}
 
 
 def _validate_handle(handle: str) -> bool:
@@ -3157,43 +3209,50 @@ def check_handle_available(handle: str, exclude_user_id: int | None = None) -> b
     return row == 0
 
 
-def generate_handle_suggestions(name: str) -> list[str]:
-    """Generate 5 unused handle suggestions based on the user's name."""
+def generate_handle_suggestions(vibe: str = "") -> list[str]:
+    """Generate 5 unused handle suggestions, Great Neck themed.
+
+    If vibe is provided (commuter/foodie/family/homebody), pull from that pool.
+    Otherwise mix from all pools.
+    """
     import random
-    # Clean the first name
-    first = name.split()[0].lower() if name else "user"
-    first = _re.sub(r'[^a-z0-9]', '', first) or "user"
-    if len(first) > 12:
-        first = first[:12]
+
+    # Select stems based on vibe
+    if vibe and vibe in _VIBE_POOLS:
+        stems = list(_VIBE_POOLS[vibe])
+    else:
+        stems = []
+        for pool in _VIBE_POOLS.values():
+            stems.extend(pool)
+
+    random.shuffle(stems)
 
     suggestions = []
     tried = set()
 
-    # Try adjective-firstname combos
-    shuffled = random.sample(_GREAT_NECK_ADJECTIVES, min(len(_GREAT_NECK_ADJECTIVES), 15))
-    for adj in shuffled:
-        candidate = f"{adj}-{first}"
-        if len(candidate) > 20:
+    # Round 1: try stems as-is
+    for stem in stems:
+        if stem in tried or len(stem) < 3:
             continue
-        if candidate in tried:
-            continue
-        tried.add(candidate)
-        if _validate_handle(candidate) and check_handle_available(candidate):
-            suggestions.append(candidate)
+        tried.add(stem)
+        if _validate_handle(stem) and check_handle_available(stem):
+            suggestions.append(stem)
             if len(suggestions) >= 5:
                 return suggestions
 
-    # Fallback: name-random3digits
-    for _ in range(20):
-        suffix = str(random.randint(100, 999))
-        candidate = f"{first}-{suffix}"
-        if candidate in tried:
-            continue
-        tried.add(candidate)
-        if _validate_handle(candidate) and check_handle_available(candidate):
-            suggestions.append(candidate)
-            if len(suggestions) >= 5:
-                return suggestions
+    # Round 2: stem + number fallback
+    random.shuffle(stems)
+    for stem in stems:
+        for _ in range(5):
+            suffix = str(random.randint(1, 99))
+            candidate = f"{stem}{suffix}"
+            if len(candidate) > 20 or candidate in tried:
+                continue
+            tried.add(candidate)
+            if _validate_handle(candidate) and check_handle_available(candidate):
+                suggestions.append(candidate)
+                if len(suggestions) >= 5:
+                    return suggestions
 
     return suggestions
 

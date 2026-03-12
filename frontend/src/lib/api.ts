@@ -1207,8 +1207,9 @@ export async function deleteWaitlistEntry(entryId: number): Promise<void> {
 
 // ── Profile / Handle API ──
 
-export async function suggestHandles(): Promise<{ suggestions: string[] }> {
-  const res = await fetchWithRefresh(`${BASE_URL}/api/profile/handle/suggest`, {
+export async function suggestHandles(vibe?: string): Promise<{ suggestions: string[] }> {
+  const params = vibe ? `?vibe=${encodeURIComponent(vibe)}` : "";
+  const res = await fetchWithRefresh(`${BASE_URL}/api/profile/handle/suggest${params}`, {
     headers: authHeaders(),
   });
   if (!res.ok) throw new Error(`Failed to suggest handles: ${res.status}`);

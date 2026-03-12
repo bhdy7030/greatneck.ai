@@ -44,7 +44,7 @@ export default function HandleChanger({ currentHandle, onComplete, onClose }: Ha
     checkHandleAvailable(handle)
       .then(({ available: ok }) => {
         setAvailable(ok);
-        if (!ok) setError("This handle is taken");
+        if (!ok) setError("This username is taken");
       })
       .catch(() => setAvailable(null))
       .finally(() => setChecking(false));
@@ -79,7 +79,7 @@ export default function HandleChanger({ currentHandle, onComplete, onClose }: Ha
       await setHandle(value);
       onComplete(value);
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : "Failed to change handle");
+      setError(e instanceof Error ? e.message : "Failed to change username");
     } finally {
       setSubmitting(false);
     }
@@ -91,9 +91,9 @@ export default function HandleChanger({ currentHandle, onComplete, onClose }: Ha
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={onClose}>
       <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6" onClick={(e) => e.stopPropagation()}>
-        <h2 className="text-lg font-semibold text-gray-900 mb-1">Change your handle</h2>
+        <h2 className="text-lg font-semibold text-gray-900 mb-1">Change your username</h2>
         <p className="text-sm text-gray-500 mb-4">
-          Your current handle is <span className="font-medium text-text-700">@{currentHandle}</span>
+          Your current username is <span className="font-medium text-text-700">@{currentHandle}</span>
         </p>
 
         <div className="mb-4">
@@ -103,7 +103,7 @@ export default function HandleChanger({ currentHandle, onComplete, onClose }: Ha
               type="text"
               value={value}
               onChange={(e) => handleChange(e.target.value)}
-              placeholder="new-handle"
+              placeholder="new-username"
               maxLength={20}
               autoFocus
               className="w-full pl-7 pr-10 py-2.5 border border-surface-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage"

@@ -30,9 +30,9 @@ def _resolve_avatar(user: dict) -> str:
 
 
 @router.get("/profile/handle/suggest")
-async def suggest_handles(user: dict = Depends(get_current_user)):
-    """Generate 5 handle suggestions for the current user."""
-    suggestions = await run_sync(generate_handle_suggestions, user.get("name", ""))
+async def suggest_handles(vibe: str = "", user: dict = Depends(get_current_user)):
+    """Generate 5 handle suggestions, optionally filtered by lifestyle vibe."""
+    suggestions = await run_sync(generate_handle_suggestions, vibe)
     return {"suggestions": suggestions}
 
 
