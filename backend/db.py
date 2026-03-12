@@ -2125,9 +2125,9 @@ def upsert_user_guide(guide_id, user_id, guide_data, is_published=False):
     existing = get_user_guide(guide_id)
     if existing:
         _exec_modify(
-            "UPDATE user_guides SET guide_data=?, is_published=?, is_draft=0, updated_at=datetime('now') WHERE id=?",
-            "UPDATE user_guides SET guide_data=%s, is_published=%s, is_draft=FALSE, updated_at=NOW() WHERE id=%s",
-            (guide_json, int(is_published) if not _is_pg() else is_published, guide_id),
+            "UPDATE user_guides SET user_id=?, guide_data=?, is_published=?, is_draft=0, updated_at=datetime('now') WHERE id=?",
+            "UPDATE user_guides SET user_id=%s, guide_data=%s, is_published=%s, is_draft=FALSE, updated_at=NOW() WHERE id=%s",
+            (user_id, guide_json, int(is_published) if not _is_pg() else is_published, guide_id),
         )
     else:
         _exec_modify(
@@ -2142,11 +2142,11 @@ def ingest_yaml_guides():
     import logging
     logger = logging.getLogger(__name__)
     from knowledge.guides_registry import get_all_guides
-    admin_id = ensure_system_user("admin", "GreatNeck.ai")
+    admin_id = ensure_system_user("tinydesk", "Tiny Desk")
     guides = get_all_guides()
     for g in guides:
         upsert_user_guide(g["id"], admin_id, g, is_published=True)
-    logger.info(f"Ingested {len(guides)} YAML guides as @admin user_guides")
+    logger.info(f"Ingested {len(guides)} YAML guides as @tinydesk user_guides")
 
 
 def migrate_user_guide_data(session_id, user_id):
@@ -3106,6 +3106,7 @@ _HANDLE_RE = _re.compile(r'^[a-z0-9]([a-z0-9-]{1,18}[a-z0-9])?$')
 _RESERVED_HANDLES = {
     "admin", "administrator", "system", "sysadmin", "systemadmin",
     "greatneck", "great-neck", "great-neck-ai",
+    "tinydesk", "tiny-desk",
     "moderator", "mod", "support", "help", "info",
     "root", "superuser", "staff", "official",
 }

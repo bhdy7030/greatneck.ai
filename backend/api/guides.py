@@ -147,7 +147,7 @@ async def list_guides(
         formatted = _format_guide(gd, lang, saved_ids, step_map)
         author_handle = ug.get("author_handle")
         formatted["author_handle"] = author_handle
-        formatted["is_community"] = author_handle != "admin" if author_handle else False
+        formatted["is_community"] = author_handle not in ("admin", "tinydesk") if author_handle else False
         result.append(formatted)
 
     logger.info(f"[guides] Catalog returned {len(result)} guides for village={village!r}")

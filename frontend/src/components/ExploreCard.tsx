@@ -164,7 +164,7 @@ export default function ExploreCard({
         <p className="text-[10px] text-white/80 drop-shadow-sm line-clamp-2 mb-1.5">
           {description}
         </p>
-        {authorHandle && authorHandle !== "admin" && (
+        {authorHandle && (
           <p className="text-[9px] text-white/60 drop-shadow-sm mb-1">@{authorHandle}</p>
         )}
         {doneCount != null ? (
