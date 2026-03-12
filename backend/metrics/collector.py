@@ -27,12 +27,22 @@ MAX_BATCH = 200       # max records per flush
 
 _ctx_session_id: contextvars.ContextVar[str] = contextvars.ContextVar("metrics_session_id", default="")
 _ctx_conversation_id: contextvars.ContextVar[str] = contextvars.ContextVar("metrics_conversation_id", default="")
+_ctx_source: contextvars.ContextVar[str] = contextvars.ContextVar("metrics_source", default="user")
 
 
 def set_request_context(session_id: str = "", conversation_id: str = ""):
     """Call at the start of each chat request."""
     _ctx_session_id.set(session_id or "")
     _ctx_conversation_id.set(conversation_id or "")
+
+
+def set_source(source: str = "user"):
+    """Set the source context for LLM usage tracking (e.g. 'user' or 'background')."""
+    _ctx_source.set(source)
+
+
+def get_source() -> str:
+    return _ctx_source.get()
 
 
 def get_session_id() -> str:
@@ -56,6 +66,7 @@ class UsageRecord:
     latency_ms: int = 0
     session_id: str = ""
     conversation_id: str = ""
+    source: str = ""       # "user" or "background"
     timestamp: float = field(default_factory=time.time)
 
 
@@ -210,6 +221,7 @@ def record_llm_usage(
         latency_ms=latency_ms,
         session_id=get_session_id(),
         conversation_id=get_conversation_id(),
+        source=get_source(),
     ))
 
 

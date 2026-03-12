@@ -565,9 +565,11 @@ export async function getMetricsTimeseries(
 export async function getMetricsBreakdown(
   metric_type: string,
   period: string = "30d",
+  breakdownBy?: string,
 ): Promise<BreakdownItem[]> {
   const qs = metricsParams({ metric_type, period });
-  const res = await fetchWithRefresh(`${BASE_URL}/api/admin/metrics/breakdown?${qs}`, {
+  const extra = breakdownBy ? `&breakdown_by=${encodeURIComponent(breakdownBy)}` : "";
+  const res = await fetchWithRefresh(`${BASE_URL}/api/admin/metrics/breakdown?${qs}${extra}`, {
     headers: authHeaders(),
   });
   if (!res.ok) throw new Error(`Failed to fetch breakdown: ${res.status}`);

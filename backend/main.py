@@ -5,6 +5,8 @@ import os
 import secrets as _secrets
 import time
 import traceback
+
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 from contextlib import asynccontextmanager
 from pathlib import Path
 from fastapi import FastAPI, Request

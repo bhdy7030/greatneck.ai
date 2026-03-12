@@ -29,7 +29,15 @@ def _extract_and_record(response, model: str, role: str, start_time: float):
         try:
             cost = litellm.completion_cost(completion_response=response)
         except Exception:
-            cost = 0.0
+            try:
+                input_cost, output_cost = litellm.cost_per_token(
+                    model=model,
+                    prompt_tokens=prompt_tokens,
+                    completion_tokens=completion_tokens,
+                )
+                cost = input_cost + output_cost
+            except Exception:
+                cost = 0.0
 
         latency_ms = int((time.time() - start_time) * 1000)
 
@@ -52,6 +60,7 @@ async def _retry(coro_fn, retries=MAX_RETRIES):
         try:
             return await coro_fn()
         except Exception as e:
+            logger.error(f"LLM call error (attempt {attempt+1}/{retries}): {type(e).__name__}: {e}")
             err_str = str(e).lower()
             is_transient = ("overloaded" in err_str or "529" in err_str or "rate" in err_str) and "not found" not in err_str and "404" not in err_str
             if is_transient and attempt < retries - 1:
@@ -127,11 +136,12 @@ async def llm_call_streaming(
         total_tokens = prompt_tokens + completion_tokens
         # Estimate cost from token counts
         try:
-            cost = litellm.completion_cost(
+            input_cost, output_cost = litellm.cost_per_token(
                 model=model,
-                prompt=str(prompt_tokens),
-                completion=str(completion_tokens),
+                prompt_tokens=prompt_tokens,
+                completion_tokens=completion_tokens,
             )
+            cost = input_cost + output_cost
         except Exception:
             cost = 0.0
         latency_ms = int((time.time() - start) * 1000)
@@ -163,7 +173,7 @@ async def llm_call_with_tools(
         response = await litellm.acompletion(
             model=model,
             messages=messages,
-            tools=tools if tools else None,
+            tools=tools or None,
             temperature=temperature,
             max_tokens=max_tokens,
         )

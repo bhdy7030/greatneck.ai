@@ -85,6 +85,9 @@ export default function MetricsDashboard() {
   const [pipeline, setPipeline] = useState<PipelineData | null>(null);
   const [legacyMetrics, setLegacyMetrics] = useState<MetricsData | null>(null);
   const [chartMode, setChartMode] = useState<"cost" | "tokens">("cost");
+  const [breakdownTab, setBreakdownTab] = useState<"role" | "model">("role");
+  const [modelTokenBreakdown, setModelTokenBreakdown] = useState<BreakdownItem[] | null>(null);
+  const [modelCostBreakdown, setModelCostBreakdown] = useState<BreakdownItem[] | null>(null);
 
   const loadData = useCallback(async () => {
     // Reset to show skeletons
@@ -96,6 +99,8 @@ export default function MetricsDashboard() {
     setLatencySeries(null);
     setTokenBreakdown(null);
     setCostBreakdown(null);
+    setModelTokenBreakdown(null);
+    setModelCostBreakdown(null);
     setPipeline(null);
 
     // Parallel fetch all data
@@ -111,6 +116,8 @@ export default function MetricsDashboard() {
       getMetricsPipeline(period),
       getRealtimeMetrics(),
       getMetrics(),
+      getMetricsBreakdown("tokens", period, "model"),
+      getMetricsBreakdown("cost", period, "model"),
     ]);
 
     if (results[0].status === "fulfilled") setSummary(results[0].value);
@@ -124,6 +131,8 @@ export default function MetricsDashboard() {
     if (results[8].status === "fulfilled") setPipeline(results[8].value);
     if (results[9].status === "fulfilled") setRealtime(results[9].value);
     if (results[10].status === "fulfilled") setLegacyMetrics(results[10].value);
+    if (results[11].status === "fulfilled") setModelTokenBreakdown(results[11].value);
+    if (results[12].status === "fulfilled") setModelCostBreakdown(results[12].value);
   }, [period]);
 
   useEffect(() => { loadData(); }, [loadData]);
@@ -181,14 +190,43 @@ export default function MetricsDashboard() {
       </div>
 
       {/* Section 3: Usage Breakdown */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="bg-surface-200 border border-surface-300 rounded-xl p-4">
-          <h3 className="text-xs text-text-500 uppercase tracking-wide mb-3">Tokens by Role</h3>
-          <BreakdownBarChart data={tokenBreakdown} valueKey="total_value" formatter={fmtTokens} />
+      <div>
+        <div className="flex gap-1 mb-3">
+          {(["role", "model"] as const).map(tab => (
+            <button
+              key={tab}
+              onClick={() => setBreakdownTab(tab)}
+              className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${
+                breakdownTab === tab
+                  ? "bg-sage text-white"
+                  : "text-text-600 hover:text-text-800 hover:bg-surface-200"
+              }`}
+            >
+              By {tab.charAt(0).toUpperCase() + tab.slice(1)}
+            </button>
+          ))}
         </div>
-        <div className="bg-surface-200 border border-surface-300 rounded-xl p-4">
-          <h3 className="text-xs text-text-500 uppercase tracking-wide mb-3">Cost by Role</h3>
-          <BreakdownBarChart data={costBreakdown} valueKey="total_value" formatter={fmtCost} />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="bg-surface-200 border border-surface-300 rounded-xl p-4">
+            <h3 className="text-xs text-text-500 uppercase tracking-wide mb-3">
+              Tokens by {breakdownTab === "role" ? "Role" : "Model"}
+            </h3>
+            <BreakdownBarChart
+              data={breakdownTab === "role" ? tokenBreakdown : modelTokenBreakdown}
+              valueKey="total_value"
+              formatter={fmtTokens}
+            />
+          </div>
+          <div className="bg-surface-200 border border-surface-300 rounded-xl p-4">
+            <h3 className="text-xs text-text-500 uppercase tracking-wide mb-3">
+              Cost by {breakdownTab === "role" ? "Role" : "Model"}
+            </h3>
+            <BreakdownBarChart
+              data={breakdownTab === "role" ? costBreakdown : modelCostBreakdown}
+              valueKey="total_value"
+              formatter={fmtCost}
+            />
+          </div>
         </div>
       </div>
 

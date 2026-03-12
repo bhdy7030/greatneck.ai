@@ -260,13 +260,14 @@ async def _handle_chat_stream(request: ChatRequest, user: dict | None = None) ->
     import time as _time
     from tools.budget import set_budget
     from llm.presets import set_fast_mode
-    from metrics.collector import set_request_context, record_pipeline_event
+    from metrics.collector import set_request_context, set_source, record_pipeline_event
     set_budget(mode=request.web_search_mode, limit=5)
     set_fast_mode(request.fast_mode)
     set_request_context(
         session_id=getattr(request, '_session_id', ''),
         conversation_id=request.conversation_id or '',
     )
+    set_source("user")
 
     # ── Cache: skip for images and follow-up questions (history means context-dependent) ──
     _is_cacheable = not request.image_base64 and len(request.history) == 0
@@ -538,15 +539,19 @@ async def _handle_chat_stream(request: ChatRequest, user: dict | None = None) ->
         _t_specialist = _time.monotonic()
 
         async def run_specialist():
-            async for item in agent.run_streaming(
-                refined_query,
-                context=context,
-                search_plan=search_plan_text,
-                model_role_override=specialist_model_role,
-                on_event=emit_tool_event,
-            ):
-                await stream_queue.put(item)
-            await stream_queue.put(None)  # sentinel
+            try:
+                async for item in agent.run_streaming(
+                    refined_query,
+                    context=context,
+                    search_plan=search_plan_text,
+                    model_role_override=specialist_model_role,
+                    on_event=emit_tool_event,
+                ):
+                    await stream_queue.put(item)
+            except Exception:
+                logger.exception("Specialist streaming failed")
+            finally:
+                await stream_queue.put(None)  # sentinel always sent
 
         task = asyncio.create_task(run_specialist())
 
@@ -724,13 +729,14 @@ async def _handle_chat(request: ChatRequest) -> ChatResponse:
     import time as _time
     from tools.budget import set_budget
     from llm.presets import set_fast_mode
-    from metrics.collector import set_request_context, record_pipeline_event
+    from metrics.collector import set_request_context, set_source, record_pipeline_event
     set_budget(mode=request.web_search_mode, limit=5)
     set_fast_mode(request.fast_mode)
     set_request_context(
         session_id=getattr(request, '_session_id', ''),
         conversation_id=request.conversation_id or '',
     )
+    set_source("user")
 
     # Semantic cache check (skip for images and follow-up questions with history)
     _is_cacheable = not request.image_base64 and len(request.history) == 0

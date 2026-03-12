@@ -1,6 +1,7 @@
 """Base agent with tool-use loop. All specialist agents extend this."""
 from __future__ import annotations
 
+import asyncio
 import json
 import time
 from dataclasses import dataclass, field
@@ -145,18 +146,27 @@ class BaseAgent:
 
             # No tool calls = final answer
             if not response.tool_calls:
-                # Stream the final answer with true token-level streaming.
-                # This makes a second LLM call but gives real-time token output
-                # which is the biggest perceived speed win for users.
-                full_content = ""
-                async for chunk in llm_call_streaming(
-                    messages=messages,
-                    role=effective_role,
-                ):
-                    full_content += chunk
-                    yield ("token", chunk)
+                content = response.content or ""
+                if calls_made:
+                    # After tool-call iterations, messages contain tool-use
+                    # format that Anthropic rejects without tools= declared.
+                    # Use the already-generated content directly instead of
+                    # making a redundant second LLM call.
+                    for i in range(0, len(content), 12):
+                        yield ("token", content[i:i + 12])
+                        await asyncio.sleep(0.005)
+                else:
+                    # First iteration, no tool history — safe to stream
+                    full_content = ""
+                    async for chunk in llm_call_streaming(
+                        messages=messages,
+                        role=effective_role,
+                    ):
+                        full_content += chunk
+                        yield ("token", chunk)
+                    content = full_content
 
-                yield ("done", full_content, calls_made)
+                yield ("done", content, calls_made)
                 return
 
             # Process tool calls (same as run())

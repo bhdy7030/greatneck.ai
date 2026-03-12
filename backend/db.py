@@ -59,20 +59,70 @@ def _is_pg() -> bool:
 
 # ── Connection helpers ──────────────────────────────────────────
 
-class _PgConnWrapper:
-    """Context manager that returns a psycopg2 connection to the pool."""
+# Thread-local dedicated connection for background tasks (rollup, backfill).
+# When set, all DB helpers use this instead of the pool, so background work
+# never competes with user-facing requests for pool connections.
+_bg_conn: threading.local = threading.local()
+
+
+class _BgConnContext:
+    """Context manager: opens a dedicated PG connection for background work.
+
+    While active (on the current thread), all _PgConnWrapper calls will reuse
+    this single connection instead of hitting the shared pool.
+    """
     def __init__(self):
-        self.conn = None
+        self._conn = None
 
     def __enter__(self):
+        if _is_pg():
+            import psycopg2
+            self._conn = psycopg2.connect(_DATABASE_URL)
+            _bg_conn.conn = self._conn
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        _bg_conn.conn = None
+        if self._conn is not None:
+            try:
+                if exc_type is not None:
+                    self._conn.rollback()
+                self._conn.close()
+            except Exception:
+                pass
+            self._conn = None
+
+
+def background_connection():
+    """Get a context manager that provides a dedicated DB connection for background tasks."""
+    return _BgConnContext()
+
+
+class _PgConnWrapper:
+    """Context manager that returns a psycopg2 connection to the pool,
+    or the dedicated background connection if one is active."""
+    def __init__(self):
+        self.conn = None
+        self._from_pool = False
+
+    def __enter__(self):
+        # Use dedicated background connection if available (rollup/backfill)
+        bg = getattr(_bg_conn, 'conn', None)
+        if bg is not None:
+            self.conn = bg
+            self._from_pool = False
+            return self.conn
+        # Otherwise use the shared pool
         self.conn = _get_pg_pool().getconn()
+        self._from_pool = True
         return self.conn
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         if self.conn is not None:
             if exc_type is not None:
                 self.conn.rollback()
-            _get_pg_pool().putconn(self.conn)
+            if self._from_pool:
+                _get_pg_pool().putconn(self.conn)
             self.conn = None
 
 
@@ -281,7 +331,8 @@ CREATE TABLE IF NOT EXISTS llm_usage (
     completion_tokens INTEGER NOT NULL DEFAULT 0,
     total_tokens INTEGER NOT NULL DEFAULT 0,
     cost_usd REAL NOT NULL DEFAULT 0,
-    latency_ms INTEGER DEFAULT 0
+    latency_ms INTEGER DEFAULT 0,
+    source TEXT DEFAULT 'user'
 );
 CREATE INDEX IF NOT EXISTS idx_llm_usage_date ON llm_usage(created_at);
 CREATE INDEX IF NOT EXISTS idx_llm_usage_role ON llm_usage(role, created_at);
@@ -472,7 +523,8 @@ CREATE TABLE IF NOT EXISTS llm_usage (
     completion_tokens INTEGER NOT NULL DEFAULT 0,
     total_tokens INTEGER NOT NULL DEFAULT 0,
     cost_usd REAL NOT NULL DEFAULT 0,
-    latency_ms INTEGER DEFAULT 0
+    latency_ms INTEGER DEFAULT 0,
+    source TEXT DEFAULT 'user'
 );
 CREATE INDEX IF NOT EXISTS idx_llm_usage_date ON llm_usage(created_at);
 CREATE INDEX IF NOT EXISTS idx_llm_usage_role ON llm_usage(role, created_at);
@@ -795,6 +847,7 @@ def init_db():
         _migrate_metrics_daily()
         _migrate_page_visits()
         _migrate_waitlist()
+        _migrate_llm_usage_source()
         return
 
     # SQLite path (existing logic)
@@ -827,6 +880,7 @@ def init_db():
     _migrate_metrics_daily()
     _migrate_page_visits()
     _migrate_waitlist()
+    _migrate_llm_usage_source()
 
 
 # ── Users ───────────────────────────────────────────────────────
@@ -1423,12 +1477,12 @@ def batch_insert_usage(records: list) -> None:
                 sql = """INSERT INTO llm_usage
                     (session_id, conversation_id, role, model,
                      prompt_tokens, completion_tokens, total_tokens,
-                     cost_usd, latency_ms)
+                     cost_usd, latency_ms, source)
                     VALUES %s"""
                 values = [
                     (r.session_id, r.conversation_id, r.role, r.model,
                      r.prompt_tokens, r.completion_tokens, r.total_tokens,
-                     r.cost_usd, r.latency_ms)
+                     r.cost_usd, r.latency_ms, getattr(r, 'source', 'user') or 'user')
                     for r in records
                 ]
                 execute_values(cur, sql, values)
@@ -1439,11 +1493,11 @@ def batch_insert_usage(records: list) -> None:
             """INSERT INTO llm_usage
                 (session_id, conversation_id, role, model,
                  prompt_tokens, completion_tokens, total_tokens,
-                 cost_usd, latency_ms)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                 cost_usd, latency_ms, source)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             [(r.session_id, r.conversation_id, r.role, r.model,
               r.prompt_tokens, r.completion_tokens, r.total_tokens,
-              r.cost_usd, r.latency_ms)
+              r.cost_usd, r.latency_ms, getattr(r, 'source', 'user') or 'user')
              for r in records],
         )
         conn.commit()
@@ -2204,6 +2258,34 @@ def delete_waitlist_entry(entry_id: int) -> None:
     )
 
 
+def _migrate_llm_usage_source():
+    """Add source column to llm_usage if missing (for existing deployments)."""
+    if _is_pg():
+        with _PgConnWrapper() as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    DO $$ BEGIN
+                        ALTER TABLE llm_usage ADD COLUMN source TEXT DEFAULT 'user';
+                    EXCEPTION WHEN duplicate_column THEN NULL;
+                    END $$
+                """)
+                conn.commit()
+    else:
+        conn = _get_sqlite_conn()
+        cols = [row[1] for row in conn.execute("PRAGMA table_info(llm_usage)").fetchall()]
+        if "source" not in cols:
+            conn.execute("ALTER TABLE llm_usage ADD COLUMN source TEXT DEFAULT 'user'")
+            conn.commit()
+
+
+def get_earliest_usage_date() -> str | None:
+    """Return the earliest date in llm_usage, or None if table is empty."""
+    return _exec_scalar(
+        "SELECT MIN(date(created_at)) FROM llm_usage",
+        "SELECT MIN(created_at::date)::TEXT FROM llm_usage",
+    )
+
+
 def _upsert_metric(date: str, metric_type: str, dimension: str,
                     count_val: int = 0, sum_val: float = 0,
                     avg_val: float = 0, p95_val: float = 0,
@@ -2395,6 +2477,42 @@ def rollup_daily_metrics(target_date: str) -> int:
         _upsert_metric(target_date, 'cost', dim,
                         count_val=r['cnt'], sum_val=r['sum_cost'] or 0)
         count += 2
+
+    # ── 4b. Token/cost aggregation by source (user vs background) ──
+    try:
+        if _is_pg():
+            src_rows = _exec(
+                "",
+                """SELECT COALESCE(source, 'user') AS src,
+                          COUNT(*) AS cnt,
+                          SUM(total_tokens) AS sum_tokens,
+                          SUM(cost_usd) AS sum_cost
+                   FROM llm_usage
+                   WHERE created_at::date = %s
+                   GROUP BY COALESCE(source, 'user')""",
+                (target_date,),
+            )
+        else:
+            src_rows = _exec(
+                """SELECT COALESCE(source, 'user') AS src,
+                          COUNT(*) AS cnt,
+                          SUM(total_tokens) AS sum_tokens,
+                          SUM(cost_usd) AS sum_cost
+                   FROM llm_usage
+                   WHERE date(created_at) = ?
+                   GROUP BY COALESCE(source, 'user')""",
+                "",
+                (target_date,),
+            )
+        for r in src_rows:
+            dim = f"source:{r['src']}"
+            _upsert_metric(target_date, 'tokens', dim,
+                            count_val=r['cnt'], sum_val=r['sum_tokens'] or 0)
+            _upsert_metric(target_date, 'cost', dim,
+                            count_val=r['cnt'], sum_val=r['sum_cost'] or 0)
+            count += 2
+    except Exception:
+        pass  # source column may not exist yet on older data
 
     # ── 5. Query count (total queries from llm_usage) ──
     if total and total['cnt']:
@@ -2595,8 +2713,45 @@ def get_metrics_summary(start_date: str, end_date: str) -> dict:
     }
 
 
-def get_metrics_breakdown(metric_type: str, start_date: str, end_date: str) -> list[dict]:
-    """Return dimension-level breakdown for a metric_type (for pie/bar charts)."""
+def get_metrics_breakdown(metric_type: str, start_date: str, end_date: str,
+                          dimension_prefix: str = "") -> list[dict]:
+    """Return dimension-level breakdown for a metric_type (for pie/bar charts).
+
+    If dimension_prefix is given (e.g. 'model'), only dimensions starting with
+    'model:' are returned. Otherwise, non-prefixed role dimensions are returned
+    (excluding '_total' and any 'prefix:' dimensions).
+    """
+    if dimension_prefix:
+        like_pattern = f"{dimension_prefix}:%"
+        if _is_pg():
+            return _exec(
+                "",
+                """SELECT dimension,
+                          SUM(count) AS total_count,
+                          SUM(sum_value) AS total_value,
+                          AVG(avg_value) AS avg_value
+                   FROM metrics_daily
+                   WHERE metric_type = %s AND date >= %s AND date <= %s
+                     AND dimension LIKE %s
+                   GROUP BY dimension
+                   ORDER BY total_value DESC""",
+                (metric_type, start_date, end_date, like_pattern),
+            )
+        return _exec(
+            """SELECT dimension,
+                      SUM(count) AS total_count,
+                      SUM(sum_value) AS total_value,
+                      AVG(avg_value) AS avg_value
+               FROM metrics_daily
+               WHERE metric_type = ? AND date >= ? AND date <= ?
+                 AND dimension LIKE ?
+               GROUP BY dimension
+               ORDER BY total_value DESC""",
+            "",
+            (metric_type, start_date, end_date, like_pattern),
+        )
+
+    # Default: role-level breakdown (exclude _total and prefixed dimensions)
     if _is_pg():
         return _exec(
             "",
@@ -2607,6 +2762,7 @@ def get_metrics_breakdown(metric_type: str, start_date: str, end_date: str) -> l
                FROM metrics_daily
                WHERE metric_type = %s AND date >= %s AND date <= %s
                  AND dimension != '_total'
+                 AND dimension NOT LIKE '%%:%%'
                GROUP BY dimension
                ORDER BY total_count DESC""",
             (metric_type, start_date, end_date),
@@ -2619,6 +2775,7 @@ def get_metrics_breakdown(metric_type: str, start_date: str, end_date: str) -> l
            FROM metrics_daily
            WHERE metric_type = ? AND date >= ? AND date <= ?
              AND dimension != '_total'
+             AND dimension NOT LIKE '%:%'
            GROUP BY dimension
            ORDER BY total_count DESC""",
         "",

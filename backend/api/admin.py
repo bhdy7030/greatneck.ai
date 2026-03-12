@@ -135,10 +135,11 @@ async def metrics_breakdown(
     start_date: str | None = Query(None),
     end_date: str | None = Query(None),
     period: str | None = Query(None, description="today, 7d, 30d, 90d"),
+    breakdown_by: str | None = Query(None, description="e.g. model, source — filters dimensions by prefix"),
 ) -> list[dict]:
     """Dimension-level breakdown for pie/bar charts."""
     sd, ed = _resolve_date_range(period, start_date, end_date)
-    return await run_sync(get_metrics_breakdown, metric_type, sd, ed)
+    return await run_sync(get_metrics_breakdown, metric_type, sd, ed, breakdown_by or "")
 
 
 @router.get("/metrics/pipeline")
