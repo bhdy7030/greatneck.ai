@@ -60,16 +60,25 @@ def rebuild_index() -> int:
             desc = desc.get("en", "")
         steps = gd.get("steps", [])
         step_titles = []
+        step_details = []
         for s in steps:
             st = s.get("title", "")
             if isinstance(st, dict):
                 st = st.get("en", "")
             if st:
                 step_titles.append(st)
+            # Include step content for richer embeddings
+            sc = s.get("content", "")
+            if isinstance(sc, dict):
+                sc = sc.get("en", "")
+            if sc:
+                step_details.append(f"{st}: {sc}" if st else sc)
 
-        # Document text for embedding
+        # Document text for embedding — include step content for better similarity
         doc_text = f"{title}. {desc}."
-        if step_titles:
+        if step_details:
+            doc_text += " Steps: " + " | ".join(step_details)
+        elif step_titles:
             doc_text += f" Steps: {', '.join(step_titles)}"
 
         ids.append(row["id"])

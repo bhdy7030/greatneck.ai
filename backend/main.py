@@ -99,10 +99,6 @@ async def lifespan(app: FastAPI):
     from metrics.rollup import start_metrics_rollup, stop_metrics_rollup
     await start_metrics_rollup()
 
-    # Build playbook similarity index (for embedding-based guide pre-filter)
-    from cache.playbook_index import rebuild_index as rebuild_playbook_index
-    rebuild_playbook_index()
-
     # Start reminder processor background task
     from reminders.processor import start_reminder_processor, stop_reminder_processor
     await start_reminder_processor()
