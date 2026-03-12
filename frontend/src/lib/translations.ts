@@ -112,6 +112,7 @@ const translations: Record<string, Record<Lang, string>> = {
   "landing.q.camp": { en: "Any summer camps for kids?", zh: "有儿童夏令营吗？" },
   "landing.q.waterpark": { en: "When does the Parkwood Pool open?", zh: "Parkwood泳池什么时候开放？" },
   "landing.q.poolfee": { en: "How much is the pool membership fee?", zh: "泳池会员费多少钱？" },
+  "landing.q.propane": { en: "New propane tank for my grill", zh: "烤架需要新的丙烷罐" },
 
   // ── Chat page ──
   "chat.village": { en: "Village:", zh: "社区：" },

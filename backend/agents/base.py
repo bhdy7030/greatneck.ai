@@ -303,6 +303,8 @@ NOTE: These formatting rules apply to your written response ONLY. Do NOT reduce 
                 "include a ```playbook-carousel fenced code block with a JSON array of 1-4 matching guides. "
                 "Each entry: {\"id\": ..., \"title\": ..., \"description\": ..., \"icon\": ..., \"color\": ..., \"step_count\": ...}. "
                 "Only include guides that are directly relevant. Do NOT include the carousel for unrelated questions. "
+                "IMPORTANT: Do NOT repeat a playbook carousel that was already shown earlier in the conversation "
+                "unless the user asks a new, different question that matches it or provides new context. "
                 "Place the code block at the end of your response, after your text answer.\n\n"
                 f"Catalog:\n{catalog_json}"
             )

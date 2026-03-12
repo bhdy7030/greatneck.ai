@@ -31,6 +31,7 @@ const ANIMATED_QUESTION_KEYS = [
   "landing.q.camp",
   "landing.q.waterpark",
   "landing.q.poolfee",
+  "landing.q.propane",
 ];
 
 export default function Home() {
