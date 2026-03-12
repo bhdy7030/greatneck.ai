@@ -971,6 +971,9 @@ export interface Guide {
   saved: boolean;
   is_custom?: boolean;
   is_community?: boolean;
+  is_published?: boolean;
+  wallet_category?: "published" | "private" | "liked";
+  author_handle?: string;
 }
 
 export async function getGuides(
@@ -1200,4 +1203,213 @@ export async function deleteWaitlistEntry(entryId: number): Promise<void> {
     headers: authHeaders(),
   });
   if (!res.ok) throw new Error(`Failed to delete waitlist entry: ${res.status}`);
+}
+
+// ── Profile / Handle API ──
+
+export async function suggestHandles(): Promise<{ suggestions: string[] }> {
+  const res = await fetchWithRefresh(`${BASE_URL}/api/profile/handle/suggest`, {
+    headers: authHeaders(),
+  });
+  if (!res.ok) throw new Error(`Failed to suggest handles: ${res.status}`);
+  return res.json();
+}
+
+export async function checkHandleAvailable(handle: string): Promise<{ available: boolean }> {
+  const res = await fetch(`${BASE_URL}/api/profile/handle/check?handle=${encodeURIComponent(handle)}`, {
+    headers: authHeaders(),
+  });
+  if (!res.ok) throw new Error(`Failed to check handle: ${res.status}`);
+  return res.json();
+}
+
+export async function setHandle(handle: string): Promise<{ ok: boolean; handle: string }> {
+  const res = await fetchWithRefresh(`${BASE_URL}/api/profile/handle`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...authHeaders() },
+    body: JSON.stringify({ handle }),
+  });
+  if (res.status === 409) throw new Error("Handle is taken");
+  if (!res.ok) throw new Error(`Failed to set handle: ${res.status}`);
+  return res.json();
+}
+
+export async function updateAvatar(url: string): Promise<{ ok: boolean; avatar_url: string }> {
+  const res = await fetchWithRefresh(`${BASE_URL}/api/profile/avatar`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json", ...authHeaders() },
+    body: JSON.stringify({ url }),
+  });
+  if (!res.ok) throw new Error(`Failed to update avatar: ${res.status}`);
+  return res.json();
+}
+
+export async function updateBio(bio: string): Promise<{ ok: boolean; bio: string }> {
+  const res = await fetchWithRefresh(`${BASE_URL}/api/profile/bio`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json", ...authHeaders() },
+    body: JSON.stringify({ bio }),
+  });
+  if (!res.ok) throw new Error(`Failed to update bio: ${res.status}`);
+  return res.json();
+}
+
+export interface PublicProfile {
+  handle: string;
+  name: string;
+  avatar_url: string;
+  bio: string;
+  published_playbooks_count: number;
+}
+
+export async function getPublicProfile(handle: string): Promise<PublicProfile> {
+  const res = await fetch(`${BASE_URL}/api/profile/@${encodeURIComponent(handle)}`, {
+    headers: authHeaders(),
+  });
+  if (!res.ok) throw new Error(`Failed to fetch profile: ${res.status}`);
+  return res.json();
+}
+
+export interface HandleSearchResult {
+  id: number;
+  handle: string;
+  name: string;
+  avatar_url: string;
+}
+
+export async function searchHandles(q: string): Promise<HandleSearchResult[]> {
+  const res = await fetchWithRefresh(`${BASE_URL}/api/profile/search?q=${encodeURIComponent(q)}`, {
+    headers: authHeaders(),
+  });
+  if (!res.ok) throw new Error(`Failed to search handles: ${res.status}`);
+  return res.json();
+}
+
+// ── Comments API ──
+
+export interface CommentUser {
+  handle: string | null;
+  name: string;
+  avatar_url: string;
+}
+
+export interface Comment {
+  id: number;
+  body: string;
+  user: CommentUser;
+  upvote_count: number;
+  user_upvoted: boolean;
+  created_at: string;
+}
+
+export async function getComments(
+  guideId: string,
+  after?: number,
+  limit: number = 30
+): Promise<{ comments: Comment[]; has_more: boolean }> {
+  const params = new URLSearchParams();
+  if (after) params.set("after", String(after));
+  params.set("limit", String(limit));
+  const res = await fetch(`${BASE_URL}/api/guides/${encodeURIComponent(guideId)}/comments?${params}`, {
+    headers: authHeaders(),
+  });
+  if (!res.ok) throw new Error(`Failed to fetch comments: ${res.status}`);
+  return res.json();
+}
+
+export async function postComment(guideId: string, body: string): Promise<Comment> {
+  const res = await fetchWithRefresh(`${BASE_URL}/api/guides/${encodeURIComponent(guideId)}/comments`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...authHeaders() },
+    body: JSON.stringify({ body }),
+  });
+  if (!res.ok) throw new Error(`Failed to post comment: ${res.status}`);
+  return res.json();
+}
+
+export async function deleteComment(guideId: string, commentId: number): Promise<void> {
+  const res = await fetchWithRefresh(
+    `${BASE_URL}/api/guides/${encodeURIComponent(guideId)}/comments/${commentId}`,
+    { method: "DELETE", headers: authHeaders() },
+  );
+  if (!res.ok) throw new Error(`Failed to delete comment: ${res.status}`);
+}
+
+// ── Likes API ──
+
+export async function toggleLike(
+  targetType: "guide" | "comment",
+  targetId: string
+): Promise<{ liked: boolean; count: number }> {
+  const res = await fetchWithRefresh(`${BASE_URL}/api/likes/toggle`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...authHeaders() },
+    body: JSON.stringify({ target_type: targetType, target_id: targetId }),
+  });
+  if (!res.ok) throw new Error(`Failed to toggle like: ${res.status}`);
+  return res.json();
+}
+
+export async function getLikeStatus(
+  type: "guide" | "comment",
+  ids: string[]
+): Promise<Record<string, { liked: boolean; count: number }>> {
+  if (!ids.length) return {};
+  const res = await fetch(
+    `${BASE_URL}/api/likes/status?type=${type}&ids=${ids.join(",")}`,
+    { headers: authHeaders() },
+  );
+  if (!res.ok) throw new Error(`Failed to get like status: ${res.status}`);
+  return res.json();
+}
+
+// ── Notifications API ──
+
+export interface NotificationActor {
+  handle: string | null;
+  name: string;
+  avatar_url: string;
+}
+
+export interface Notification {
+  id: number;
+  type: string;
+  actor: NotificationActor | null;
+  target_type: string | null;
+  target_id: string | null;
+  body: string;
+  is_read: boolean;
+  created_at: string;
+}
+
+export async function getNotifications(
+  after?: number,
+  limit: number = 30
+): Promise<{ notifications: Notification[]; unread_count: number }> {
+  const params = new URLSearchParams();
+  if (after) params.set("after", String(after));
+  params.set("limit", String(limit));
+  const res = await fetchWithRefresh(`${BASE_URL}/api/notifications?${params}`, {
+    headers: authHeaders(),
+  });
+  if (!res.ok) throw new Error(`Failed to fetch notifications: ${res.status}`);
+  return res.json();
+}
+
+export async function getUnreadCount(): Promise<{ unread: number }> {
+  const res = await fetchWithRefresh(`${BASE_URL}/api/notifications/count`, {
+    headers: authHeaders(),
+  });
+  if (!res.ok) throw new Error(`Failed to fetch unread count: ${res.status}`);
+  return res.json();
+}
+
+export async function markNotificationsRead(ids?: number[]): Promise<{ ok: boolean; marked: number }> {
+  const res = await fetchWithRefresh(`${BASE_URL}/api/notifications/read`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...authHeaders() },
+    body: JSON.stringify({ ids: ids ?? null }),
+  });
+  if (!res.ok) throw new Error(`Failed to mark notifications read: ${res.status}`);
+  return res.json();
 }

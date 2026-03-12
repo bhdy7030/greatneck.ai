@@ -848,6 +848,10 @@ def init_db():
         _migrate_page_visits()
         _migrate_waitlist()
         _migrate_llm_usage_source()
+        _migrate_user_handles()
+        _migrate_comments()
+        _migrate_likes()
+        _migrate_notifications()
         return
 
     # SQLite path (existing logic)
@@ -881,6 +885,10 @@ def init_db():
     _migrate_page_visits()
     _migrate_waitlist()
     _migrate_llm_usage_source()
+    _migrate_user_handles()
+    _migrate_comments()
+    _migrate_likes()
+    _migrate_notifications()
 
 
 # ── Users ───────────────────────────────────────────────────────
@@ -1983,10 +1991,10 @@ def create_user_guide(user_id, session_id, guide_data, source_guide_id=None):
 
 
 def get_user_guide(guide_id):
-    """Get a single user guide by ID."""
+    """Get a single user guide by ID, with author_handle."""
     row = _exec_one(
-        "SELECT * FROM user_guides WHERE id=?",
-        "SELECT * FROM user_guides WHERE id=%s",
+        "SELECT ug.*, u.handle AS author_handle FROM user_guides ug LEFT JOIN users u ON ug.user_id = u.id WHERE ug.id=?",
+        "SELECT ug.*, u.handle AS author_handle FROM user_guides ug LEFT JOIN users u ON ug.user_id = u.id WHERE ug.id=%s",
         (guide_id,),
     )
     if row and isinstance(row.get("guide_data"), str):
@@ -2082,16 +2090,63 @@ def set_user_guide_published(guide_id, user_id, is_published):
 
 
 def get_published_user_guides():
-    """Get all published user guides for the catalog."""
+    """Get all published user guides for the catalog, with author_handle."""
     rows = _exec(
-        "SELECT * FROM user_guides WHERE is_published=1",
-        "SELECT * FROM user_guides WHERE is_published=TRUE",
+        "SELECT ug.*, u.handle AS author_handle FROM user_guides ug LEFT JOIN users u ON ug.user_id = u.id WHERE ug.is_published=1",
+        "SELECT ug.*, u.handle AS author_handle FROM user_guides ug LEFT JOIN users u ON ug.user_id = u.id WHERE ug.is_published=TRUE",
         (),
     )
     for r in rows:
         if isinstance(r.get("guide_data"), str):
             r["guide_data"] = json.loads(r["guide_data"])
     return rows
+
+
+def ensure_system_user(handle, name):
+    """Create or find a system user by handle. Returns user id."""
+    existing = get_user_by_handle(handle)
+    if existing:
+        return existing["id"]
+    # Create a system user with a placeholder email
+    email = f"{handle}@system.local"
+    row = _exec_insert_returning(
+        f"INSERT INTO users (email, name, handle) VALUES (?, ?, ?)",
+        f"INSERT INTO users (email, name, handle) VALUES (%s, %s, %s) RETURNING id",
+        (email, name, handle),
+    )
+    if _is_pg():
+        return row["id"]
+    return row
+
+
+def upsert_user_guide(guide_id, user_id, guide_data, is_published=False):
+    """INSERT or UPDATE a user_guide by id. Uses guide_id as-is (no ug- prefix forced)."""
+    guide_json = json.dumps(guide_data) if isinstance(guide_data, dict) else guide_data
+    existing = get_user_guide(guide_id)
+    if existing:
+        _exec_modify(
+            "UPDATE user_guides SET guide_data=?, is_published=?, is_draft=0, updated_at=datetime('now') WHERE id=?",
+            "UPDATE user_guides SET guide_data=%s, is_published=%s, is_draft=FALSE, updated_at=NOW() WHERE id=%s",
+            (guide_json, int(is_published) if not _is_pg() else is_published, guide_id),
+        )
+    else:
+        _exec_modify(
+            "INSERT INTO user_guides (id, user_id, session_id, guide_data, is_published, is_draft) VALUES (?, ?, NULL, ?, ?, 0)",
+            "INSERT INTO user_guides (id, user_id, session_id, guide_data, is_published, is_draft) VALUES (%s, %s, NULL, %s, %s, FALSE)",
+            (guide_id, user_id, guide_json, int(is_published) if not _is_pg() else is_published),
+        )
+
+
+def ingest_yaml_guides():
+    """Ingest all YAML catalog guides as @admin user_guides. Idempotent via upsert."""
+    import logging
+    logger = logging.getLogger(__name__)
+    from knowledge.guides_registry import get_all_guides
+    admin_id = ensure_system_user("admin", "GreatNeck.ai")
+    guides = get_all_guides()
+    for g in guides:
+        upsert_user_guide(g["id"], admin_id, g, is_published=True)
+    logger.info(f"Ingested {len(guides)} YAML guides as @admin user_guides")
 
 
 def migrate_user_guide_data(session_id, user_id):
@@ -2878,6 +2933,717 @@ def get_pipeline_events_summary(start_date: str, end_date: str) -> dict:
     except Exception:
         pass  # pipeline_events table may not exist yet
     return result
+
+
+# ── Social Features ──────────────────────────────────────────────
+
+
+def _migrate_user_handles():
+    """Add handle, custom_avatar_url, bio columns to users table."""
+    if _is_pg():
+        with _PgConnWrapper() as conn:
+            with conn.cursor() as cur:
+                cur.execute("SELECT column_name FROM information_schema.columns WHERE table_name='users'")
+                existing = {row[0] for row in cur.fetchall()}
+                if "handle" not in existing:
+                    cur.execute("ALTER TABLE users ADD COLUMN handle TEXT UNIQUE")
+                if "custom_avatar_url" not in existing:
+                    cur.execute("ALTER TABLE users ADD COLUMN custom_avatar_url TEXT DEFAULT ''")
+                if "bio" not in existing:
+                    cur.execute("ALTER TABLE users ADD COLUMN bio TEXT DEFAULT ''")
+                cur.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_users_handle ON users(handle) WHERE handle IS NOT NULL")
+                conn.commit()
+    else:
+        conn = _get_sqlite_conn()
+        existing = {row[1] for row in conn.execute("PRAGMA table_info(users)").fetchall()}
+        if "handle" not in existing:
+            conn.execute("ALTER TABLE users ADD COLUMN handle TEXT UNIQUE")
+        if "custom_avatar_url" not in existing:
+            conn.execute("ALTER TABLE users ADD COLUMN custom_avatar_url TEXT DEFAULT ''")
+        if "bio" not in existing:
+            conn.execute("ALTER TABLE users ADD COLUMN bio TEXT DEFAULT ''")
+        conn.commit()
+
+
+def _migrate_comments():
+    """Create guide_comments table and add comment_count to user_guides."""
+    if _is_pg():
+        with _PgConnWrapper() as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    CREATE TABLE IF NOT EXISTS guide_comments (
+                        id SERIAL PRIMARY KEY,
+                        guide_id TEXT NOT NULL,
+                        user_id INTEGER NOT NULL REFERENCES users(id),
+                        body TEXT NOT NULL,
+                        upvote_count INTEGER NOT NULL DEFAULT 0,
+                        created_at TIMESTAMPTZ DEFAULT NOW(),
+                        updated_at TIMESTAMPTZ DEFAULT NOW(),
+                        deleted_at TIMESTAMPTZ
+                    )
+                """)
+                cur.execute("CREATE INDEX IF NOT EXISTS idx_gc_guide ON guide_comments(guide_id, created_at) WHERE deleted_at IS NULL")
+                cur.execute("CREATE INDEX IF NOT EXISTS idx_gc_user ON guide_comments(user_id)")
+                # Add comment_count to user_guides
+                cur.execute("SELECT column_name FROM information_schema.columns WHERE table_name='user_guides'")
+                ug_cols = {row[0] for row in cur.fetchall()}
+                if "comment_count" not in ug_cols:
+                    cur.execute("ALTER TABLE user_guides ADD COLUMN comment_count INTEGER NOT NULL DEFAULT 0")
+                conn.commit()
+    else:
+        conn = _get_sqlite_conn()
+        tables = {row[0] for row in conn.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()}
+        if "guide_comments" not in tables:
+            conn.execute("""
+                CREATE TABLE guide_comments (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    guide_id TEXT NOT NULL,
+                    user_id INTEGER NOT NULL REFERENCES users(id),
+                    body TEXT NOT NULL,
+                    upvote_count INTEGER NOT NULL DEFAULT 0,
+                    created_at TEXT DEFAULT (datetime('now')),
+                    updated_at TEXT DEFAULT (datetime('now')),
+                    deleted_at TEXT
+                )
+            """)
+            conn.execute("CREATE INDEX IF NOT EXISTS idx_gc_guide ON guide_comments(guide_id, created_at)")
+            conn.execute("CREATE INDEX IF NOT EXISTS idx_gc_user ON guide_comments(user_id)")
+        ug_cols = {row[1] for row in conn.execute("PRAGMA table_info(user_guides)").fetchall()}
+        if "comment_count" not in ug_cols:
+            conn.execute("ALTER TABLE user_guides ADD COLUMN comment_count INTEGER NOT NULL DEFAULT 0")
+        conn.commit()
+
+
+def _migrate_likes():
+    """Create likes table and add like_count to user_guides."""
+    if _is_pg():
+        with _PgConnWrapper() as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    CREATE TABLE IF NOT EXISTS likes (
+                        user_id INTEGER NOT NULL REFERENCES users(id),
+                        target_type TEXT NOT NULL,
+                        target_id TEXT NOT NULL,
+                        created_at TIMESTAMPTZ DEFAULT NOW(),
+                        PRIMARY KEY (user_id, target_type, target_id)
+                    )
+                """)
+                cur.execute("CREATE INDEX IF NOT EXISTS idx_likes_target ON likes(target_type, target_id)")
+                cur.execute("SELECT column_name FROM information_schema.columns WHERE table_name='user_guides'")
+                ug_cols = {row[0] for row in cur.fetchall()}
+                if "like_count" not in ug_cols:
+                    cur.execute("ALTER TABLE user_guides ADD COLUMN like_count INTEGER NOT NULL DEFAULT 0")
+                conn.commit()
+    else:
+        conn = _get_sqlite_conn()
+        tables = {row[0] for row in conn.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()}
+        if "likes" not in tables:
+            conn.execute("""
+                CREATE TABLE likes (
+                    user_id INTEGER NOT NULL REFERENCES users(id),
+                    target_type TEXT NOT NULL,
+                    target_id TEXT NOT NULL,
+                    created_at TEXT DEFAULT (datetime('now')),
+                    PRIMARY KEY (user_id, target_type, target_id)
+                )
+            """)
+            conn.execute("CREATE INDEX IF NOT EXISTS idx_likes_target ON likes(target_type, target_id)")
+        ug_cols = {row[1] for row in conn.execute("PRAGMA table_info(user_guides)").fetchall()}
+        if "like_count" not in ug_cols:
+            conn.execute("ALTER TABLE user_guides ADD COLUMN like_count INTEGER NOT NULL DEFAULT 0")
+        conn.commit()
+
+
+def _migrate_notifications():
+    """Create notifications table."""
+    if _is_pg():
+        with _PgConnWrapper() as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    CREATE TABLE IF NOT EXISTS notifications (
+                        id SERIAL PRIMARY KEY,
+                        user_id INTEGER NOT NULL REFERENCES users(id),
+                        type TEXT NOT NULL,
+                        actor_id INTEGER REFERENCES users(id),
+                        target_type TEXT,
+                        target_id TEXT,
+                        body TEXT DEFAULT '',
+                        is_read BOOLEAN DEFAULT FALSE,
+                        created_at TIMESTAMPTZ DEFAULT NOW()
+                    )
+                """)
+                cur.execute("CREATE INDEX IF NOT EXISTS idx_notif_user_unread ON notifications(user_id, is_read, created_at DESC)")
+                cur.execute("CREATE INDEX IF NOT EXISTS idx_notif_created ON notifications(created_at)")
+                conn.commit()
+    else:
+        conn = _get_sqlite_conn()
+        tables = {row[0] for row in conn.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()}
+        if "notifications" not in tables:
+            conn.execute("""
+                CREATE TABLE notifications (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    user_id INTEGER NOT NULL REFERENCES users(id),
+                    type TEXT NOT NULL,
+                    actor_id INTEGER REFERENCES users(id),
+                    target_type TEXT,
+                    target_id TEXT,
+                    body TEXT DEFAULT '',
+                    is_read INTEGER DEFAULT 0,
+                    created_at TEXT DEFAULT (datetime('now'))
+                )
+            """)
+            conn.execute("CREATE INDEX IF NOT EXISTS idx_notif_user_unread ON notifications(user_id, is_read, created_at)")
+            conn.execute("CREATE INDEX IF NOT EXISTS idx_notif_created ON notifications(created_at)")
+        conn.commit()
+
+
+# ── Profile / Handle functions ───────────────────────────────────
+
+import re as _re
+
+_HANDLE_RE = _re.compile(r'^[a-z0-9]([a-z0-9-]{1,18}[a-z0-9])?$')
+
+_RESERVED_HANDLES = {
+    "admin", "administrator", "system", "sysadmin", "systemadmin",
+    "greatneck", "greatneckai", "great-neck", "great-neck-ai",
+    "moderator", "mod", "support", "help", "info",
+    "root", "superuser", "staff", "official",
+}
+
+_GREAT_NECK_ADJECTIVES = [
+    "harbor", "bayside", "parkside", "meadow", "northshore", "sunny",
+    "coastal", "village", "lakeside", "creek", "maple", "cedar",
+    "willow", "garden", "hilltop", "breezy", "golden", "shore",
+]
+
+
+def _validate_handle(handle: str) -> bool:
+    """Check handle format: 3-20 chars, lowercase alphanumeric + hyphens, no leading/trailing/consecutive hyphens."""
+    if not handle or len(handle) < 3 or len(handle) > 20:
+        return False
+    if '--' in handle:
+        return False
+    return bool(_HANDLE_RE.match(handle))
+
+
+def check_handle_available(handle: str, exclude_user_id: int | None = None) -> bool:
+    """Check if a handle is available. Optionally exclude a user (for handle changes)."""
+    if not _validate_handle(handle):
+        return False
+    if handle.lower() in _RESERVED_HANDLES:
+        return False
+    if exclude_user_id is not None:
+        row = _exec_scalar(
+            "SELECT COUNT(*) FROM users WHERE handle=? AND id!=?",
+            "SELECT COUNT(*) FROM users WHERE handle=%s AND id!=%s",
+            (handle, exclude_user_id),
+        )
+    else:
+        row = _exec_scalar(
+            "SELECT COUNT(*) FROM users WHERE handle=?",
+            "SELECT COUNT(*) FROM users WHERE handle=%s",
+            (handle,),
+        )
+    return row == 0
+
+
+def generate_handle_suggestions(name: str) -> list[str]:
+    """Generate 5 unused handle suggestions based on the user's name."""
+    import random
+    # Clean the first name
+    first = name.split()[0].lower() if name else "user"
+    first = _re.sub(r'[^a-z0-9]', '', first) or "user"
+    if len(first) > 12:
+        first = first[:12]
+
+    suggestions = []
+    tried = set()
+
+    # Try adjective-firstname combos
+    shuffled = random.sample(_GREAT_NECK_ADJECTIVES, min(len(_GREAT_NECK_ADJECTIVES), 15))
+    for adj in shuffled:
+        candidate = f"{adj}-{first}"
+        if len(candidate) > 20:
+            continue
+        if candidate in tried:
+            continue
+        tried.add(candidate)
+        if _validate_handle(candidate) and check_handle_available(candidate):
+            suggestions.append(candidate)
+            if len(suggestions) >= 5:
+                return suggestions
+
+    # Fallback: name-random3digits
+    for _ in range(20):
+        suffix = str(random.randint(100, 999))
+        candidate = f"{first}-{suffix}"
+        if candidate in tried:
+            continue
+        tried.add(candidate)
+        if _validate_handle(candidate) and check_handle_available(candidate):
+            suggestions.append(candidate)
+            if len(suggestions) >= 5:
+                return suggestions
+
+    return suggestions
+
+
+def set_user_handle(user_id: int, handle: str) -> dict | None:
+    """Set a user's handle. Returns updated user dict, or None if handle is taken."""
+    if not _validate_handle(handle):
+        return None
+    try:
+        _exec_modify(
+            "UPDATE users SET handle=? WHERE id=?",
+            "UPDATE users SET handle=%s WHERE id=%s",
+            (handle, user_id),
+        )
+        return get_user_by_id(user_id)
+    except Exception:
+        # Unique constraint violation
+        return None
+
+
+def get_user_by_handle(handle: str) -> dict | None:
+    """Get a user by their handle."""
+    return _exec_one(
+        "SELECT * FROM users WHERE handle=?",
+        "SELECT * FROM users WHERE handle=%s",
+        (handle,),
+    )
+
+
+def set_user_custom_avatar(user_id: int, url: str) -> dict | None:
+    """Set a user's custom avatar URL."""
+    _exec_modify(
+        "UPDATE users SET custom_avatar_url=? WHERE id=?",
+        "UPDATE users SET custom_avatar_url=%s WHERE id=%s",
+        (url, user_id),
+    )
+    return get_user_by_id(user_id)
+
+
+def set_user_bio(user_id: int, bio: str) -> dict | None:
+    """Set a user's bio."""
+    _exec_modify(
+        "UPDATE users SET bio=? WHERE id=?",
+        "UPDATE users SET bio=%s WHERE id=%s",
+        (bio, user_id),
+    )
+    return get_user_by_id(user_id)
+
+
+def search_users_by_handle(prefix: str, limit: int = 10) -> list[dict]:
+    """Search users by handle prefix (for @mention autocomplete)."""
+    prefix_like = prefix.lower() + "%"
+    return _exec(
+        "SELECT id, handle, name, avatar_url, custom_avatar_url FROM users WHERE handle LIKE ? AND handle IS NOT NULL ORDER BY handle LIMIT ?",
+        "SELECT id, handle, name, avatar_url, custom_avatar_url FROM users WHERE handle LIKE %s AND handle IS NOT NULL ORDER BY handle LIMIT %s",
+        (prefix_like, limit),
+    )
+
+
+# ── Comment functions ────────────────────────────────────────────
+
+
+def create_comment(guide_id: str, user_id: int, body: str) -> dict:
+    """Create a comment on a guide. Also increments comment_count."""
+    if _is_pg():
+        from psycopg2.extras import RealDictCursor
+        with _PgConnWrapper() as conn:
+            with conn.cursor(cursor_factory=RealDictCursor) as cur:
+                cur.execute(
+                    """INSERT INTO guide_comments (guide_id, user_id, body)
+                       VALUES (%s, %s, %s) RETURNING *""",
+                    (guide_id, user_id, body),
+                )
+                comment = dict(cur.fetchone())
+                cur.execute(
+                    "UPDATE user_guides SET comment_count = comment_count + 1 WHERE id = %s",
+                    (guide_id,),
+                )
+                conn.commit()
+                return comment
+    else:
+        conn = _get_sqlite_conn()
+        cur = conn.execute(
+            "INSERT INTO guide_comments (guide_id, user_id, body) VALUES (?, ?, ?)",
+            (guide_id, user_id, body),
+        )
+        comment_id = cur.lastrowid
+        conn.execute(
+            "UPDATE user_guides SET comment_count = comment_count + 1 WHERE id = ?",
+            (guide_id,),
+        )
+        conn.commit()
+        return dict(conn.execute("SELECT * FROM guide_comments WHERE id=?", (comment_id,)).fetchone())
+
+
+def get_comments_for_guide(guide_id: str, after_id: int | None = None, limit: int = 30) -> list[dict]:
+    """Get comments for a guide with user info. Cursor-based pagination."""
+    cursor_clause_sq = f"AND gc.id > {int(after_id)}" if after_id else ""
+    cursor_clause_pg = "AND gc.id > %s" if after_id else ""
+
+    if _is_pg():
+        from psycopg2.extras import RealDictCursor
+        params = [guide_id]
+        if after_id:
+            params.append(int(after_id))
+        params.append(limit)
+        with _PgConnWrapper() as conn:
+            with conn.cursor(cursor_factory=RealDictCursor) as cur:
+                cur.execute(f"""
+                    SELECT gc.id, gc.guide_id, gc.user_id, gc.body, gc.upvote_count,
+                           gc.created_at, gc.updated_at,
+                           u.handle, u.name, u.avatar_url, u.custom_avatar_url
+                    FROM guide_comments gc
+                    JOIN users u ON gc.user_id = u.id
+                    WHERE gc.guide_id = %s AND gc.deleted_at IS NULL
+                      {cursor_clause_pg}
+                    ORDER BY gc.created_at ASC
+                    LIMIT %s
+                """, tuple(params))
+                return [dict(r) for r in cur.fetchall()]
+    else:
+        conn = _get_sqlite_conn()
+        params = [guide_id]
+        if after_id:
+            params.append(int(after_id))
+        params.append(limit)
+        rows = conn.execute(f"""
+            SELECT gc.id, gc.guide_id, gc.user_id, gc.body, gc.upvote_count,
+                   gc.created_at, gc.updated_at,
+                   u.handle, u.name, u.avatar_url, u.custom_avatar_url
+            FROM guide_comments gc
+            JOIN users u ON gc.user_id = u.id
+            WHERE gc.guide_id = ? AND gc.deleted_at IS NULL
+              {cursor_clause_sq}
+            ORDER BY gc.created_at ASC
+            LIMIT ?
+        """, tuple(params)).fetchall()
+        return [dict(r) for r in rows]
+
+
+def delete_comment(comment_id: int, user_id: int) -> bool:
+    """Soft-delete a comment. Only the author can delete. Returns True if deleted."""
+    # Check ownership
+    comment = _exec_one(
+        "SELECT * FROM guide_comments WHERE id=? AND user_id=? AND deleted_at IS NULL",
+        "SELECT * FROM guide_comments WHERE id=%s AND user_id=%s AND deleted_at IS NULL",
+        (comment_id, user_id),
+    )
+    if not comment:
+        return False
+
+    if _is_pg():
+        with _PgConnWrapper() as conn:
+            with conn.cursor() as cur:
+                cur.execute("UPDATE guide_comments SET deleted_at = NOW() WHERE id = %s", (comment_id,))
+                cur.execute(
+                    "UPDATE user_guides SET comment_count = GREATEST(comment_count - 1, 0) WHERE id = %s",
+                    (comment["guide_id"],),
+                )
+                conn.commit()
+    else:
+        conn = _get_sqlite_conn()
+        conn.execute("UPDATE guide_comments SET deleted_at = datetime('now') WHERE id = ?", (comment_id,))
+        conn.execute(
+            "UPDATE user_guides SET comment_count = MAX(comment_count - 1, 0) WHERE id = ?",
+            (comment["guide_id"],),
+        )
+        conn.commit()
+    return True
+
+
+# ── Like functions ───────────────────────────────────────────────
+
+
+def toggle_like(user_id: int, target_type: str, target_id: str) -> dict:
+    """Toggle a like. Returns {liked: bool, count: int}."""
+    if target_type not in ("guide", "comment"):
+        return {"liked": False, "count": 0}
+
+    if _is_pg():
+        with _PgConnWrapper() as conn:
+            with conn.cursor() as cur:
+                # Check if already liked
+                cur.execute(
+                    "SELECT 1 FROM likes WHERE user_id=%s AND target_type=%s AND target_id=%s",
+                    (user_id, target_type, target_id),
+                )
+                already_liked = cur.fetchone() is not None
+
+                if already_liked:
+                    cur.execute(
+                        "DELETE FROM likes WHERE user_id=%s AND target_type=%s AND target_id=%s",
+                        (user_id, target_type, target_id),
+                    )
+                    if target_type == "guide":
+                        cur.execute("UPDATE user_guides SET like_count = GREATEST(like_count - 1, 0) WHERE id = %s", (target_id,))
+                    else:
+                        cur.execute("UPDATE guide_comments SET upvote_count = GREATEST(upvote_count - 1, 0) WHERE id = %s", (int(target_id),))
+                else:
+                    cur.execute(
+                        "INSERT INTO likes (user_id, target_type, target_id) VALUES (%s, %s, %s)",
+                        (user_id, target_type, target_id),
+                    )
+                    if target_type == "guide":
+                        cur.execute("UPDATE user_guides SET like_count = like_count + 1 WHERE id = %s", (target_id,))
+                    else:
+                        cur.execute("UPDATE guide_comments SET upvote_count = upvote_count + 1 WHERE id = %s", (int(target_id),))
+
+                # Get updated count
+                if target_type == "guide":
+                    cur.execute("SELECT like_count FROM user_guides WHERE id = %s", (target_id,))
+                else:
+                    cur.execute("SELECT upvote_count FROM guide_comments WHERE id = %s", (int(target_id),))
+                row = cur.fetchone()
+                count = row[0] if row else 0
+                conn.commit()
+                return {"liked": not already_liked, "count": count}
+    else:
+        conn = _get_sqlite_conn()
+        row = conn.execute(
+            "SELECT 1 FROM likes WHERE user_id=? AND target_type=? AND target_id=?",
+            (user_id, target_type, target_id),
+        ).fetchone()
+        already_liked = row is not None
+
+        if already_liked:
+            conn.execute(
+                "DELETE FROM likes WHERE user_id=? AND target_type=? AND target_id=?",
+                (user_id, target_type, target_id),
+            )
+            if target_type == "guide":
+                conn.execute("UPDATE user_guides SET like_count = MAX(like_count - 1, 0) WHERE id = ?", (target_id,))
+            else:
+                conn.execute("UPDATE guide_comments SET upvote_count = MAX(upvote_count - 1, 0) WHERE id = ?", (int(target_id),))
+        else:
+            conn.execute(
+                "INSERT INTO likes (user_id, target_type, target_id) VALUES (?, ?, ?)",
+                (user_id, target_type, target_id),
+            )
+            if target_type == "guide":
+                conn.execute("UPDATE user_guides SET like_count = like_count + 1 WHERE id = ?", (target_id,))
+            else:
+                conn.execute("UPDATE guide_comments SET upvote_count = upvote_count + 1 WHERE id = ?", (int(target_id),))
+
+        if target_type == "guide":
+            row = conn.execute("SELECT like_count FROM user_guides WHERE id = ?", (target_id,)).fetchone()
+        else:
+            row = conn.execute("SELECT upvote_count FROM guide_comments WHERE id = ?", (int(target_id),)).fetchone()
+        count = row[0] if row else 0
+        conn.commit()
+        return {"liked": not already_liked, "count": count}
+
+
+def get_like_status_bulk(user_id: int | None, target_type: str, target_ids: list[str]) -> dict:
+    """Get like status for multiple targets. Returns {target_id: {liked: bool, count: int}}."""
+    if not target_ids:
+        return {}
+
+    result = {}
+    if target_type == "guide":
+        # Get counts from user_guides
+        if _is_pg():
+            placeholders = ",".join(["%s"] * len(target_ids))
+            rows = _exec(
+                "",
+                f"SELECT id, like_count FROM user_guides WHERE id IN ({placeholders})",
+                tuple(target_ids),
+            )
+        else:
+            placeholders = ",".join(["?"] * len(target_ids))
+            rows = _exec(
+                f"SELECT id, like_count FROM user_guides WHERE id IN ({placeholders})",
+                "",
+                tuple(target_ids),
+            )
+        for r in rows:
+            result[r["id"]] = {"liked": False, "count": r["like_count"] or 0}
+    else:
+        if _is_pg():
+            placeholders = ",".join(["%s"] * len(target_ids))
+            rows = _exec(
+                "",
+                f"SELECT id, upvote_count FROM guide_comments WHERE id IN ({placeholders})",
+                tuple(int(tid) for tid in target_ids),
+            )
+        else:
+            placeholders = ",".join(["?"] * len(target_ids))
+            rows = _exec(
+                f"SELECT id, upvote_count FROM guide_comments WHERE id IN ({placeholders})",
+                "",
+                tuple(int(tid) for tid in target_ids),
+            )
+        for r in rows:
+            result[str(r["id"])] = {"liked": False, "count": r["upvote_count"] or 0}
+
+    # Fill in missing targets
+    for tid in target_ids:
+        if tid not in result:
+            result[tid] = {"liked": False, "count": 0}
+
+    # Get user's likes if authenticated
+    if user_id:
+        if _is_pg():
+            placeholders = ",".join(["%s"] * len(target_ids))
+            liked_rows = _exec(
+                "",
+                f"SELECT target_id FROM likes WHERE user_id=%s AND target_type=%s AND target_id IN ({placeholders})",
+                (user_id, target_type, *target_ids),
+            )
+        else:
+            placeholders = ",".join(["?"] * len(target_ids))
+            liked_rows = _exec(
+                f"SELECT target_id FROM likes WHERE user_id=? AND target_type=? AND target_id IN ({placeholders})",
+                "",
+                (user_id, target_type, *target_ids),
+            )
+        for r in liked_rows:
+            tid = str(r["target_id"])
+            if tid in result:
+                result[tid]["liked"] = True
+
+    return result
+
+
+def get_liked_guide_ids(user_id):
+    """Return list of guide IDs the user has liked."""
+    rows = _exec(
+        "SELECT target_id FROM likes WHERE user_id=? AND target_type='guide'",
+        "SELECT target_id FROM likes WHERE user_id=%s AND target_type='guide'",
+        (user_id,),
+    )
+    return [r["target_id"] for r in rows]
+
+
+# ── Notification functions ───────────────────────────────────────
+
+
+def create_notification(user_id: int, type: str, actor_id: int, target_type: str | None, target_id: str | None, body: str) -> dict:
+    """Create a notification."""
+    if _is_pg():
+        from psycopg2.extras import RealDictCursor
+        with _PgConnWrapper() as conn:
+            with conn.cursor(cursor_factory=RealDictCursor) as cur:
+                cur.execute(
+                    """INSERT INTO notifications (user_id, type, actor_id, target_type, target_id, body)
+                       VALUES (%s, %s, %s, %s, %s, %s) RETURNING *""",
+                    (user_id, type, actor_id, target_type, target_id, body),
+                )
+                notif = dict(cur.fetchone())
+                conn.commit()
+                return notif
+    else:
+        conn = _get_sqlite_conn()
+        cur = conn.execute(
+            "INSERT INTO notifications (user_id, type, actor_id, target_type, target_id, body) VALUES (?, ?, ?, ?, ?, ?)",
+            (user_id, type, actor_id, target_type, target_id, body),
+        )
+        conn.commit()
+        return dict(conn.execute("SELECT * FROM notifications WHERE id=?", (cur.lastrowid,)).fetchone())
+
+
+def get_notifications(user_id: int, after_id: int | None = None, limit: int = 30) -> list[dict]:
+    """Get notifications for a user with actor info. Cursor-based pagination."""
+    if _is_pg():
+        from psycopg2.extras import RealDictCursor
+        params = [user_id]
+        cursor_clause = ""
+        if after_id:
+            cursor_clause = "AND n.id < %s"
+            params.append(int(after_id))
+        params.append(limit)
+        with _PgConnWrapper() as conn:
+            with conn.cursor(cursor_factory=RealDictCursor) as cur:
+                cur.execute(f"""
+                    SELECT n.id, n.user_id, n.type, n.actor_id, n.target_type, n.target_id,
+                           n.body, n.is_read, n.created_at,
+                           u.handle AS actor_handle, u.name AS actor_name,
+                           u.avatar_url AS actor_avatar_url, u.custom_avatar_url AS actor_custom_avatar_url
+                    FROM notifications n
+                    LEFT JOIN users u ON n.actor_id = u.id
+                    WHERE n.user_id = %s {cursor_clause}
+                    ORDER BY n.created_at DESC
+                    LIMIT %s
+                """, tuple(params))
+                return [dict(r) for r in cur.fetchall()]
+    else:
+        conn = _get_sqlite_conn()
+        params = [user_id]
+        cursor_clause = ""
+        if after_id:
+            cursor_clause = "AND n.id < ?"
+            params.append(int(after_id))
+        params.append(limit)
+        rows = conn.execute(f"""
+            SELECT n.id, n.user_id, n.type, n.actor_id, n.target_type, n.target_id,
+                   n.body, n.is_read, n.created_at,
+                   u.handle AS actor_handle, u.name AS actor_name,
+                   u.avatar_url AS actor_avatar_url, u.custom_avatar_url AS actor_custom_avatar_url
+            FROM notifications n
+            LEFT JOIN users u ON n.actor_id = u.id
+            WHERE n.user_id = ? {cursor_clause}
+            ORDER BY n.created_at DESC
+            LIMIT ?
+        """, tuple(params)).fetchall()
+        return [dict(r) for r in rows]
+
+
+def count_unread_notifications(user_id: int) -> int:
+    """Count unread notifications for a user."""
+    val = _exec_scalar(
+        "SELECT COUNT(*) FROM notifications WHERE user_id=? AND is_read=0",
+        "SELECT COUNT(*) FROM notifications WHERE user_id=%s AND is_read=FALSE",
+        (user_id,),
+    )
+    return val or 0
+
+
+def mark_notifications_read(user_id: int, ids: list[int] | None = None) -> int:
+    """Mark notifications as read. If ids is None, mark all. Returns count marked."""
+    if ids is None:
+        if _is_pg():
+            with _PgConnWrapper() as conn:
+                with conn.cursor() as cur:
+                    cur.execute("UPDATE notifications SET is_read=TRUE WHERE user_id=%s AND is_read=FALSE", (user_id,))
+                    count = cur.rowcount
+                    conn.commit()
+                    return count
+        else:
+            conn = _get_sqlite_conn()
+            cur = conn.execute("UPDATE notifications SET is_read=1 WHERE user_id=? AND is_read=0", (user_id,))
+            conn.commit()
+            return cur.rowcount
+    else:
+        if not ids:
+            return 0
+        if _is_pg():
+            placeholders = ",".join(["%s"] * len(ids))
+            with _PgConnWrapper() as conn:
+                with conn.cursor() as cur:
+                    cur.execute(
+                        f"UPDATE notifications SET is_read=TRUE WHERE user_id=%s AND id IN ({placeholders})",
+                        (user_id, *ids),
+                    )
+                    count = cur.rowcount
+                    conn.commit()
+                    return count
+        else:
+            placeholders = ",".join(["?"] * len(ids))
+            conn = _get_sqlite_conn()
+            cur = conn.execute(
+                f"UPDATE notifications SET is_read=1 WHERE user_id=? AND id IN ({placeholders})",
+                (user_id, *ids),
+            )
+            conn.commit()
+            return cur.rowcount
+
+
+def extract_mentions(body: str) -> list[str]:
+    """Extract @handles from comment body."""
+    return list(set(_re.findall(r'@([a-z0-9][a-z0-9-]{1,18}[a-z0-9])', body)))
 
 
 def get_realtime_metrics() -> dict:

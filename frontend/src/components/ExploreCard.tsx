@@ -13,6 +13,8 @@ interface ExploreCardProps {
   seasonLabel?: string | null;
   saved?: boolean;
   badge?: string | null;
+  authorHandle?: string;
+  likeCount?: number;
   index: number;
   onTap: () => void;
 }
@@ -27,6 +29,8 @@ export default function ExploreCard({
   seasonLabel,
   saved,
   badge,
+  authorHandle,
+  likeCount,
   index,
   onTap,
 }: ExploreCardProps) {
@@ -160,6 +164,9 @@ export default function ExploreCard({
         <p className="text-[10px] text-white/80 drop-shadow-sm line-clamp-2 mb-1.5">
           {description}
         </p>
+        {authorHandle && authorHandle !== "admin" && (
+          <p className="text-[9px] text-white/60 drop-shadow-sm mb-1">@{authorHandle}</p>
+        )}
         {doneCount != null ? (
           /* Progress bar for "Mine" cards */
           <div className="flex items-center gap-2">
@@ -175,9 +182,19 @@ export default function ExploreCard({
           </div>
         ) : (
           <div className="flex items-center justify-between">
-            <span className="text-[10px] text-white/70">
-              {totalCount} steps
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] text-white/70">
+                {totalCount} steps
+              </span>
+              {likeCount != null && likeCount > 0 && (
+                <span className="flex items-center gap-0.5 text-[10px] text-white/70">
+                  <svg className="w-3 h-3" fill="currentColor" stroke="none" viewBox="0 0 24 24">
+                    <path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                  </svg>
+                  {likeCount}
+                </span>
+              )}
+            </div>
             {saved && (
               <span className="flex items-center justify-center w-5 h-5 rounded-full bg-white/25 backdrop-blur-sm">
                 <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">

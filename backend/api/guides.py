@@ -21,8 +21,8 @@ from db import (
     get_user_guide,
     get_user_guides_for_owner,
     get_published_user_guides,
+    get_liked_guide_ids,
 )
-from knowledge.guides_registry import get_all_guides, get_guide_by_id, get_guides_for_context
 
 logger = logging.getLogger(__name__)
 
@@ -95,7 +95,7 @@ async def list_guides(
     x_session_id: str = Header(default="", alias="X-Session-ID"),
     authorization: str | None = Header(default=None),
 ):
-    """Catalog — all active guides with save status and step statuses."""
+    """Catalog — all published guides (YAML-ingested + community) with save status and step statuses."""
     user = None
     if authorization:
         try:
@@ -104,7 +104,6 @@ async def list_guides(
             pass
 
     user_id, session_id = _resolve_identity(user, x_session_id or None)
-    guides = get_guides_for_context(village=village) if village else get_all_guides()
     saved_ids = set(await run_sync(get_saved_guide_ids, user_id, session_id))
     all_statuses = await run_sync(get_all_step_statuses, user_id, session_id)
 
@@ -116,21 +115,39 @@ async def list_guides(
             status_by_guide[gid] = {}
         status_by_guide[gid][row["step_id"]] = row
 
-    result = []
-    for g in guides:
-        step_map = status_by_guide.get(g["id"], {})
-        result.append(_format_guide(g, lang, saved_ids, step_map))
-
-    # Include published user guides
     published = await run_sync(get_published_user_guides)
+    result = []
     for ug in published:
         gd = ug["guide_data"]
         gd["id"] = ug["id"]
         if "season" not in gd:
             gd["season"] = None
+
+        # Village filter: skip if guide has steps with applies_to and none match
+        if village:
+            filtered_steps = []
+            for step in gd.get("steps", []):
+                applies = step.get("applies_to", "all")
+                if applies == "all" or (isinstance(applies, list) and village.lower() in [v.lower() for v in applies]):
+                    filtered_steps.append(step)
+            if not filtered_steps:
+                continue
+            gd = {**gd, "steps": filtered_steps}
+
+        # Season filter: skip seasonal guides outside their months
+        if gd.get("type") == "seasonal":
+            season = gd.get("season")
+            if season:
+                from datetime import datetime as _dt
+                month = _dt.now().month
+                if month not in season.get("months", []):
+                    continue
+
         step_map = status_by_guide.get(ug["id"], {})
         formatted = _format_guide(gd, lang, saved_ids, step_map)
-        formatted["is_community"] = True
+        author_handle = ug.get("author_handle")
+        formatted["author_handle"] = author_handle
+        formatted["is_community"] = author_handle != "admin" if author_handle else False
         result.append(formatted)
 
     logger.info(f"[guides] Catalog returned {len(result)} guides for village={village!r}")
@@ -144,7 +161,7 @@ async def wallet_guides(
     x_session_id: str = Header(default="", alias="X-Session-ID"),
     authorization: str | None = Header(default=None),
 ):
-    """Wallet — only saved guides with full step statuses."""
+    """Wallet — sectioned by published/private/liked/saved."""
     user = None
     if authorization:
         try:
@@ -153,7 +170,6 @@ async def wallet_guides(
             pass
 
     user_id, session_id = _resolve_identity(user, x_session_id or None)
-    guides = get_all_guides()
     saved_ids = set(await run_sync(get_saved_guide_ids, user_id, session_id))
     all_statuses = await run_sync(get_all_step_statuses, user_id, session_id)
 
@@ -165,18 +181,12 @@ async def wallet_guides(
         status_by_guide[gid][row["step_id"]] = row
 
     result = []
-    for g in guides:
-        if g["id"] not in saved_ids:
-            continue
-        step_map = status_by_guide.get(g["id"], {})
-        result.append(_format_guide(g, lang, saved_ids, step_map))
+    seen_ids: set[str] = set()
 
-    # Include user's own guides (created/forked)
+    # 1) Own user guides → published or private
+    own_handle = user.get("handle") if user else None
     own_guides = await run_sync(get_user_guides_for_owner, user_id, session_id)
-    seen_ids = {r["id"] for r in result}
     for ug in own_guides:
-        if ug["id"] in seen_ids:
-            continue
         gd = ug["guide_data"]
         gd["id"] = ug["id"]
         if "season" not in gd:
@@ -184,13 +194,38 @@ async def wallet_guides(
         step_map = status_by_guide.get(ug["id"], {})
         formatted = _format_guide(gd, lang, saved_ids, step_map)
         formatted["is_custom"] = True
-        formatted["saved"] = True  # own guides always show as "saved"
+        formatted["is_published"] = bool(ug.get("is_published"))
+        formatted["saved"] = True
+        formatted["wallet_category"] = "published" if formatted["is_published"] else "private"
+        formatted["author_handle"] = own_handle
         result.append(formatted)
+        seen_ids.add(ug["id"])
 
-    # Sort: in-progress first (has any non-todo steps), then by type
+    # 2) Liked guides (replaces old "saved" section)
+    if user_id:
+        liked_ids = await run_sync(get_liked_guide_ids, user_id)
+        for lid in liked_ids:
+            if lid in seen_ids:
+                continue
+            ug = await run_sync(get_user_guide, lid)
+            if not ug:
+                continue
+            gd = ug["guide_data"]
+            gd["id"] = ug["id"]
+            if "season" not in gd:
+                gd["season"] = None
+            step_map = status_by_guide.get(lid, {})
+            formatted = _format_guide(gd, lang, saved_ids, step_map)
+            formatted["wallet_category"] = "liked"
+            formatted["author_handle"] = ug.get("author_handle")
+            result.append(formatted)
+            seen_ids.add(lid)
+
+    # Sort within each category: in-progress first, then by type
+    cat_order = {"published": 0, "private": 1, "liked": 2}
     def sort_key(g):
         has_progress = g["done_count"] > 0 and g["done_count"] < g["total_count"]
-        return (0 if has_progress else 1, 0 if g["type"] == "onboarding" else 1)
+        return (cat_order.get(g.get("wallet_category", "liked"), 9), 0 if has_progress else 1, 0 if g["type"] == "onboarding" else 1)
     result.sort(key=sort_key)
     return result
 
@@ -213,8 +248,8 @@ async def save_guide_endpoint(
         except Exception:
             pass
     user_id, session_id = _resolve_identity(user, x_session_id or None)
-    # Validate guide exists (YAML or user guide)
-    if not get_guide_by_id(body.guide_id) and not (body.guide_id.startswith("ug-") and await run_sync(get_user_guide, body.guide_id)):
+    # Validate guide exists
+    if not await run_sync(get_user_guide, body.guide_id):
         raise HTTPException(status_code=404, detail=f"Guide '{body.guide_id}' not found")
     await run_sync(db_save_guide, user_id, session_id, body.guide_id)
     return {"ok": True}
@@ -234,8 +269,8 @@ async def unsave_guide_endpoint(
         except Exception:
             pass
     user_id, session_id = _resolve_identity(user, x_session_id or None)
-    # Validate guide exists (YAML or user guide)
-    if not get_guide_by_id(body.guide_id) and not (body.guide_id.startswith("ug-") and await run_sync(get_user_guide, body.guide_id)):
+    # Validate guide exists
+    if not await run_sync(get_user_guide, body.guide_id):
         raise HTTPException(status_code=404, detail=f"Guide '{body.guide_id}' not found")
     await run_sync(db_unsave_guide, user_id, session_id, body.guide_id)
     return {"ok": True}
@@ -263,12 +298,9 @@ async def update_step(
         except Exception:
             pass
     user_id, session_id = _resolve_identity(user, x_session_id or None)
-    # Validate guide and step exist (YAML or user guide)
-    guide = get_guide_by_id(body.guide_id)
-    if not guide and body.guide_id.startswith("ug-"):
-        ug = await run_sync(get_user_guide, body.guide_id)
-        if ug:
-            guide = ug["guide_data"]
+    # Validate guide and step exist
+    ug = await run_sync(get_user_guide, body.guide_id)
+    guide = ug["guide_data"] if ug else None
     if not guide:
         raise HTTPException(status_code=404, detail=f"Guide '{body.guide_id}' not found")
     step_ids = {s["id"] for s in guide.get("steps", [])}

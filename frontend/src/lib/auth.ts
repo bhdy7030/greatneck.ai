@@ -18,6 +18,8 @@ export interface AuthUser {
   is_invited?: boolean;
   tier?: string;
   promo_expires_at?: string | null;
+  handle?: string | null;
+  bio?: string;
 }
 
 export function getToken(): string | null {

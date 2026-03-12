@@ -21,7 +21,6 @@ from db import (
     migrate_user_guide_data,
     save_guide as db_save_guide,
 )
-from knowledge.guides_registry import get_guide_by_id
 
 logger = logging.getLogger(__name__)
 
@@ -170,17 +169,11 @@ async def fork_guide_endpoint(
 
     user_id, session_id = _resolve_identity(user, x_session_id or None)
 
-    # Try YAML guide first
-    source_guide = get_guide_by_id(body.guide_id)
-    if source_guide:
-        guide_data = source_guide
-    else:
-        # Try user guide
-        ug = await run_sync(get_user_guide, body.guide_id)
-        if ug:
-            guide_data = ug["guide_data"]
-        else:
-            raise HTTPException(status_code=404, detail="Source guide not found")
+    # Look up source guide
+    ug = await run_sync(get_user_guide, body.guide_id)
+    if not ug:
+        raise HTTPException(status_code=404, detail="Source guide not found")
+    guide_data = ug["guide_data"]
 
     # Create the fork
     new_id = await run_sync(create_user_guide, user_id, session_id, guide_data, body.guide_id)

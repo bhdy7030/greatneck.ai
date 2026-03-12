@@ -28,6 +28,7 @@ import {
   type UsageInfo,
   type TierFeatures,
 } from "@/lib/api";
+import HandlePicker from "@/components/HandlePicker";
 
 /** Detect in-app browsers (Facebook, Instagram, WeChat, LINE, etc.) where Google blocks OAuth. */
 function isInAppBrowser(): boolean {
@@ -125,6 +126,7 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const [usage, setUsage] = useState<UsageInfo | null>(null);
   const [showBrowserPrompt, setShowBrowserPrompt] = useState(false);
+  const [showHandlePicker, setShowHandlePicker] = useState(false);
 
   const refreshUsage = useCallback(async () => {
     try {
@@ -173,6 +175,10 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
       .then(async (u) => {
         setUser(u);
         setStoredUser(u);
+        // Show handle picker if user has no handle
+        if (!u.handle) {
+          setShowHandlePicker(true);
+        }
         // After login, link any stored invite code to this account
         const inviteCode = getInviteCode();
         if (inviteCode && !u.is_invited) {
@@ -241,6 +247,16 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
       {children}
       {showBrowserPrompt && (
         <InAppBrowserPrompt onClose={() => setShowBrowserPrompt(false)} />
+      )}
+      {showHandlePicker && user && (
+        <HandlePicker
+          userName={user.name}
+          onComplete={(handle) => {
+            setShowHandlePicker(false);
+            setUser({ ...user, handle });
+            setStoredUser({ ...user, handle });
+          }}
+        />
       )}
     </AuthContext.Provider>
   );

@@ -259,16 +259,19 @@ async def apple_callback(request: Request):
 async def get_me(user: dict = Depends(get_current_user)):
     """Return the current authenticated user's info."""
     from api.tier import resolve_tier
+    custom_avatar = user.get("custom_avatar_url", "")
     return {
         "id": user["id"],
         "email": user["email"],
         "name": user["name"],
-        "avatar_url": user["avatar_url"],
+        "avatar_url": custom_avatar if custom_avatar else user["avatar_url"],
         "is_admin": bool(user.get("is_admin")),
         "can_debug": bool(user.get("can_debug")),
         "is_invited": bool(user.get("is_invited")),
         "tier": resolve_tier(user),
         "promo_expires_at": user.get("promo_expires_at"),
+        "handle": user.get("handle"),
+        "bio": user.get("bio", ""),
     }
 
 

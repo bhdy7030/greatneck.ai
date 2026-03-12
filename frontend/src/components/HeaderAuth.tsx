@@ -3,14 +3,16 @@
 import { useState, useRef, useEffect } from "react";
 import { useAuth } from "@/components/AuthProvider";
 import { useLanguage } from "./LanguageProvider";
-import TierBadge from "./TierBadge";
 import InviteManager from "./InviteManager";
+import NotificationBell from "./NotificationBell";
+import HandleChanger from "./HandleChanger";
 
 export default function HeaderAuth() {
   const { user, isLoading, login, loginWithApple, logout } = useAuth();
   const { t } = useLanguage();
   const [showMenu, setShowMenu] = useState(false);
   const [showInviteManager, setShowInviteManager] = useState(false);
+  const [showHandleChanger, setShowHandleChanger] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
   // Nudge: show dot badge after 3+ chat sessions
@@ -96,7 +98,7 @@ export default function HeaderAuth() {
   return (
     <>
       <div className="flex items-center gap-1 md:gap-2 relative" ref={menuRef}>
-        <TierBadge />
+        <NotificationBell />
         <button
           onClick={() => setShowMenu((v) => !v)}
           className="relative flex items-center gap-1 px-1.5 py-1 rounded-full hover:bg-surface-100 transition-colors"
@@ -122,6 +124,34 @@ export default function HeaderAuth() {
         </button>
         {showMenu && (
           <div className="absolute right-0 top-full mt-2 w-52 bg-white rounded-lg shadow-lg border border-surface-200 py-1 z-50">
+            {user.handle && (
+              <div className="px-3 py-2 text-xs text-text-400 border-b border-surface-100">
+                @{user.handle}
+              </div>
+            )}
+            {user.handle && (
+              <a
+                href={`/profile/?h=${user.handle}`}
+                onClick={() => setShowMenu(false)}
+                className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-text-700 hover:bg-surface-100 transition-colors"
+              >
+                <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+                Edit Profile
+              </a>
+            )}
+            {user.handle && (
+              <button
+                onClick={() => { setShowMenu(false); setShowHandleChanger(true); }}
+                className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-text-700 hover:bg-surface-100 transition-colors"
+              >
+                <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9" />
+                </svg>
+                Change Handle
+              </button>
+            )}
             <button
               onClick={handleOpenInvites}
               className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-text-700 hover:bg-surface-100 transition-colors"
@@ -176,6 +206,25 @@ export default function HeaderAuth() {
       </div>
       {showInviteManager && (
         <InviteManager onClose={() => setShowInviteManager(false)} />
+      )}
+      {showHandleChanger && user.handle && (
+        <HandleChanger
+          currentHandle={user.handle}
+          onComplete={(handle) => {
+            setShowHandleChanger(false);
+            // Update user context with new handle
+            if (typeof window !== "undefined") {
+              const stored = localStorage.getItem("gn_user");
+              if (stored) {
+                const u = JSON.parse(stored);
+                u.handle = handle;
+                localStorage.setItem("gn_user", JSON.stringify(u));
+              }
+            }
+            window.location.reload();
+          }}
+          onClose={() => setShowHandleChanger(false)}
+        />
       )}
     </>
   );

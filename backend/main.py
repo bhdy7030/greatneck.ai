@@ -13,7 +13,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from config import settings
-from db import init_db, close_pg_pool, _is_pg
+from db import init_db, close_pg_pool, _is_pg, ingest_yaml_guides
 
 logger = logging.getLogger(__name__)
 
@@ -90,6 +90,7 @@ async def lifespan(app: FastAPI):
     _knowledge_mounted = True
     init_db()
     logger.info("Database initialized (mode=%s)", "PostgreSQL" if _is_pg() else "SQLite")
+    ingest_yaml_guides()
 
     # Start metrics collector background task
     from metrics.collector import collector as metrics_collector
@@ -136,6 +137,10 @@ from api.guides import router as guides_router
 from api.user_guides import router as user_guides_router
 from api.track import router as track_router
 from api.waitlist import router as waitlist_router
+from api.profile import router as profile_router
+from api.comments import router as comments_router
+from api.likes import router as likes_router
+from api.notifications import router as notifications_router
 
 app.include_router(chat_router, prefix="/api")
 app.include_router(admin_router, prefix="/api/admin")
@@ -149,6 +154,10 @@ app.include_router(guides_router, prefix="/api")
 app.include_router(user_guides_router, prefix="/api")
 app.include_router(track_router, prefix="/api")
 app.include_router(waitlist_router, prefix="/api")
+app.include_router(profile_router, prefix="/api")
+app.include_router(comments_router, prefix="/api")
+app.include_router(likes_router, prefix="/api")
+app.include_router(notifications_router, prefix="/api")
 app.include_router(health_router)
 
 
