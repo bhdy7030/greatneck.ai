@@ -348,21 +348,21 @@ NOTE: These formatting rules apply to your written response ONLY. Do NOT reduce 
         dynamic_part = system[len(_static_system):]
         use_cache = len(static_part.split()) > 300  # ~1200 tokens
 
-        if dynamic_part.strip():
-            static_block = {"type": "text", "text": static_part}
-            if use_cache:
-                static_block["cache_control"] = {"type": "ephemeral"}
-            messages: list[dict] = [{"role": "system", "content": [
-                static_block,
-                {"type": "text", "text": dynamic_part},
-            ]}]
+        if use_cache:
+            # Multi-part content with cache_control for provider-level caching
+            static_block: dict = {"type": "text", "text": static_part, "cache_control": {"type": "ephemeral"}}
+            if dynamic_part.strip():
+                messages: list[dict] = [{"role": "system", "content": [
+                    static_block,
+                    {"type": "text", "text": dynamic_part},
+                ]}]
+            else:
+                messages: list[dict] = [{"role": "system", "content": [
+                    static_block,
+                ]}]
         else:
-            static_block = {"type": "text", "text": static_part}
-            if use_cache:
-                static_block["cache_control"] = {"type": "ephemeral"}
-            messages: list[dict] = [{"role": "system", "content": [
-                static_block,
-            ]}]
+            # Plain string — avoids Gemini interpreting list format as cacheable
+            messages: list[dict] = [{"role": "system", "content": system}]
 
         messages.extend(history)
         messages.append({"role": "user", "content": query})
