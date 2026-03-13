@@ -413,7 +413,7 @@ export default function Home() {
               ).map((guide, i) => (
                 <a
                   key={guide.id}
-                  href={`/guides/?open=${guide.id}${playbookTab === "mine" ? "&tab=wallet" : ""}`}
+                  href={playbookTab === "mine" ? `/guides/?open=${guide.id}&tab=wallet` : `/guides/?id=${guide.id}&tab=browse`}
                   className="flex-shrink-0 w-[130px] aspect-[3/4] flex flex-col rounded-lg overflow-hidden cursor-pointer select-none group animate-miniCardIn bg-surface-50/60 border border-surface-300/50 hover:border-surface-400 transition-all duration-200 hover:-translate-y-0.5"
                   style={{ animationDelay: `${i * 80}ms` }}
                 >

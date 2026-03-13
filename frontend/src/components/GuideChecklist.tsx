@@ -6,6 +6,7 @@ import { useLanguage } from "./LanguageProvider";
 import type { GuideStep, StepStatus } from "@/lib/api";
 import { updateStepStatus, clearStepReminder } from "@/lib/api";
 import StepInlineChat from "./StepInlineChat";
+import StepMarkdown from "./StepMarkdown";
 import StepReels from "./StepReels";
 
 interface GuideChecklistProps {
@@ -111,8 +112,8 @@ export default function GuideChecklist({ guideId, guideTitle, steps: initialStep
   };
 
   return (
-    <div className="space-y-0">
-      {/* Reel view — includes bottom nav bar with progress + prev/next */}
+    <div className="h-full flex flex-col">
+      {/* Reel view — immersive, fills container */}
       <StepReels
         steps={steps}
         activeIdx={activeIdx}
@@ -124,12 +125,10 @@ export default function GuideChecklist({ guideId, guideTitle, steps: initialStep
           return (
             <div className="space-y-2.5">
               {/* Section 1: Description + Details */}
-              <div className="bg-surface-100/60 rounded-xl px-3.5 py-3 border border-surface-200">
-                <p className="text-xs text-text-700 leading-relaxed">{step.description}</p>
+              <div className="bg-white rounded-xl px-3.5 py-3 border border-surface-200/60 shadow-sm">
+                <StepMarkdown content={step.description} />
                 {step.details && (
-                  <div className="text-text-600 whitespace-pre-line text-[11px] mt-2 leading-relaxed">
-                    {step.details}
-                  </div>
+                  <StepMarkdown content={step.details} className="mt-2 text-text-600 text-[12px]" />
                 )}
                 {step.links.length > 0 && (
                   <div className="flex flex-wrap gap-1.5 mt-2.5 pt-2.5 border-t border-surface-200">
@@ -153,7 +152,7 @@ export default function GuideChecklist({ guideId, guideTitle, steps: initialStep
 
               {/* Section 2: Note */}
               {(editingNote === i || step.note) && (
-                <div className="bg-surface-100/60 rounded-xl px-3.5 py-3 border border-surface-200">
+                <div className="bg-white rounded-xl px-3.5 py-3 border border-surface-200/60 shadow-sm">
                   {editingNote === i ? (
                     <div className="flex gap-1.5">
                       <input
@@ -185,7 +184,7 @@ export default function GuideChecklist({ guideId, guideTitle, steps: initialStep
 
               {/* Section 3: Inline chat */}
               {inlineChatIdx === i && step.chat_prompt && (
-                <div className="bg-surface-100/60 rounded-xl px-3.5 py-3 border border-surface-200">
+                <div className="bg-white rounded-xl px-3.5 py-3 border border-surface-200/60 shadow-sm">
                   <StepInlineChat
                     chatPrompt={step.chat_prompt}
                     stepTitle={step.title}
@@ -200,8 +199,8 @@ export default function GuideChecklist({ guideId, guideTitle, steps: initialStep
               )}
 
               {/* Section 4: Status + Actions */}
-              <div className="bg-surface-100/60 rounded-xl px-3.5 py-3 border border-surface-200 space-y-2">
-                <div className="flex bg-surface-200 rounded-xl p-1 gap-1">
+              <div className="bg-white rounded-xl px-3.5 py-3 border border-surface-200/60 shadow-sm space-y-2">
+                <div className="flex bg-surface-100 rounded-xl p-1 gap-1">
                   {STATUS_OPTIONS.map((status) => {
                     const isActive = step.status === status;
                     let activeClass = "";
@@ -248,7 +247,7 @@ export default function GuideChecklist({ guideId, guideTitle, steps: initialStep
                   ) : (
                     <button
                       onClick={() => setReminderPickerIdx(reminderPickerIdx === i ? null : i)}
-                      className="flex-1 min-h-[44px] text-[11px] rounded-lg bg-surface-200/80 text-text-600 hover:bg-surface-200 flex items-center justify-center gap-1.5"
+                      className="flex-1 min-h-[44px] text-[11px] rounded-lg bg-surface-100 text-text-600 hover:bg-surface-200 flex items-center justify-center gap-1.5"
                     >
                       <span>🔔</span>
                       {t("guides.action.remind")}
@@ -256,7 +255,7 @@ export default function GuideChecklist({ guideId, guideTitle, steps: initialStep
                   )}
                   <button
                     onClick={() => { setEditingNote(i); setNoteText(step.note || ""); }}
-                    className="flex-1 min-h-[44px] text-[11px] rounded-lg bg-surface-200/80 text-text-600 hover:bg-surface-200 flex items-center justify-center gap-1.5"
+                    className="flex-1 min-h-[44px] text-[11px] rounded-lg bg-surface-100 text-text-600 hover:bg-surface-200 flex items-center justify-center gap-1.5"
                   >
                     <span>📝</span>
                     {t("guides.action.note")}
@@ -264,7 +263,7 @@ export default function GuideChecklist({ guideId, guideTitle, steps: initialStep
                   {step.chat_prompt && (
                     <button
                       onClick={() => setInlineChatIdx(inlineChatIdx === i ? null : i)}
-                      className="flex-1 min-h-[44px] text-[11px] rounded-lg bg-surface-200/80 text-text-600 hover:bg-surface-200 flex items-center justify-center gap-1.5"
+                      className="flex-1 min-h-[44px] text-[11px] rounded-lg bg-surface-100 text-text-600 hover:bg-surface-200 flex items-center justify-center gap-1.5"
                     >
                       <span>✨</span>
                       {t("guides.action.askAI")}

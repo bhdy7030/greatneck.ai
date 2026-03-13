@@ -25,6 +25,7 @@ import GuideEditor from "@/components/GuideEditor";
 import ExploreCard from "@/components/ExploreCard";
 import StepReels from "@/components/StepReels";
 import StepInlineChat from "@/components/StepInlineChat";
+import StepMarkdown from "@/components/StepMarkdown";
 import PlaybookComments from "@/components/PlaybookComments";
 
 export default function GuidesPage() {
@@ -59,6 +60,9 @@ function GuidesPageInner() {
   const [showPublishModal, setShowPublishModal] = useState(false);
   const [showUpdatePublishedModal, setShowUpdatePublishedModal] = useState(false);
   const [updatePublishedDone, setUpdatePublishedDone] = useState(false);
+  const [showCommentsSheet, setShowCommentsSheet] = useState(false);
+  const [showBottomActions, setShowBottomActions] = useState(false);
+  const [showSaveSheet, setShowSaveSheet] = useState(false);
 
   const village = typeof window !== "undefined" ? localStorage.getItem("gn_village") || "" : "";
 
@@ -84,23 +88,36 @@ function GuidesPageInner() {
       const shareId = searchParams.get("id");
       const openId = searchParams.get("open");
       const targetId = shareId || openId;
+      const urlTab = searchParams.get("tab");
       if (targetId) {
-        const guide = wallet.find((g) => g.id === targetId) || all.find((g) => g.id === targetId);
+        const walletGuide = wallet.find((g) => g.id === targetId);
+        const guide = walletGuide || all.find((g) => g.id === targetId);
         if (guide) {
-          if (shareId) {
-            // Shared link → open in peek (read-only preview) mode
-            setPeekGuide(guide);
-          } else {
+          // Restore tab from URL, or infer from guide location
+          if (urlTab === "wallet" || urlTab === "browse") {
+            setTab(urlTab);
+          } else if (walletGuide) {
+            setTab("wallet");
+          }
+
+          if (openId) {
             // Notification → open in expanded (wallet) mode
             setExpandedGuide(guide);
+            // Clean up ?open= but keep ?id= style URL
+            window.history.replaceState({}, "", `/guides?id=${guide.id}&tab=${urlTab || (walletGuide ? "wallet" : "browse")}`);
+          } else if (walletGuide && urlTab === "wallet") {
+            // Wallet guide opened from wallet tab → expanded mode
+            setExpandedGuide(guide);
+          } else {
+            // Shared/browse link → peek (read-only preview) mode
+            setPeekGuide(guide);
           }
+        } else {
+          // Guide not found — clean up URL
+          window.history.replaceState({}, "", `/guides${urlTab ? `?tab=${urlTab}` : ""}`);
         }
-        // Clean up URL
-        const params = new URLSearchParams(searchParams.toString());
-        params.delete("id");
-        params.delete("open");
-        const qs = params.toString();
-        window.history.replaceState({}, "", `/guides${qs ? `?${qs}` : ""}`);
+      } else if (urlTab === "wallet" || urlTab === "browse") {
+        setTab(urlTab);
       }
 
       // Auto-expand to guide+step if returning from chat
@@ -129,6 +146,29 @@ function GuidesPageInner() {
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  // Handle browser back/forward button
+  useEffect(() => {
+    const handlePopState = () => {
+      const params = new URLSearchParams(window.location.search);
+      const id = params.get("id");
+      const urlTab = params.get("tab");
+
+      if (!id) {
+        // No guide in URL — close any open guide
+        setExpandedGuide(null);
+        setPeekGuide(null);
+        setPreviewIdx(0);
+        setPreviewChatIdx(null);
+        setShowCommentsSheet(false);
+        setShowBottomActions(false);
+        setShowSaveSheet(false);
+        if (urlTab === "wallet" || urlTab === "browse") setTab(urlTab);
+      }
+    };
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
 
   const handleSave = async (guideId: string) => {
     // Optimistic
@@ -171,6 +211,7 @@ function GuidesPageInner() {
     setExpandedGuide(guide);
     setEditingGuide(null);
     setEditingGuideId(null);
+    window.history.pushState({}, "", `/guides?id=${guide.id}&tab=${tab}`);
   };
 
   const handleFork = async (guideId: string) => {
@@ -304,67 +345,77 @@ function GuidesPageInner() {
   if (expandedGuide) {
     const isOwnGuide = expandedGuide.wallet_category === "published" || expandedGuide.wallet_category === "private";
 
+    const commentCount = ((expandedGuide as unknown as Record<string, unknown>).comment_count as number) || 0;
+    const showComments = (!isOwnGuide || expandedGuide.is_published) || (isOwnGuide && !expandedGuide.is_published && commentCount > 0);
+    const commentsReadOnly = isOwnGuide && !expandedGuide.is_published;
+
     return (
-      <div className="fixed inset-0 z-50 bg-surface-100 flex flex-col animate-fullscreenSlideUp">
-        {/* Compact top bar: back + title + actions */}
+      <div className="fixed inset-0 z-50 bg-surface-50 flex flex-col animate-fullscreenSlideUp">
+        {/* Fixed top bar — translucent, compact */}
         <div
-          className="shrink-0 px-3 py-2 border-b border-surface-200 bg-surface-100/95 backdrop-blur-sm"
-          style={{ borderBottomColor: expandedGuide.color + "40" }}
+          className="shrink-0 px-3 pt-[env(safe-area-inset-top)] bg-surface-50/90 backdrop-blur-md z-20"
+          style={{ borderBottom: `1px solid ${expandedGuide.color}20` }}
         >
-          <div className="flex items-center gap-2 max-w-2xl mx-auto">
-            {/* Color accent + title */}
+          <div className="flex items-center gap-2 max-w-2xl mx-auto py-2">
+            {/* Close */}
+            <button
+              onClick={() => {
+                if (editingGuide) { handleEditDone(); return; }
+                setExpandedGuide(null); setReturnStepId(null); fetchData();
+                window.history.pushState({}, "", `/guides?tab=${tab}`);
+              }}
+              className="shrink-0 w-8 h-8 flex items-center justify-center rounded-full hover:bg-surface-200 active:bg-surface-300 transition-colors"
+              aria-label="Close"
+            >
+              <svg className="w-5 h-5 text-text-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+
+            {/* Title */}
             <div className="flex-1 min-w-0 flex items-center gap-2">
-              <div className="w-1 h-5 rounded-full shrink-0" style={{ backgroundColor: expandedGuide.color }} />
+              <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: expandedGuide.color }} />
               <h1 className="text-sm font-bold text-text-900 truncate">{expandedGuide.title}</h1>
-              {expandedGuide.published_copy_id && (
-                <span className="shrink-0 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide bg-green-100 text-green-700 rounded-full">
-                  Published
-                </span>
-              )}
             </div>
 
-            {/* Update published version */}
+            {/* Top-right actions */}
             {isOwnGuide && expandedGuide.published_copy_id && !editingGuide && (
               updatePublishedDone ? (
                 <span className="shrink-0 text-[11px] text-green-600 flex items-center gap-1">
                   <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
-                  Updated
                 </span>
               ) : (
                 <button
                   onClick={() => setShowUpdatePublishedModal(true)}
-                  className="shrink-0 px-2.5 py-1 text-[11px] font-medium text-amber-700 border border-amber-300 rounded-lg hover:bg-amber-50 transition-colors"
+                  className="shrink-0 px-2 py-1 text-[10px] font-medium text-amber-700 border border-amber-300 rounded-lg hover:bg-amber-50"
                 >
-                  Update Published
+                  Sync Live
                 </button>
               )
             )}
-
-            {/* Actions */}
             {isOwnGuide && !editingGuide && (
               <button
                 onClick={() => handleEditStart(expandedGuide.id)}
-                className="shrink-0 px-2.5 py-1 text-[11px] font-medium text-sage border border-sage/30 rounded-lg hover:bg-sage/5 transition-colors"
+                className="shrink-0 w-8 h-8 flex items-center justify-center rounded-full hover:bg-surface-200 transition-colors"
               >
-                {t("guides.edit")}
+                <svg className="w-4 h-4 text-text-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                </svg>
               </button>
             )}
             {editingGuide && editSaved && (
-              <span className="shrink-0 text-[11px] text-green-600 flex items-center gap-1">
-                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <span className="shrink-0 text-[11px] text-green-600">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
-                {t("guides.edit.saved")}
               </span>
             )}
-
-            {/* Share button — for published guides */}
             {expandedGuide.is_published && !editingGuide && (
               <button
                 onClick={() => handleShareGuide(expandedGuide)}
-                className="shrink-0 w-8 h-8 flex items-center justify-center rounded-full bg-surface-200 hover:bg-surface-300 active:bg-surface-400 transition-colors"
+                className="shrink-0 w-8 h-8 flex items-center justify-center rounded-full hover:bg-surface-200 transition-colors"
                 aria-label="Share"
               >
                 {shareCopied ? (
@@ -372,141 +423,207 @@ function GuidesPageInner() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
                 ) : (
-                  <svg className="w-4 h-4 text-text-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-4 h-4 text-text-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
                   </svg>
                 )}
               </button>
             )}
-
-            {/* Close button */}
+            {/* More menu (publish/delete) */}
             <button
-              onClick={() => {
-                if (editingGuide) { handleEditDone(); return; }
-                setExpandedGuide(null); setReturnStepId(null); fetchData();
-              }}
-              className="shrink-0 w-8 h-8 flex items-center justify-center rounded-full bg-surface-200 hover:bg-surface-300 active:bg-surface-400 transition-colors"
-              aria-label="Close"
+              onClick={() => setShowBottomActions((v) => !v)}
+              className="shrink-0 w-8 h-8 flex items-center justify-center rounded-full hover:bg-surface-200 transition-colors"
             >
-              <svg className="w-4 h-4 text-text-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              <svg className="w-4 h-4 text-text-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01" />
               </svg>
             </button>
           </div>
         </div>
 
-        {/* Scrollable content */}
-        <div className="flex-1 overflow-y-auto">
-          <div className="max-w-2xl mx-auto px-4 pt-3 pb-4">
-            {/* Guide description */}
-            <p className="text-xs text-text-500 mb-3">{expandedGuide.description}</p>
-
-            {/* Private hint for own unpublished guides */}
-            {isOwnGuide && !expandedGuide.is_published && !editingGuide && (
-              <div className="mb-3 flex items-start gap-2 px-3 py-2.5 rounded-xl bg-amber-50 border border-amber-200/60">
-                <svg className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                </svg>
-                <p className="text-[11px] text-amber-800 leading-relaxed">
-                  {t("guides.private.hint")}
-                </p>
-              </div>
-            )}
-
-            {/* Edit mode or Checklist */}
-            {editingGuide ? (
+        {/* Main content — immersive, fills viewport */}
+        <div className="flex-1 min-h-0 flex flex-col">
+          {editingGuide ? (
+            <div className="flex-1 overflow-y-auto px-4 pt-3 pb-4 max-w-2xl mx-auto w-full">
               <GuideEditor guide={editingGuide} onChange={handleEditChange} />
-            ) : (
-              <GuideChecklist
-                guideId={expandedGuide.id}
-                guideTitle={expandedGuide.title}
-                steps={expandedGuide.steps}
-                color={expandedGuide.color}
-                initialStepId={returnStepId}
-              />
-            )}
+            </div>
+          ) : (
+            <>
+              {/* Description — compact, above the steps */}
+              {expandedGuide.description && (
+                <div className="shrink-0 px-4 pt-2 pb-1 max-w-2xl mx-auto w-full">
+                  <StepMarkdown content={expandedGuide.description} className="text-text-500" />
+                </div>
+              )}
 
-            {/* Like button — on all published guides */}
-            {(!isOwnGuide || expandedGuide.is_published) && (
-              <div className="mt-4 flex items-center gap-2">
+              {/* Private hint */}
+              {isOwnGuide && !expandedGuide.is_published && (
+                <div className="shrink-0 mx-4 mb-1 flex items-center gap-2 px-3 py-2 rounded-xl bg-amber-50/80 border border-amber-200/40 max-w-2xl">
+                  <svg className="w-3.5 h-3.5 text-amber-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                  </svg>
+                  <p className="text-[10px] text-amber-700">{t("guides.private.hint")}</p>
+                </div>
+              )}
+
+              {/* Step reels — takes remaining space */}
+              <div className="flex-1 min-h-0 max-w-2xl mx-auto w-full">
+                <GuideChecklist
+                  guideId={expandedGuide.id}
+                  guideTitle={expandedGuide.title}
+                  steps={expandedGuide.steps}
+                  color={expandedGuide.color}
+                  initialStepId={returnStepId}
+                />
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* Bottom bar — like + comments toggle */}
+        {!editingGuide && (
+          <div
+            className="shrink-0 pb-[env(safe-area-inset-bottom)] bg-surface-50/90 backdrop-blur-md border-t border-surface-200/60 z-20"
+          >
+            <div className="flex items-center gap-3 px-4 py-2 max-w-2xl mx-auto">
+              {/* Like */}
+              {(!isOwnGuide || expandedGuide.is_published) && (
                 <button
                   onClick={() => handleToggleLike(expandedGuide.id)}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm transition-colors ${
-                    likeStatus[expandedGuide.id]?.liked
-                      ? "bg-red-50 text-red-500"
-                      : "bg-surface-100 text-text-500 hover:bg-surface-200"
+                  className={`flex items-center gap-1 text-sm transition-colors ${
+                    likeStatus[expandedGuide.id]?.liked ? "text-red-500" : "text-text-400"
                   }`}
                 >
-                  <svg className="w-4 h-4" fill={likeStatus[expandedGuide.id]?.liked ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-5 h-5" fill={likeStatus[expandedGuide.id]?.liked ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                   </svg>
                   {(likeStatus[expandedGuide.id]?.count || 0) > 0 && (
-                    <span>{likeStatus[expandedGuide.id]?.count}</span>
+                    <span className="text-xs">{likeStatus[expandedGuide.id]?.count}</span>
                   )}
                 </button>
-              </div>
-            )}
+              )}
 
-            {/* Comments — active on all published guides; frozen on own unpublished with existing comments */}
-            {(!isOwnGuide || expandedGuide.is_published) && !editingGuide && (
-              <PlaybookComments
-                guideId={expandedGuide.id}
-                commentCount={((expandedGuide as unknown as Record<string, unknown>).comment_count as number) || 0}
-              />
-            )}
-            {isOwnGuide && !expandedGuide.is_published && !editingGuide && (((expandedGuide as unknown as Record<string, unknown>).comment_count as number) || 0) > 0 && (
-              <PlaybookComments
-                guideId={expandedGuide.id}
-                commentCount={((expandedGuide as unknown as Record<string, unknown>).comment_count as number) || 0}
-                readOnly
-              />
-            )}
+              {/* Comments toggle */}
+              {showComments && (
+                <button
+                  onClick={() => setShowCommentsSheet((v) => !v)}
+                  className="flex items-center gap-1 text-text-400 transition-colors hover:text-text-600"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                  </svg>
+                  {commentCount > 0 && <span className="text-xs">{commentCount}</span>}
+                </button>
+              )}
 
-            {/* Bottom actions */}
-            <div className="mt-6 pt-4 border-t border-surface-300 flex items-center gap-4 pb-8">
-              {isOwnGuide && !editingGuide && (
+              <div className="flex-1" />
+
+              {/* Publish status */}
+              {isOwnGuide && (
                 <button
                   onClick={() => handleTogglePublish(expandedGuide)}
-                  className={`text-xs font-medium min-h-[44px] flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-colors ${
+                  className={`text-[11px] font-medium flex items-center gap-1 px-2.5 py-1 rounded-full transition-colors ${
                     expandedGuide.is_published
-                      ? "bg-sage/10 text-sage border border-sage/30"
-                      : "bg-surface-200 text-text-600 hover:bg-surface-300"
+                      ? "bg-sage/10 text-sage"
+                      : "bg-surface-200 text-text-500"
                   }`}
                 >
-                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                   {expandedGuide.is_published ? "Published" : t("guides.publish")}
                 </button>
               )}
-              <div className="flex-1" />
-              {!isOwnGuide && (
-                <button
-                  onClick={() => { handleUnsave(expandedGuide.id); setExpandedGuide(null); }}
-                  className="text-xs text-text-500 hover:text-red-500 transition-colors min-h-[44px] flex items-center"
-                >
-                  {t("guides.removeFromWallet")}
-                </button>
-              )}
-              {isOwnGuide && (
-                <button
-                  onClick={() => handleDelete(expandedGuide.id)}
-                  className="text-xs text-red-500 hover:text-red-700 transition-colors min-h-[44px] flex items-center"
-                >
-                  {t("guides.delete")}
-                </button>
-              )}
             </div>
           </div>
-        </div>
+        )}
+
+        {/* Comments bottom sheet */}
+        {showCommentsSheet && showComments && !editingGuide && (
+          <div className="fixed inset-0 z-30" onClick={() => setShowCommentsSheet(false)}>
+            {/* Backdrop */}
+            <div className="absolute inset-0 bg-black/30" />
+            {/* Sheet */}
+            <div
+              className="absolute bottom-0 left-0 right-0 bg-surface-50 rounded-t-2xl shadow-2xl flex flex-col animate-sheetSlideUp"
+              style={{ maxHeight: "75vh" }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Drag handle */}
+              <div className="shrink-0 flex justify-center pt-3 pb-2">
+                <div className="w-10 h-1 rounded-full bg-surface-300" />
+              </div>
+              {/* Sheet content */}
+              <div className="flex-1 overflow-y-auto px-4 pb-[env(safe-area-inset-bottom)]">
+                <PlaybookComments
+                  guideId={expandedGuide.id}
+                  commentCount={commentCount}
+                  readOnly={commentsReadOnly}
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* More actions sheet */}
+        {showBottomActions && (
+          <div className="fixed inset-0 z-30" onClick={() => setShowBottomActions(false)}>
+            <div className="absolute inset-0 bg-black/30" />
+            <div
+              className="absolute bottom-0 left-0 right-0 bg-surface-50 rounded-t-2xl shadow-2xl animate-sheetSlideUp"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex justify-center pt-3 pb-2">
+                <div className="w-10 h-1 rounded-full bg-surface-300" />
+              </div>
+              <div className="px-4 pb-8 space-y-1">
+                {isOwnGuide && (
+                  <button
+                    onClick={() => { setShowBottomActions(false); handleTogglePublish(expandedGuide); }}
+                    className="w-full min-h-[48px] flex items-center gap-3 px-3 rounded-xl hover:bg-surface-100 transition-colors"
+                  >
+                    <svg className="w-5 h-5 text-sage" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span className="text-sm text-text-700">
+                      {expandedGuide.is_published ? t("guides.unpublish") || "Unpublish" : t("guides.publish")}
+                    </span>
+                  </button>
+                )}
+                {!isOwnGuide && (
+                  <button
+                    onClick={() => { setShowBottomActions(false); handleUnsave(expandedGuide.id); setExpandedGuide(null); }}
+                    className="w-full min-h-[48px] flex items-center gap-3 px-3 rounded-xl hover:bg-surface-100 transition-colors"
+                  >
+                    <svg className="w-5 h-5 text-text-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                    <span className="text-sm text-text-700">{t("guides.removeFromWallet")}</span>
+                  </button>
+                )}
+                {isOwnGuide && (
+                  <button
+                    onClick={() => { setShowBottomActions(false); handleDelete(expandedGuide.id); }}
+                    className="w-full min-h-[48px] flex items-center gap-3 px-3 rounded-xl hover:bg-surface-100 transition-colors"
+                  >
+                    <svg className="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                    <span className="text-sm text-red-600">{t("guides.delete")}</span>
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Update published version confirmation modal */}
         {showUpdatePublishedModal && (
           <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
             <div className="mx-4 max-w-sm w-full bg-surface-50 rounded-2xl shadow-xl p-5 space-y-4 animate-scaleIn">
-              <h2 className="text-base font-bold text-text-900">Update Published Version</h2>
+              <h2 className="text-base font-bold text-text-900">Sync to Published Version</h2>
               <p className="text-xs text-text-600 leading-relaxed">
-                This will update the version the community sees with your latest edits. Are you sure?
+                Push your latest edits to the live version that the community sees. This replaces the published copy.
               </p>
               <div className="flex gap-2 pt-1">
                 <button
@@ -519,7 +636,7 @@ function GuidesPageInner() {
                   onClick={handleUpdatePublished}
                   className="flex-1 py-2.5 min-h-[44px] rounded-xl text-xs font-semibold bg-amber-500 text-white hover:bg-amber-600 transition-colors"
                 >
-                  Update
+                  Sync Now
                 </button>
               </div>
             </div>
@@ -583,23 +700,32 @@ function GuidesPageInner() {
 
   // Preview view — read-only fullscreen for explore playbooks
   if (peekGuide) {
-    const step = peekGuide.steps[previewIdx];
+    const peekCommentCount = ((peekGuide as unknown as Record<string, unknown>).comment_count as number) || 0;
 
     return (
-      <div className="fixed inset-0 z-50 bg-surface-100 flex flex-col animate-fullscreenSlideUp">
-        {/* Compact top bar: back + title */}
+      <div className="fixed inset-0 z-50 bg-surface-50 flex flex-col animate-fullscreenSlideUp">
+        {/* Fixed top bar — translucent */}
         <div
-          className="shrink-0 px-3 py-2 border-b border-surface-200 bg-surface-100/95 backdrop-blur-sm"
-          style={{ borderBottomColor: peekGuide.color + "40" }}
+          className="shrink-0 px-3 pt-[env(safe-area-inset-top)] bg-surface-50/90 backdrop-blur-md z-20"
+          style={{ borderBottom: `1px solid ${peekGuide.color}20` }}
         >
-          <div className="flex items-center gap-2 max-w-2xl mx-auto">
+          <div className="flex items-center gap-2 max-w-2xl mx-auto py-2">
+            <button
+              onClick={() => { setPeekGuide(null); setPreviewIdx(0); setPreviewChatIdx(null); window.history.pushState({}, "", `/guides?tab=${tab}`); }}
+              className="shrink-0 w-8 h-8 flex items-center justify-center rounded-full hover:bg-surface-200 transition-colors"
+              aria-label="Close"
+            >
+              <svg className="w-5 h-5 text-text-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
             <div className="flex-1 min-w-0 flex items-center gap-2">
-              <div className="w-1 h-5 rounded-full shrink-0" style={{ backgroundColor: peekGuide.color }} />
+              <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: peekGuide.color }} />
               <h1 className="text-sm font-bold text-text-900 truncate">{peekGuide.title}</h1>
             </div>
             <button
               onClick={() => handleShareGuide(peekGuide)}
-              className="shrink-0 w-8 h-8 flex items-center justify-center rounded-full bg-surface-200 hover:bg-surface-300 active:bg-surface-400 transition-colors"
+              className="shrink-0 w-8 h-8 flex items-center justify-center rounded-full hover:bg-surface-200 transition-colors"
               aria-label="Share"
             >
               {shareCopied ? (
@@ -607,30 +733,24 @@ function GuidesPageInner() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
               ) : (
-                <svg className="w-4 h-4 text-text-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-4 h-4 text-text-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
                 </svg>
               )}
             </button>
-            <button
-              onClick={() => { setPeekGuide(null); setPreviewIdx(0); setPreviewChatIdx(null); }}
-              className="shrink-0 w-8 h-8 flex items-center justify-center rounded-full bg-surface-200 hover:bg-surface-300 active:bg-surface-400 transition-colors"
-              aria-label="Close"
-            >
-              <svg className="w-4 h-4 text-text-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
           </div>
         </div>
 
-        {/* Scrollable content */}
-        <div className="flex-1 overflow-y-auto">
-          <div className="max-w-2xl mx-auto px-4 pt-3 pb-4">
-            {/* Guide description */}
-            <p className="text-xs text-text-500 mb-3">{peekGuide.description}</p>
+        {/* Immersive content — fills viewport */}
+        <div className="flex-1 min-h-0 flex flex-col">
+          {peekGuide.description && (
+            <div className="shrink-0 px-4 pt-2 pb-1 max-w-2xl mx-auto w-full">
+              <StepMarkdown content={peekGuide.description} className="text-text-500" />
+            </div>
+          )}
 
-            {/* Read-only step reels */}
+          {/* Read-only step reels — fills remaining space */}
+          <div className="flex-1 min-h-0 max-w-2xl mx-auto w-full">
             <StepReels
               steps={peekGuide.steps}
               activeIdx={previewIdx}
@@ -641,13 +761,10 @@ function GuidesPageInner() {
                 const s = peekGuide.steps[i];
                 return (
                   <div className="space-y-2.5">
-                    {/* Description + Details */}
-                    <div className="bg-surface-100/60 rounded-xl px-3.5 py-3 border border-surface-200">
-                      <p className="text-xs text-text-700 leading-relaxed">{s.description}</p>
+                    <div className="bg-white rounded-xl px-3.5 py-3 border border-surface-200/60 shadow-sm">
+                      <StepMarkdown content={s.description} />
                       {s.details && (
-                        <div className="text-text-600 whitespace-pre-line text-[11px] mt-2 leading-relaxed">
-                          {s.details}
-                        </div>
+                        <StepMarkdown content={s.details} className="mt-2 text-text-600 text-[12px]" />
                       )}
                       {s.links.length > 0 && (
                         <div className="flex flex-wrap gap-1.5 mt-2.5 pt-2.5 border-t border-surface-200">
@@ -669,9 +786,8 @@ function GuidesPageInner() {
                       )}
                     </div>
 
-                    {/* Inline chat */}
                     {previewChatIdx === i && s.chat_prompt && (
-                      <div className="bg-surface-100/60 rounded-xl px-3.5 py-3 border border-surface-200">
+                      <div className="bg-white rounded-xl px-3.5 py-3 border border-surface-200/60 shadow-sm">
                         <StepInlineChat
                           chatPrompt={s.chat_prompt}
                           stepTitle={s.title}
@@ -688,7 +804,6 @@ function GuidesPageInner() {
                       </div>
                     )}
 
-                    {/* Chat with AI button */}
                     {s.chat_prompt && (
                       <button
                         onClick={() => setPreviewChatIdx(previewChatIdx === i ? null : i)}
@@ -702,71 +817,122 @@ function GuidesPageInner() {
                 );
               }}
             />
-
-            {/* Like button */}
-            <div className="mt-4 flex items-center gap-2">
-              <button
-                onClick={() => handleToggleLike(peekGuide.id)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm transition-colors ${
-                  likeStatus[peekGuide.id]?.liked
-                    ? "bg-red-50 text-red-500"
-                    : "bg-surface-100 text-text-500 hover:bg-surface-200"
-                }`}
-              >
-                <svg className="w-4 h-4" fill={likeStatus[peekGuide.id]?.liked ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                </svg>
-                {(likeStatus[peekGuide.id]?.count || 0) > 0 && (
-                  <span>{likeStatus[peekGuide.id]?.count}</span>
-                )}
-              </button>
-            </div>
-
-            {/* Comments */}
-            <PlaybookComments
-              guideId={peekGuide.id}
-              commentCount={((peekGuide as unknown as Record<string, unknown>).comment_count as number) || 0}
-            />
-
-            {/* Save CTA */}
-            <div className="mt-6 bg-surface-50 rounded-2xl border border-surface-300 px-4 py-5 space-y-3">
-              <div className="flex items-center gap-2">
-                <svg className="w-4 h-4 text-amber-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                </svg>
-                <p className="text-[13px] font-semibold text-text-800">{t("guides.save.headline")}</p>
-              </div>
-              <p className="text-[12px] text-text-600 leading-relaxed">{t("guides.save.description")}</p>
-              <ul className="space-y-1.5 text-[11px] text-text-600">
-                <li className="flex items-center gap-2">
-                  <span className="text-sage">&#10003;</span>
-                  {t("guides.save.bullet.track")}
-                </li>
-                <li className="flex items-center gap-2">
-                  <span className="text-sage">&#10003;</span>
-                  {t("guides.save.bullet.notes")}
-                </li>
-                <li className="flex items-center gap-2">
-                  <span className="text-sage">&#10003;</span>
-                  {t("guides.save.bullet.reminders")}
-                </li>
-              </ul>
-              <button
-                onClick={() => {
-                  handleFork(peekGuide.id);
-                  setPeekGuide(null);
-                  setPreviewIdx(0);
-                  setPreviewChatIdx(null);
-                }}
-                className="w-full py-3 min-h-[44px] rounded-xl font-semibold text-sm bg-sage text-white hover:bg-sage-dark active:scale-[0.98] transition-colors"
-              >
-                {t("guides.save.cta")}
-              </button>
-            </div>
-
-            <div className="h-8" />
           </div>
         </div>
+
+        {/* Fixed bottom bar — like, comments, save CTA */}
+        <div className="shrink-0 pb-[env(safe-area-inset-bottom)] bg-surface-50/90 backdrop-blur-md border-t border-surface-200/60 z-20">
+          <div className="flex items-center gap-3 px-4 py-2 max-w-2xl mx-auto">
+            {/* Like */}
+            <button
+              onClick={() => handleToggleLike(peekGuide.id)}
+              className={`flex items-center gap-1 text-sm transition-colors ${
+                likeStatus[peekGuide.id]?.liked ? "text-red-500" : "text-text-400"
+              }`}
+            >
+              <svg className="w-5 h-5" fill={likeStatus[peekGuide.id]?.liked ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+              </svg>
+              {(likeStatus[peekGuide.id]?.count || 0) > 0 && (
+                <span className="text-xs">{likeStatus[peekGuide.id]?.count}</span>
+              )}
+            </button>
+
+            {/* Comments */}
+            <button
+              onClick={() => setShowCommentsSheet((v) => !v)}
+              className="flex items-center gap-1 text-text-400 transition-colors hover:text-text-600"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+              </svg>
+              {peekCommentCount > 0 && <span className="text-xs">{peekCommentCount}</span>}
+            </button>
+
+            <div className="flex-1" />
+
+            {/* Save to wallet CTA */}
+            <button
+              onClick={() => setShowSaveSheet(true)}
+              className="px-4 py-2 min-h-[36px] rounded-full font-semibold text-sm bg-sage text-white hover:bg-sage-dark active:scale-[0.98] transition-all"
+            >
+              {t("guides.save.cta")}
+            </button>
+          </div>
+        </div>
+
+        {/* Save confirmation bottom sheet */}
+        {showSaveSheet && (
+          <div className="fixed inset-0 z-30" onClick={() => setShowSaveSheet(false)}>
+            <div className="absolute inset-0 bg-black/30" />
+            <div
+              className="absolute bottom-0 left-0 right-0 bg-surface-50 rounded-t-2xl shadow-2xl animate-sheetSlideUp"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex justify-center pt-3 pb-2">
+                <div className="w-10 h-1 rounded-full bg-surface-300" />
+              </div>
+              <div className="px-5 pb-8 space-y-4">
+                <h2 className="text-base font-bold text-text-900">{t("guides.save.headline")}</h2>
+                <p className="text-xs text-text-600 leading-relaxed">{t("guides.save.description")}</p>
+                <ul className="space-y-2.5 text-[12px] text-text-700">
+                  <li className="flex items-start gap-2.5">
+                    <svg className="w-4 h-4 text-sage shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    {t("guides.save.bullet.track")}
+                  </li>
+                  <li className="flex items-start gap-2.5">
+                    <svg className="w-4 h-4 text-sage shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    {t("guides.save.bullet.notes")}
+                  </li>
+                  <li className="flex items-start gap-2.5">
+                    <svg className="w-4 h-4 text-sage shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    {t("guides.save.bullet.reminders")}
+                  </li>
+                </ul>
+                <button
+                  onClick={() => {
+                    setShowSaveSheet(false);
+                    handleFork(peekGuide.id);
+                    setPeekGuide(null);
+                    setPreviewIdx(0);
+                    setPreviewChatIdx(null);
+                  }}
+                  className="w-full py-3 min-h-[48px] rounded-xl font-semibold text-sm bg-sage text-white hover:bg-sage-dark active:scale-[0.98] transition-all"
+                >
+                  {t("guides.save.cta")}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Comments bottom sheet */}
+        {showCommentsSheet && (
+          <div className="fixed inset-0 z-30" onClick={() => setShowCommentsSheet(false)}>
+            <div className="absolute inset-0 bg-black/30" />
+            <div
+              className="absolute bottom-0 left-0 right-0 bg-surface-50 rounded-t-2xl shadow-2xl flex flex-col animate-sheetSlideUp"
+              style={{ maxHeight: "75vh" }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="shrink-0 flex justify-center pt-3 pb-2">
+                <div className="w-10 h-1 rounded-full bg-surface-300" />
+              </div>
+              <div className="flex-1 overflow-y-auto px-4 pb-[env(safe-area-inset-bottom)]">
+                <PlaybookComments
+                  guideId={peekGuide.id}
+                  commentCount={peekCommentCount}
+                />
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
@@ -794,7 +960,7 @@ function GuidesPageInner() {
         {/* Tabs */}
         <div className="flex gap-1 mb-4 bg-surface-200 rounded-lg p-0.5">
           <button
-            onClick={() => setTab("wallet")}
+            onClick={() => { setTab("wallet"); window.history.replaceState({}, "", "/guides?tab=wallet"); }}
             className={`flex-1 text-sm font-medium py-2.5 min-h-[44px] rounded-md transition-colors ${
               tab === "wallet"
                 ? "bg-surface-50 text-text-900 shadow-sm"
@@ -804,7 +970,7 @@ function GuidesPageInner() {
             {t("guides.tab.wallet")}
           </button>
           <button
-            onClick={() => setTab("browse")}
+            onClick={() => { setTab("browse"); window.history.replaceState({}, "", "/guides?tab=browse"); }}
             className={`flex-1 text-sm font-medium py-2.5 min-h-[44px] rounded-md transition-colors ${
               tab === "browse"
                 ? "bg-surface-50 text-text-900 shadow-sm"
@@ -825,7 +991,7 @@ function GuidesPageInner() {
             <div className="text-center py-12">
               <p className="text-sm text-text-500 mb-2">{t("guides.empty")}</p>
               <button
-                onClick={() => setTab("browse")}
+                onClick={() => { setTab("browse"); window.history.replaceState({}, "", "/guides?tab=browse"); }}
                 className="text-xs text-sage hover:text-sage-dark transition-colors"
               >
                 {t("guides.browseCta")}
@@ -883,7 +1049,7 @@ function GuidesPageInner() {
                 authorHandle={guide.author_handle}
                 likeCount={likeStatus[guide.id]?.count}
                 index={i}
-                onTap={() => setPeekGuide(guide)}
+                onTap={() => { setPeekGuide(guide); window.history.pushState({}, "", `/guides?id=${guide.id}&tab=browse`); }}
               />
             ))}
           </div>

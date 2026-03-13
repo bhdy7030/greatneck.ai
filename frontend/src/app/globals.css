@@ -378,6 +378,23 @@ body {
 .animate-reelSlideLeft { animation: reelSlideLeft 0.3s ease-out both; }
 .animate-reelSlideRight { animation: reelSlideRight 0.3s ease-out both; }
 
+@keyframes reelSlideUp {
+  from { transform: translateY(40px); opacity: 0; }
+  to   { transform: translateY(0); opacity: 1; }
+}
+@keyframes reelSlideDown {
+  from { transform: translateY(-40px); opacity: 0; }
+  to   { transform: translateY(0); opacity: 1; }
+}
+.animate-reelSlideUp { animation: reelSlideUp 0.3s ease-out both; }
+.animate-reelSlideDown { animation: reelSlideDown 0.3s ease-out both; }
+
+@keyframes sheetSlideUp {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
+.animate-sheetSlideUp { animation: sheetSlideUp 0.3s cubic-bezier(0.32, 0.72, 0, 1) both; }
+
 @keyframes expandContentIn {
   from { opacity: 0; transform: translateY(8px); }
   to   { opacity: 1; transform: translateY(0); }
@@ -389,6 +406,8 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .animate-reelSlideLeft,
   .animate-reelSlideRight,
+  .animate-reelSlideUp,
+  .animate-reelSlideDown,
   .animate-expandContentIn {
     animation: none;
     opacity: 1;

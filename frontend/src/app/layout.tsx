@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Inter, Source_Serif_4 } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { LanguageProvider } from "@/components/LanguageProvider";
@@ -12,6 +12,11 @@ import NavLinks from "@/components/NavLinks";
 import PageTracker from "@/components/PageTracker";
 
 const inter = Inter({ subsets: ["latin"] });
+const sourceSerif = Source_Serif_4({
+  subsets: ["latin"],
+  variable: "--font-serif",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: {
@@ -77,7 +82,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className={`${inter.className} h-full flex flex-col pb-[env(safe-area-inset-bottom)]`}>
+      <body className={`${inter.className} ${sourceSerif.variable} h-full flex flex-col pb-[env(safe-area-inset-bottom)]`}>
         <AuthProvider>
           <LanguageProvider>
           <ThemeProvider>
