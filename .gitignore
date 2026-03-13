@@ -10,5 +10,5 @@ __pycache__/
 .DS_Store
 ios/
 android/
-backend/data/
+backend/data/*.db*
 frontend/tsconfig.tsbuildinfo
