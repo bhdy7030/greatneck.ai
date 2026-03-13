@@ -75,7 +75,7 @@ class KnowledgeStore:
         if collection.count() == 0:
             return []
         kwargs: dict = {"n_results": min(n_results, collection.count())}
-        if query_embedding:
+        if query_embedding is not None:
             kwargs["query_embeddings"] = [query_embedding]
         else:
             kwargs["query_texts"] = [query]

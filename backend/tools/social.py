@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import logging
 import os
-import time
 
 from tools.registry import tool
 
@@ -17,6 +16,9 @@ COMMUNITY_DOMAINS = [
     "patch.com",
     "theislandnow.com",
     "greatneckrecord.com",
+    "gnparksny.gov",
+    "greatnecklibrary.org",
+    "greatneck.k12.ny.us",
 ]
 
 # Map domain fragments to human-readable labels
@@ -30,28 +32,8 @@ _DOMAIN_LABELS = {
     "greatneckrecord.com": "GN Record",
 }
 
-# In-memory TTL cache: key → (timestamp, result)
-_cache: dict[str, tuple[float, str]] = {}
-_CACHE_TTL = 600  # 10 minutes
-_CACHE_MAX = 100
-
-
-def _cache_get(key: str) -> str | None:
-    entry = _cache.get(key)
-    if entry is None:
-        return None
-    ts, result = entry
-    if time.time() - ts > _CACHE_TTL:
-        del _cache[key]
-        return None
-    return result
-
-
-def _cache_set(key: str, value: str):
-    if len(_cache) >= _CACHE_MAX:
-        oldest_key = min(_cache, key=lambda k: _cache[k][0])
-        del _cache[oldest_key]
-    _cache[key] = (time.time(), value)
+# Tavily best practice: keep queries under 400 chars
+_MAX_QUERY_LEN = 400
 
 
 def _label_for_url(url: str) -> str:
@@ -66,7 +48,7 @@ def _label_for_url(url: str) -> str:
     return "Web"
 
 
-async def _tavily_social_search(query: str, api_key: str, max_results: int = 8) -> str:
+async def _tavily_social_search(query: str, api_key: str, max_results: int = 5) -> str:
     """Search community sources via Tavily with include_domains."""
     import httpx
 
@@ -77,6 +59,7 @@ async def _tavily_social_search(query: str, api_key: str, max_results: int = 8) 
                 json={
                     "api_key": api_key,
                     "query": query,
+                    "search_depth": "basic",  # 1 credit
                     "max_results": max_results,
                     "include_answer": True,
                     "include_domains": COMMUNITY_DOMAINS,
@@ -125,6 +108,7 @@ async def _tavily_social_search(query: str, api_key: str, max_results: int = 8) 
 async def search_social(query: str) -> str:
     """Search social media, review sites, and local news for the query."""
     from tools.budget import check_budget
+    from tools.cache import tavily_cache_get, tavily_cache_set
 
     tavily_key = os.environ.get("TAVILY_API_KEY", "")
     if not tavily_key:
@@ -133,10 +117,9 @@ async def search_social(query: str) -> str:
             "Try web_search as an alternative."
         )
 
-    cache_key = query.lower().strip()
-    cached = _cache_get(cache_key)
+    cached = tavily_cache_get("social", query)
     if cached is not None:
-        logger.info(f"Social search cache hit: {query}")
+        logger.info(f"Social search cache hit: {query[:80]}")
         return cached
 
     # Check budget (cache hits don't count)
@@ -144,6 +127,9 @@ async def search_social(query: str) -> str:
     if blocked:
         return blocked
 
-    result = await _tavily_social_search(query, tavily_key)
-    _cache_set(cache_key, result)
+    # Truncate long queries
+    search_query = query[:_MAX_QUERY_LEN] if len(query) > _MAX_QUERY_LEN else query
+
+    result = await _tavily_social_search(search_query, tavily_key)
+    tavily_cache_set("social", query, result)
     return result

@@ -21,7 +21,7 @@ from agents.planner import PlannerAgent
 from agents.critic import CriticAgent
 from agents.base import AgentResponse
 from debug.memory import debug_memory
-from knowledge.registry import lookup_and_format as registry_lookup
+from knowledge.registry import async_lookup_and_format as registry_lookup
 from config import settings
 from api.deps import get_optional_user
 from api.tier import resolve_tier, get_tier_features
@@ -476,7 +476,7 @@ async def _handle_chat_stream(request: ChatRequest, user: dict | None = None) ->
             context["debug_instructions"] = debug_instructions
 
         # Check internal registry for known answers (saves search costs)
-        registry_context = registry_lookup(request.message, request.village)
+        registry_context = await registry_lookup(request.message, request.village)
         if registry_context:
             context["registry_context"] = registry_context
             if is_debug:
@@ -833,7 +833,7 @@ async def _handle_chat(request: ChatRequest) -> ChatResponse:
         context["playbook_catalog"] = guide_catalog
 
     # Check internal registry for known answers
-    reg_ctx = registry_lookup(request.message, request.village)
+    reg_ctx = await registry_lookup(request.message, request.village)
     if reg_ctx:
         context["registry_context"] = reg_ctx
 

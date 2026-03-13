@@ -24,6 +24,10 @@
 #   - `last_verified`:  YYYY-MM-DD — when an engineer last checked.
 #   - `stale_days`:     After this many days, agent will re-verify.
 #   - `category`:       For filtering: community, permits, codes, etc.
+#   - `fetch_urls`:     (optional) List of URLs to pre-fetch when this
+#                       entry matches. Content is scraped at query time
+#                       and appended to the registry context — the agent
+#                       sees the live page data without needing a tool call.
 # ──────────────────────────────────────────────────────────────
 
 entries:
@@ -33,22 +37,22 @@ entries:
     answer: |
       The Andrew Stergiopoulos Ice Rink is operated by the Great Neck
       Park District. It offers public skating sessions, figure skating,
-      hockey leagues, and learn-to-skate programs. Public session
-      schedules vary by season — check the Park District website for
-      current hours and fees. The rink is located at 70 Arrandale Ave,
-      Great Neck, NY 11023.
+      hockey leagues, and learn-to-skate programs. The rink is located
+      at 65 Arrandale Ave, Great Neck, NY 11024. Phone: (516) 487-2975.
 
-      NOTE TO AGENT: Schedules change frequently due to holidays, private
-      events, and maintenance. When answering schedule questions, always
-      check for cancellation or closure announcements on the source pages
-      and warn the user to verify before going.
+      NOTE TO AGENT: Scraped schedule data from the Park District website
+      is appended below (auto-fetched from knowledge base). Use it to answer
+      schedule questions. Show ALL sessions for the requested day, including
+      evening/night sessions. If the data seems incomplete, use scrape_url
+      or web_search as a fallback.
 
       Relevant links:
-      - Public sessions schedule: https://www.gnparksny.gov/720/Public-Sessions
+      - Daily schedule calendar: https://www.gnparksny.gov/calendar.aspx?CID=67
+      - Public sessions info: https://www.gnparksny.gov/720/Public-Sessions
       - Ice rink main page: https://www.greatneckparkdistrict.com/ice-rink
       - Great Neck Park District: https://www.gnparksny.gov
     source_name: "Great Neck Park District — Ice Rink"
-    source_url: "https://www.gnparksny.gov/720/Public-Sessions"
+    source_url: "https://www.gnparksny.gov/calendar.aspx?CID=67"
     applies_to: all
     last_verified: "2026-03-03"
     stale_days: 90

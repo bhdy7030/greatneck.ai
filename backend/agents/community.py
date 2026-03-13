@@ -9,6 +9,7 @@ import tools.web  # noqa: F401
 import tools.community  # noqa: F401
 import tools.social  # noqa: F401
 import tools.events  # noqa: F401
+import tools.scraper  # noqa: F401
 
 
 class CommunityAgent(BaseAgent):
@@ -83,8 +84,9 @@ You have access to:
 - search_community: Search community knowledge base (ingested posts, reviews, resident discussions)
 - search_social: Search Reddit, Yelp, RedNote, and local news sites live for current community discussions and reviews
 - search_codes: Search the knowledge base (covers community resources too, not just codes)
-- web_search: Search the web for current community information"""
+- web_search: Search the web for current community information
+- scrape_url: Fetch and read a specific URL. Use when you have a known URL (e.g., from registry context) and need the full page content, not just search snippets."""
 
     def __init__(self):
-        tools = get_tools_for_agent(["search_events", "search_community", "search_social", "search_codes", "web_search"])
+        tools = get_tools_for_agent(["search_events", "search_community", "search_social", "search_codes", "web_search", "scrape_url"])
         super().__init__(tools=tools)

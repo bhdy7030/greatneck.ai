@@ -1,7 +1,14 @@
-"""Web search tool (placeholder / Tavily integration)."""
+"""Web search tool via Tavily API."""
 
+import logging
 import os
+
 from tools.registry import tool
+
+logger = logging.getLogger(__name__)
+
+# Tavily best practice: keep queries under 400 chars
+_MAX_QUERY_LEN = 400
 
 
 @tool(
@@ -22,11 +29,23 @@ async def web_search(query: str) -> str:
             "Try using the search_codes or search_permits tools instead."
         )
 
+    # Check cache before consuming budget
+    from tools.cache import tavily_cache_get, tavily_cache_set
+    cached = tavily_cache_get("web", query)
+    if cached is not None:
+        logger.info(f"Web search cache hit: {query[:80]}")
+        return cached
+
     blocked = check_budget()
     if blocked:
         return blocked
 
-    return await _tavily_search(query, tavily_key)
+    # Truncate long queries (LLM sometimes generates verbose ones)
+    search_query = query[:_MAX_QUERY_LEN] if len(query) > _MAX_QUERY_LEN else query
+
+    result = await _tavily_search(search_query, tavily_key)
+    tavily_cache_set("web", query, result)
+    return result
 
 
 async def _tavily_search(query: str, api_key: str) -> str:
@@ -40,6 +59,7 @@ async def _tavily_search(query: str, api_key: str) -> str:
                 json={
                     "api_key": api_key,
                     "query": query,
+                    "search_depth": "basic",  # 1 credit (vs 2 for advanced)
                     "max_results": 5,
                     "include_answer": True,
                 },

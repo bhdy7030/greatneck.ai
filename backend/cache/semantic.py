@@ -81,7 +81,7 @@ def get(
             "n_results": 3,  # fetch a few to find best match with compatible settings
             "where": where,
         }
-        if query_embedding:
+        if query_embedding is not None:
             query_kwargs["query_embeddings"] = [query_embedding]
         else:
             query_kwargs["query_texts"] = [query]
