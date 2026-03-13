@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/components/AuthProvider";
 import MentionInput from "@/components/MentionInput";
+import { useToast } from "@/components/ToastProvider";
 import {
   getComments,
   postComment,
@@ -51,6 +52,7 @@ interface PlaybookCommentsProps {
 
 export default function PlaybookComments({ guideId, commentCount, readOnly = false }: PlaybookCommentsProps) {
   const { user } = useAuth();
+  const { showToast } = useToast();
   const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(false);
@@ -69,7 +71,9 @@ export default function PlaybookComments({ guideId, commentCount, readOnly = fal
           setComments(fetched);
         }
         setHasMore(has_more);
-      } catch {}
+      } catch {
+        showToast("Couldn't load comments");
+      }
       setLoading(false);
     },
     [guideId]
@@ -87,7 +91,9 @@ export default function PlaybookComments({ guideId, commentCount, readOnly = fal
       setComments((prev) => [...prev, comment]);
       setNewComment("");
       setCount((c) => c + 1);
-    } catch {}
+    } catch {
+      showToast("Couldn't post comment, try again");
+    }
     setPosting(false);
   };
 
@@ -96,7 +102,9 @@ export default function PlaybookComments({ guideId, commentCount, readOnly = fal
       await deleteComment(guideId, commentId);
       setComments((prev) => prev.filter((c) => c.id !== commentId));
       setCount((c) => Math.max(c - 1, 0));
-    } catch {}
+    } catch {
+      showToast("Couldn't delete comment");
+    }
   };
 
   const handleUpvote = async (commentId: number) => {

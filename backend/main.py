@@ -127,6 +127,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Rate limiting — must be added after CORS (middleware executes in reverse order)
+from api.rate_limit import RateLimitMiddleware
+app.add_middleware(RateLimitMiddleware)
+
 # Import and mount route modules
 from api.chat import router as chat_router
 from api.admin import router as admin_router
@@ -145,6 +149,7 @@ from api.profile import router as profile_router
 from api.comments import router as comments_router
 from api.likes import router as likes_router
 from api.notifications import router as notifications_router
+from api.cron import router as cron_router
 
 app.include_router(chat_router, prefix="/api")
 app.include_router(admin_router, prefix="/api/admin")
@@ -162,6 +167,7 @@ app.include_router(profile_router, prefix="/api")
 app.include_router(comments_router, prefix="/api")
 app.include_router(likes_router, prefix="/api")
 app.include_router(notifications_router, prefix="/api")
+app.include_router(cron_router, prefix="/api")
 app.include_router(health_router)
 
 

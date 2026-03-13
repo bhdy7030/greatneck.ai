@@ -389,6 +389,12 @@ body {
 .animate-reelSlideUp { animation: reelSlideUp 0.3s ease-out both; }
 .animate-reelSlideDown { animation: reelSlideDown 0.3s ease-out both; }
 
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fadeIn { animation: fadeIn 0.2s ease-out both; }
+
 @keyframes sheetSlideUp {
   from { transform: translateY(100%); }
   to   { transform: translateY(0); }

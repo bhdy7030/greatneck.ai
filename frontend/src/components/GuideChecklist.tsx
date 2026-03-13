@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useLanguage } from "./LanguageProvider";
 import type { GuideStep, StepStatus } from "@/lib/api";
 import { updateStepStatus, clearStepReminder } from "@/lib/api";
+import { useToast } from "@/components/ToastProvider";
 import StepInlineChat from "./StepInlineChat";
 import StepMarkdown from "./StepMarkdown";
 import StepReels from "./StepReels";
@@ -28,6 +29,7 @@ const STATUS_LABEL_KEYS: Record<string, string> = {
 export default function GuideChecklist({ guideId, guideTitle, steps: initialSteps, color, initialStepId }: GuideChecklistProps) {
   const router = useRouter();
   const { t } = useLanguage();
+  const { showToast } = useToast();
   const [steps, setSteps] = useState(initialSteps);
   const [activeIdx, setActiveIdx] = useState<number>(() => {
     if (!initialStepId) return 0;
@@ -50,6 +52,7 @@ export default function GuideChecklist({ guideId, guideTitle, steps: initialStep
       try {
         await updateStepStatus(guideId, step.id, { status: newStatus });
       } catch {
+        showToast("Couldn't update status, try again");
         setSteps((prev) =>
           prev.map((s, i) => (i === idx ? { ...s, status: step.status } : s))
         );

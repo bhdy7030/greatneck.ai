@@ -10,6 +10,8 @@ import InviteGate from "@/components/InviteGate";
 import HeaderAuth from "@/components/HeaderAuth";
 import NavLinks from "@/components/NavLinks";
 import PageTracker from "@/components/PageTracker";
+import ToastProvider from "@/components/ToastProvider";
+import ErrorBoundary from "@/components/ErrorBoundary";
 
 const inter = Inter({ subsets: ["latin"] });
 const sourceSerif = Source_Serif_4({
@@ -84,6 +86,7 @@ export default function RootLayout({
       </head>
       <body className={`${inter.className} ${sourceSerif.variable} h-full flex flex-col pb-[env(safe-area-inset-bottom)]`}>
         <AuthProvider>
+          <ToastProvider>
           <LanguageProvider>
           <ThemeProvider>
             <InviteGate>
@@ -121,11 +124,14 @@ export default function RootLayout({
 
             {/* Main content */}
             <main className="flex-1 flex flex-col overflow-hidden">
-              {children}
+              <ErrorBoundary>
+                {children}
+              </ErrorBoundary>
             </main>
             </InviteGate>
           </ThemeProvider>
           </LanguageProvider>
+          </ToastProvider>
         </AuthProvider>
       </body>
     </html>
