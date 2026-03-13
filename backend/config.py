@@ -71,7 +71,7 @@ class Settings(BaseSettings):
     anon_initial_queries: int = 10
     anon_extended_queries: int = 10
     free_promo_days: int = 14
-    free_web_search_mode: str = "limited"
+    free_web_search: bool = True
     free_fast_mode_only: bool = False
 
     # Database (empty = SQLite fallback, set = PostgreSQL)

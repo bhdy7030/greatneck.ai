@@ -343,17 +343,25 @@ NOTE: These formatting rules apply to your written response ONLY. Do NOT reduce 
         # (identical across requests to the same agent within the same day).
         # Dynamic = village, RAG, search plan, critic, language (varies per request).
         # Provider-level caching: Anthropic cache_control, Gemini implicit caching.
+        # Skip cache_control for short prompts (Gemini requires ≥1024 tokens).
         static_part = _static_system
         dynamic_part = system[len(_static_system):]
+        use_cache = len(static_part.split()) > 300  # ~1200 tokens
 
         if dynamic_part.strip():
+            static_block = {"type": "text", "text": static_part}
+            if use_cache:
+                static_block["cache_control"] = {"type": "ephemeral"}
             messages: list[dict] = [{"role": "system", "content": [
-                {"type": "text", "text": static_part, "cache_control": {"type": "ephemeral"}},
+                static_block,
                 {"type": "text", "text": dynamic_part},
             ]}]
         else:
+            static_block = {"type": "text", "text": static_part}
+            if use_cache:
+                static_block["cache_control"] = {"type": "ephemeral"}
             messages: list[dict] = [{"role": "system", "content": [
-                {"type": "text", "text": static_part, "cache_control": {"type": "ephemeral"}},
+                static_block,
             ]}]
 
         messages.extend(history)

@@ -96,7 +96,7 @@ interface AuthContextValue {
 }
 
 const DEFAULT_FEATURES: TierFeatures = {
-  web_search_mode: "limited",
+  web_search: true,
   fast_mode_forced: true,
   deep_mode_allowed: false,
   max_queries: 20,

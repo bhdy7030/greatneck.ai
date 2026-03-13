@@ -16,7 +16,6 @@ import {
   TierError,
   type ChatMessage as ChatMessageType,
   type PipelineEvent,
-  type WebSearchMode,
 } from "@/lib/api";
 
 export default function ChatPage() {
@@ -41,7 +40,7 @@ function ChatPageInner() {
   const pipelineEventsRef = useRef<PipelineEvent[]>([]);
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [sidebarRefresh, setSidebarRefresh] = useState(0);
-  const [webSearchMode, setWebSearchMode] = useState<WebSearchMode>("limited");
+  const [webSearch, setWebSearch] = useState(true);
   const [fastMode, setFastMode] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [tierModal, setTierModal] = useState<"trial_exhausted" | "must_sign_in" | null>(null);
@@ -90,10 +89,8 @@ function ChatPageInner() {
       return;
     }
     setVillage(stored);
-    const storedMode = localStorage.getItem("gn_web_search_mode");
-    if (storedMode === "off" || storedMode === "limited" || storedMode === "unlimited") {
-      setWebSearchMode(storedMode);
-    }
+    const storedWs = localStorage.getItem("gn_web_search");
+    if (storedWs === "false") setWebSearch(false);
     const storedFast = localStorage.getItem("gn_fast_mode");
     if (storedFast === "true") setFastMode(true);
   }, [router]);
@@ -311,7 +308,7 @@ function ChatPageInner() {
           history,
           false,
           activeConvoId || undefined,
-          webSearchMode,
+          webSearch,
           language,
           fastMode,
           imageMime,
@@ -369,7 +366,7 @@ function ChatPageInner() {
         setIsLoading(false);
       }
     },
-    [village, messages, conversationId, user, webSearchMode, language, fastMode, features, refreshUsage]
+    [village, messages, conversationId, user, webSearch, language, fastMode, features, refreshUsage]
   );
 
   if (!village) {
@@ -423,50 +420,24 @@ function ChatPageInner() {
             {/* Separator */}
             <div className="w-px h-4 bg-surface-300 hidden md:block" />
 
-            {/* Web search: toggle on/off + ∞ option */}
+            {/* Web search: on/off toggle */}
             <div className="flex items-center gap-1 ml-auto md:ml-0">
               <button
                 onClick={() => {
-                  const next = webSearchMode === "off" ? "limited" : "off";
-                  setWebSearchMode(next);
-                  localStorage.setItem("gn_web_search_mode", next);
+                  const next = !webSearch;
+                  setWebSearch(next);
+                  localStorage.setItem("gn_web_search", String(next));
                 }}
                 className="flex items-center gap-1 cursor-pointer"
-                title={webSearchMode === "off" ? "Enable web search" : "Disable web search"}
+                title={webSearch ? "Disable web search" : "Enable web search"}
               >
-                <svg className={`w-3.5 h-3.5 flex-shrink-0 transition-colors ${webSearchMode === "off" ? "text-text-400" : "text-sage"}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className={`w-3.5 h-3.5 flex-shrink-0 transition-colors ${webSearch ? "text-sage" : "text-text-400"}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9" />
                 </svg>
-                <div className={`w-7 h-4 rounded-full transition-colors relative ${webSearchMode === "off" ? "bg-surface-400" : "bg-sage"}`}>
-                  <div className={`absolute top-0.5 w-3 h-3 rounded-full bg-white shadow transition-transform ${webSearchMode === "off" ? "left-0.5" : "left-3.5"}`} />
+                <div className={`w-7 h-4 rounded-full transition-colors relative ${webSearch ? "bg-sage" : "bg-surface-400"}`}>
+                  <div className={`absolute top-0.5 w-3 h-3 rounded-full bg-white shadow transition-transform ${webSearch ? "left-3.5" : "left-0.5"}`} />
                 </div>
               </button>
-              {webSearchMode !== "off" && (
-                <button
-                  onClick={() => {
-                    if (features?.web_search_mode !== "unlimited" && webSearchMode !== "unlimited") return;
-                    const next = webSearchMode === "unlimited" ? "limited" : "unlimited";
-                    setWebSearchMode(next);
-                    localStorage.setItem("gn_web_search_mode", next);
-                  }}
-                  className={`text-[11px] px-1.5 py-0.5 min-h-[24px] rounded-full transition-all ${
-                    features?.web_search_mode !== "unlimited" && webSearchMode !== "unlimited"
-                      ? "bg-surface-200 text-text-300 cursor-not-allowed"
-                      : webSearchMode === "unlimited"
-                        ? "bg-gold text-white shadow-sm shadow-gold/30"
-                        : "bg-surface-200 text-gold/60 hover:text-gold hover:bg-gold/10"
-                  }`}
-                  title={
-                    features?.web_search_mode !== "unlimited"
-                      ? t("tier.unlimitedSearchLocked")
-                      : webSearchMode === "unlimited"
-                        ? "Switch to limited (up to 5)"
-                        : "Unlimited — deeper web search"
-                  }
-                >
-                  ∞
-                </button>
-              )}
             </div>
 
             {/* Speed: bolt toggle */}

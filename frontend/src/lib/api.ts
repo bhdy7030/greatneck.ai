@@ -25,7 +25,7 @@ function sessionHeaders(): Record<string, string> {
 // ── Tier / Usage types ──
 
 export interface TierFeatures {
-  web_search_mode: "off" | "limited" | "unlimited";
+  web_search: boolean;
   fast_mode_forced: boolean;
   deep_mode_allowed: boolean;
   max_queries: number | null;
@@ -168,15 +168,13 @@ export interface KnowledgeStats {
 /**
  * Send a chat message to the backend.
  */
-export type WebSearchMode = "off" | "limited" | "unlimited";
-
 export async function sendMessage(
   message: string,
   village: string,
   imageBase64?: string,
   history?: { role: string; content: string }[],
   conversationId?: string,
-  webSearchMode?: WebSearchMode,
+  webSearch?: boolean,
   language?: string,
   fastMode?: boolean
 ): Promise<ChatResponse> {
@@ -189,7 +187,7 @@ export async function sendMessage(
       image_base64: imageBase64 || null,
       history: history || [],
       conversation_id: conversationId || null,
-      web_search_mode: webSearchMode || "limited",
+      web_search: webSearch ?? true,
       fast_mode: fastMode || false,
       language: language || "en",
     }),
@@ -259,7 +257,7 @@ export async function sendMessageStream(
   history?: { role: string; content: string }[],
   debug?: boolean,
   conversationId?: string,
-  webSearchMode?: WebSearchMode,
+  webSearch?: boolean,
   language?: string,
   fastMode?: boolean,
   imageMime?: string,
@@ -276,7 +274,7 @@ export async function sendMessageStream(
       history: history || [],
       debug: debug || false,
       conversation_id: conversationId || null,
-      web_search_mode: webSearchMode || "limited",
+      web_search: webSearch ?? true,
       fast_mode: fastMode || false,
       language: language || "en",
     }),

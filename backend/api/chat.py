@@ -99,7 +99,7 @@ def invalidate_guide_catalog_cache() -> None:
 async def _enforce_tier(request: "ChatRequest", user: dict | None, session_id: str | None) -> dict | None:
     """Apply tier-based limits. Returns an error dict if blocked, None if allowed.
 
-    Also mutates request to server-enforce fast_mode and web_search_mode.
+    Also mutates request to server-enforce fast_mode and web_search.
     """
     tier = resolve_tier(user)
     features = get_tier_features(tier)
@@ -107,8 +107,8 @@ async def _enforce_tier(request: "ChatRequest", user: dict | None, session_id: s
     # Server-override client toggles
     if features["fast_mode_forced"]:
         request.fast_mode = True
-    if request.web_search_mode == "unlimited" and features["web_search_mode"] != "unlimited":
-        request.web_search_mode = features["web_search_mode"]
+    if not features["web_search"]:
+        request.web_search = False
 
     # Anonymous usage limits
     if tier == "anonymous":
@@ -161,7 +161,7 @@ class ChatRequest(BaseModel):
     history: list[dict] = Field(default_factory=list)
     debug: bool = False
     conversation_id: str | None = None
-    web_search_mode: str = "limited"  # "off", "limited", "unlimited"
+    web_search: bool = True
     fast_mode: bool = False
     language: str = "en"  # "en" or "zh"
 
@@ -315,7 +315,7 @@ async def _handle_chat_stream(request: ChatRequest, user: dict | None = None) ->
     from tools.budget import set_budget
     from llm.presets import set_fast_mode
     from metrics.collector import set_request_context, set_source, record_pipeline_event
-    set_budget(mode=request.web_search_mode, limit=5)
+    set_budget(enabled=request.web_search)
     set_fast_mode(request.fast_mode)
     set_request_context(
         session_id=getattr(request, '_session_id', ''),
@@ -360,7 +360,7 @@ async def _handle_chat_stream(request: ChatRequest, user: dict | None = None) ->
         from cache import semantic as semantic_cache
         sem_cached = await run_sync(
             semantic_cache.get, request.message, request.village, request.language,
-            fast_mode=request.fast_mode, web_search_mode=request.web_search_mode,
+            fast_mode=request.fast_mode, web_search=request.web_search,
             query_embedding=_query_embedding,
         )
         if sem_cached:
@@ -776,7 +776,7 @@ async def _handle_chat_stream(request: ChatRequest, user: dict | None = None) ->
             _sem_data = {"response": agent_response.content, "sources": sources, "agent_used": agent_name}
             await run_sync(
                 semantic_cache.put, request.message, request.village, request.language, _sem_data,
-                fast_mode=request.fast_mode, web_search_mode=request.web_search_mode,
+                fast_mode=request.fast_mode, web_search=request.web_search,
             )
 
         yield _sse_event("response", {
@@ -796,7 +796,7 @@ async def _handle_chat(request: ChatRequest) -> ChatResponse:
     from tools.budget import set_budget
     from llm.presets import set_fast_mode
     from metrics.collector import set_request_context, set_source, record_pipeline_event
-    set_budget(mode=request.web_search_mode, limit=5)
+    set_budget(enabled=request.web_search)
     set_fast_mode(request.fast_mode)
     set_request_context(
         session_id=getattr(request, '_session_id', ''),
@@ -810,7 +810,7 @@ async def _handle_chat(request: ChatRequest) -> ChatResponse:
         from cache import semantic as semantic_cache
         sem_cached = await run_sync(
             semantic_cache.get, request.message, request.village, request.language,
-            fast_mode=request.fast_mode, web_search_mode=request.web_search_mode,
+            fast_mode=request.fast_mode, web_search=request.web_search,
         )
         if sem_cached:
             record_pipeline_event("cache_hit", "semantic_cache")
@@ -1041,7 +1041,7 @@ async def _handle_chat(request: ChatRequest) -> ChatResponse:
         _sem_data = {"response": result.response, "sources": result.sources, "agent_used": result.agent_used}
         await run_sync(
             semantic_cache.put, request.message, request.village, request.language, _sem_data,
-            fast_mode=request.fast_mode, web_search_mode=request.web_search_mode,
+            fast_mode=request.fast_mode, web_search=request.web_search,
         )
 
     return result

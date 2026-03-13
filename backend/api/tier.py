@@ -37,14 +37,14 @@ def get_tier_features(tier: str) -> dict:
     """Return feature flags for a given tier.
 
     Keys:
-        web_search_mode: "off" | "limited" | "unlimited"
+        web_search: bool — whether web search is available
         fast_mode_forced: bool — if True, client cannot use Deep mode
         deep_mode_allowed: bool
         max_queries: int | None — None means unlimited
     """
     if tier == "pro" or tier == "free_promo":
         return {
-            "web_search_mode": "unlimited",
+            "web_search": True,
             "fast_mode_forced": False,
             "deep_mode_allowed": True,
             "max_queries": None,
@@ -52,7 +52,7 @@ def get_tier_features(tier: str) -> dict:
 
     if tier == "free":
         return {
-            "web_search_mode": settings.free_web_search_mode,
+            "web_search": settings.free_web_search,
             "fast_mode_forced": settings.free_fast_mode_only,
             "deep_mode_allowed": not settings.free_fast_mode_only,
             "max_queries": None,
@@ -60,7 +60,7 @@ def get_tier_features(tier: str) -> dict:
 
     # anonymous
     return {
-        "web_search_mode": "limited",
+        "web_search": True,
         "fast_mode_forced": True,
         "deep_mode_allowed": False,
         "max_queries": settings.anon_initial_queries + settings.anon_extended_queries,

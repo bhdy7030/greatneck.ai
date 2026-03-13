@@ -225,8 +225,23 @@ async def _fetch_urls(urls: list[str], query: str) -> dict[str, str]:
     return results
 
 
+_TIME_SENSITIVE_WORDS = {
+    "schedule", "hours", "tonight", "today", "tomorrow", "open",
+    "closed", "session", "sessions", "time", "times", "when",
+    "available", "availability", "now", "currently", "this week",
+    "this weekend", "morning", "afternoon", "evening", "night",
+}
+
+
+def _is_time_sensitive(query: str) -> bool:
+    """Detect if a query is asking about time-sensitive info (schedules, hours, etc.)."""
+    q = query.lower()
+    return any(w in q for w in _TIME_SENSITIVE_WORDS)
+
+
 def format_context(
     matches: list[dict],
+    query: str = "",
     rag_content: str = "",
     fetched: dict[str, str] | None = None,
 ) -> str:
@@ -235,14 +250,26 @@ def format_context(
         return ""
 
     fetched = fetched or {}
+    time_sensitive = _is_time_sensitive(query)
 
-    lines = [
-        "## Known Answers (from internal registry — high confidence)",
-        "The following information is from a curated, engineer-maintained knowledge base.",
-        "Use it as your PRIMARY source. Only search if you need additional detail.",
-        "IMPORTANT: Include ALL relevant links mentioned in the answer — do not drop any URLs.",
-        "",
-    ]
+    if time_sensitive:
+        lines = [
+            "## Background Context (from internal registry)",
+            "The following is BACKGROUND information only — addresses, phone numbers, and general descriptions are reliable.",
+            "However, schedules, hours, sessions, and availability change frequently.",
+            "You MUST do a live search (web_search, search_social, or scrape_url) to get current schedule/hours before answering.",
+            "Do NOT rely on any dates or times from the knowledge base below — they may be outdated.",
+            "IMPORTANT: Include ALL relevant links mentioned in the answer — do not drop any URLs.",
+            "",
+        ]
+    else:
+        lines = [
+            "## Known Answers (from internal registry — high confidence)",
+            "The following information is from a curated, engineer-maintained knowledge base.",
+            "Use it as your PRIMARY source. Only search if you need additional detail.",
+            "IMPORTANT: Include ALL relevant links mentioned in the answer — do not drop any URLs.",
+            "",
+        ]
 
     for m in matches:
         lines.append(f"### {m['topic']}")
@@ -301,9 +328,9 @@ async def async_lookup_and_format(query: str, village: str = "") -> str:
         rag_content = await rag_task
         fetched = {}
 
-    return format_context(matches, rag_content=rag_content, fetched=fetched)
+    return format_context(matches, query=query, rag_content=rag_content, fetched=fetched)
 
 
 def lookup_and_format(query: str, village: str = "") -> str:
     """Sync fallback (no URL fetching, no RAG). Use async_lookup_and_format when possible."""
-    return format_context(lookup(query, village))
+    return format_context(lookup(query, village), query=query)

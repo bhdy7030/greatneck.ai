@@ -89,7 +89,7 @@ export default function StepInlineChat({
           history,
           false,
           undefined,
-          "off",
+          false,
           language,
           true,
           undefined,

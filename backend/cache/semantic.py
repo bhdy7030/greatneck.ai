@@ -9,8 +9,8 @@ Handles context dimensions:
   - fast_mode:    metadata filter (fast vs deep use different models)
                   Deep-mode cached responses CAN serve fast-mode requests (upgrade),
                   but fast-mode responses must NOT serve deep-mode requests.
-  - web_search:   metadata filter (off/limited/unlimited → different sources)
-                  Higher-tier cached responses CAN serve lower-tier requests.
+  - web_search:   metadata filter (on/off → different sources)
+                  Search-on cached responses CAN serve search-off requests.
   - time:         TTL-based eviction (6 hours)
   - history:      caller skips cache when conversation has history (contextual answers)
   - image:        caller skips cache for image queries
@@ -43,15 +43,12 @@ def _get_collection():
     )
 
 
-_WEB_SEARCH_RANK = {"unlimited": 2, "limited": 1, "off": 0}
-
-
 def get(
     query: str,
     village: str,
     language: str,
     fast_mode: bool = False,
-    web_search_mode: str = "limited",
+    web_search: bool = True,
     query_embedding: list[float] | None = None,
 ) -> dict | None:
     """Look up a semantically similar cached response.
@@ -61,7 +58,7 @@ def get(
 
     Upgrade rules:
       - A deep-mode cached response can serve a fast-mode request (better quality).
-      - A higher web_search_mode cached response can serve a lower request.
+      - A web-search-on cached response can serve a web-search-off request.
       - Never the reverse.
     """
     global _hits, _misses
@@ -72,7 +69,7 @@ def get(
             return None
 
         # Filter by village + language (exact match required)
-        # fast_mode and web_search_mode are checked post-query for upgrade logic
+        # fast_mode and web_search are checked post-query for upgrade logic
         where = {"$and": [
             {"village": {"$eq": village or ""}},
             {"language": {"$eq": language or "en"}},
@@ -92,7 +89,6 @@ def get(
             return None
 
         now = time.time()
-        req_ws_rank = _WEB_SEARCH_RANK.get(web_search_mode, 1)
 
         # Check candidates in order of similarity
         for idx in range(len(results["ids"][0])):
@@ -115,11 +111,10 @@ def get(
                 # Fast-mode response serving deep-mode request — skip
                 continue
 
-            # web_search upgrade rule: higher-tier cache can serve lower-tier requests
-            cached_ws = meta.get("web_search_mode", "limited")
-            cached_ws_rank = _WEB_SEARCH_RANK.get(cached_ws, 1)
-            if cached_ws_rank < req_ws_rank:
-                # Cached response used fewer web searches than requested — skip
+            # web_search upgrade: search-on cache can serve search-off requests
+            cached_ws = meta.get("web_search", True)
+            if not cached_ws and web_search:
+                # Cached without web search, but request wants web search — skip
                 continue
 
             # Retrieve response data from Redis
@@ -132,7 +127,7 @@ def get(
             _hits += 1
             logger.info(
                 "Semantic cache HIT (dist=%.3f, village=%s, lang=%s, fast=%s, ws=%s, q=%.50s)",
-                distance, village, language, fast_mode, web_search_mode, query,
+                distance, village, language, fast_mode, web_search, query,
             )
             return data
 
@@ -151,7 +146,7 @@ def put(
     language: str,
     response_data: dict,
     fast_mode: bool = False,
-    web_search_mode: str = "limited",
+    web_search: bool = True,
 ):
     """Cache a pipeline response for future semantic matches."""
     doc_id = str(uuid.uuid4())
@@ -173,7 +168,7 @@ def put(
                 "village": village or "",
                 "language": language or "en",
                 "fast_mode": fast_mode,
-                "web_search_mode": web_search_mode,
+                "web_search": web_search,
                 "cached_at": time.time(),
             }],
             ids=[doc_id],
@@ -183,7 +178,7 @@ def put(
 
     logger.info(
         "Semantic cache STORE (village=%s, lang=%s, fast=%s, ws=%s, q=%.60s)",
-        village, language, fast_mode, web_search_mode, query,
+        village, language, fast_mode, web_search, query,
     )
 
 

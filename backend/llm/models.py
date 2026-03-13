@@ -11,7 +11,7 @@ def get_model(role: str) -> str:
     # fast_mode is per-session only (set from chat request via contextvars)
     fast_mode = get_fast_mode() or False
 
-    if fast_mode and role != "vision":
+    if fast_mode and role not in ("vision", "planner"):
         return FAST_MODELS.get(provider, FAST_MODELS["claude"])
 
     preset = ROLE_PRESETS.get(role, ROLE_PRESETS["reasoning"])
