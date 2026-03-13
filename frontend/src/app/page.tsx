@@ -85,13 +85,14 @@ export default function Home() {
       setTitleCollapsed(true);
       setTitleTyped(true);
     }
-    // Fetch playbooks for landing section
-    getGuides(stored, language).then((guides) => {
+    // Fetch playbooks for landing section (parallel)
+    Promise.all([
+      getGuides(stored, language),
+      getWalletGuides(stored, language),
+    ]).then(([guides, wallet]) => {
       setLandingGuides(guides.slice(0, 6));
-    }).catch(() => {});
-    getWalletGuides(stored, language).then((guides) => {
-      setWalletGuidesLanding(guides.slice(0, 6));
-      if (guides.length > 0) setPlaybookTab("mine");
+      setWalletGuidesLanding(wallet.slice(0, 6));
+      if (wallet.length > 0) setPlaybookTab("mine");
     }).catch(() => {});
   }, [language]);
 

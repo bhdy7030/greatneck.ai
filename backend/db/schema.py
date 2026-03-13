@@ -196,26 +196,27 @@ CREATE INDEX IF NOT EXISTS idx_waitlist_created ON waitlist(created_at);
 """
 
 
-def _migrate_events_zh():
+def _migrate_events_zh(existing: set[str]):
     """Add _zh translation columns to events table if missing."""
     zh_cols = ["title_zh", "description_zh", "venue_zh"]
+    missing = [col for col in zh_cols if col not in existing]
+    if not missing:
+        return
     with _PgConnWrapper() as conn:
         with conn.cursor() as cur:
-            cur.execute("SELECT column_name FROM information_schema.columns WHERE table_name='events'")
-            existing = {row[0] for row in cur.fetchall()}
-            for col in zh_cols:
-                if col not in existing:
-                    cur.execute(f"ALTER TABLE events ADD COLUMN {col} TEXT")
+            for col in missing:
+                cur.execute(f"ALTER TABLE events ADD COLUMN {col} TEXT")
             conn.commit()
 
 
-def _migrate_apple_id():
+def _migrate_apple_id(existing: set[str]):
     """Add apple_id column and make google_id nullable."""
+    needs_apple = "apple_id" not in existing
+    if not needs_apple:
+        return  # google_id nullable was a one-time fix, safe to skip if apple_id exists
     with _PgConnWrapper() as conn:
         with conn.cursor() as cur:
-            cur.execute("SELECT column_name FROM information_schema.columns WHERE table_name='users'")
-            existing = {row[0] for row in cur.fetchall()}
-            if "apple_id" not in existing:
+            if needs_apple:
                 cur.execute("ALTER TABLE users ADD COLUMN apple_id TEXT UNIQUE")
             cur.execute("""
                 SELECT is_nullable FROM information_schema.columns
@@ -227,12 +228,10 @@ def _migrate_apple_id():
             conn.commit()
 
 
-def _migrate_invites():
+def _migrate_invites(existing: set[str]):
     """Add invites table and is_invited column to users if missing."""
     with _PgConnWrapper() as conn:
         with conn.cursor() as cur:
-            cur.execute("SELECT column_name FROM information_schema.columns WHERE table_name='users'")
-            existing = {row[0] for row in cur.fetchall()}
             if "is_invited" not in existing:
                 cur.execute("ALTER TABLE users ADD COLUMN is_invited BOOLEAN NOT NULL DEFAULT FALSE")
                 cur.execute("UPDATE users SET is_invited = TRUE")
@@ -313,13 +312,13 @@ def _migrate_user_guides():
         logging.getLogger(__name__).exception("_migrate_user_guides failed")
 
 
-def _migrate_publish_snapshot():
+def _migrate_publish_snapshot(cols: set[str]):
     """Add is_snapshot and published_copy_id columns to user_guides."""
+    if "is_snapshot" in cols and "published_copy_id" in cols:
+        return
     try:
         with _PgConnWrapper() as conn:
             with conn.cursor() as cur:
-                cur.execute("SELECT column_name FROM information_schema.columns WHERE table_name='user_guides'")
-                cols = {row[0] for row in cur.fetchall()}
                 if "is_snapshot" not in cols:
                     cur.execute("ALTER TABLE user_guides ADD COLUMN is_snapshot BOOLEAN DEFAULT FALSE")
                 if "published_copy_id" not in cols:
@@ -404,12 +403,12 @@ def _migrate_llm_usage_source():
             conn.commit()
 
 
-def _migrate_user_handles():
+def _migrate_user_handles(existing: set[str]):
     """Add handle, custom_avatar_url, bio columns to users table."""
+    if all(c in existing for c in ("handle", "custom_avatar_url", "bio")):
+        return
     with _PgConnWrapper() as conn:
         with conn.cursor() as cur:
-            cur.execute("SELECT column_name FROM information_schema.columns WHERE table_name='users'")
-            existing = {row[0] for row in cur.fetchall()}
             if "handle" not in existing:
                 cur.execute("ALTER TABLE users ADD COLUMN handle TEXT UNIQUE")
             if "custom_avatar_url" not in existing:
@@ -420,7 +419,7 @@ def _migrate_user_handles():
             conn.commit()
 
 
-def _migrate_comments():
+def _migrate_comments(ug_cols: set[str]):
     """Create guide_comments table and add comment_count to user_guides."""
     with _PgConnWrapper() as conn:
         with conn.cursor() as cur:
@@ -438,14 +437,12 @@ def _migrate_comments():
             """)
             cur.execute("CREATE INDEX IF NOT EXISTS idx_gc_guide ON guide_comments(guide_id, created_at) WHERE deleted_at IS NULL")
             cur.execute("CREATE INDEX IF NOT EXISTS idx_gc_user ON guide_comments(user_id)")
-            cur.execute("SELECT column_name FROM information_schema.columns WHERE table_name='user_guides'")
-            ug_cols = {row[0] for row in cur.fetchall()}
             if "comment_count" not in ug_cols:
                 cur.execute("ALTER TABLE user_guides ADD COLUMN comment_count INTEGER NOT NULL DEFAULT 0")
             conn.commit()
 
 
-def _migrate_likes():
+def _migrate_likes(ug_cols: set[str]):
     """Create likes table and add like_count to user_guides."""
     with _PgConnWrapper() as conn:
         with conn.cursor() as cur:
@@ -459,8 +456,6 @@ def _migrate_likes():
                 )
             """)
             cur.execute("CREATE INDEX IF NOT EXISTS idx_likes_target ON likes(target_type, target_id)")
-            cur.execute("SELECT column_name FROM information_schema.columns WHERE table_name='user_guides'")
-            ug_cols = {row[0] for row in cur.fetchall()}
             if "like_count" not in ug_cols:
                 cur.execute("ALTER TABLE user_guides ADD COLUMN like_count INTEGER NOT NULL DEFAULT 0")
             conn.commit()
@@ -501,24 +496,42 @@ def _migrate_reminder_sent():
             conn.commit()
 
 
+def _get_all_columns() -> dict[str, set[str]]:
+    """Fetch all column names for all tables in one query. Returns {table: {col1, col2, ...}}."""
+    result: dict[str, set[str]] = {}
+    with _PgConnWrapper() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT table_name, column_name FROM information_schema.columns "
+                "WHERE table_schema = 'public'"
+            )
+            for table, col in cur.fetchall():
+                result.setdefault(table, set()).add(col)
+    return result
+
+
 def init_db():
     """Create tables if they don't exist."""
     with _PgConnWrapper() as conn:
         with conn.cursor() as cur:
             cur.execute(_PG_SCHEMA)
             conn.commit()
-    _migrate_events_zh()
-    _migrate_apple_id()
-    _migrate_invites()
+
+    # Single pre-check: fetch all columns once, pass to migrations that need it
+    all_cols = _get_all_columns()
+
+    _migrate_events_zh(all_cols.get("events", set()))
+    _migrate_apple_id(all_cols.get("users", set()))
+    _migrate_invites(all_cols.get("users", set()))
     _migrate_guides()
     _migrate_user_guides()
-    _migrate_publish_snapshot()
+    _migrate_publish_snapshot(all_cols.get("user_guides", set()))
     _migrate_metrics_daily()
     _migrate_page_visits()
     _migrate_waitlist()
     _migrate_llm_usage_source()
-    _migrate_user_handles()
-    _migrate_comments()
-    _migrate_likes()
+    _migrate_user_handles(all_cols.get("users", set()))
+    _migrate_comments(all_cols.get("user_guides", set()))
+    _migrate_likes(all_cols.get("user_guides", set()))
     _migrate_notifications()
     _migrate_reminder_sent()

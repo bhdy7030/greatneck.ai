@@ -52,10 +52,12 @@ def get(
     language: str,
     fast_mode: bool = False,
     web_search_mode: str = "limited",
+    query_embedding: list[float] | None = None,
 ) -> dict | None:
     """Look up a semantically similar cached response.
 
     Returns {response, sources, agent_used} or None.
+    If query_embedding is provided, uses it directly instead of re-embedding.
 
     Upgrade rules:
       - A deep-mode cached response can serve a fast-mode request (better quality).
@@ -75,11 +77,15 @@ def get(
             {"village": {"$eq": village or ""}},
             {"language": {"$eq": language or "en"}},
         ]}
-        results = collection.query(
-            query_texts=[query],
-            n_results=3,  # fetch a few to find best match with compatible settings
-            where=where,
-        )
+        query_kwargs: dict = {
+            "n_results": 3,  # fetch a few to find best match with compatible settings
+            "where": where,
+        }
+        if query_embedding:
+            query_kwargs["query_embeddings"] = [query_embedding]
+        else:
+            query_kwargs["query_texts"] = [query]
+        results = collection.query(**query_kwargs)
 
         if not results["ids"] or not results["ids"][0]:
             _misses += 1

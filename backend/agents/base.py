@@ -65,16 +65,18 @@ class BaseAgent:
                     tool_calls_made=calls_made,
                 )
 
-            # Process tool calls
+            # Process tool calls in parallel
             messages.append(response.model_dump())
-            for tc in response.tool_calls:
+
+            # Emit all tool_call events first
+            if on_event:
+                for tc in response.tool_calls:
+                    await on_event({"type": "tool_call", "tool": tc.function.name, "args": json.loads(tc.function.arguments)})
+
+            # Execute all tools concurrently
+            async def _exec_tool(tc):
                 fn_name = tc.function.name
                 args = json.loads(tc.function.arguments)
-
-                # Emit tool_call event before execution
-                if on_event:
-                    await on_event({"type": "tool_call", "tool": fn_name, "args": args})
-
                 t0 = time.monotonic()
                 tool_success = True
                 try:
@@ -91,10 +93,12 @@ class BaseAgent:
                         metadata={"agent": self.name, "args_keys": list(args.keys())},
                         success=tool_success,
                     )
+                return tc, fn_name, args, result
 
+            results = await asyncio.gather(*[_exec_tool(tc) for tc in response.tool_calls])
+
+            for tc, fn_name, args, result in results:
                 calls_made.append({"tool": fn_name, "args": args, "result_preview": result[:2000]})
-
-                # Emit tool_result event after execution
                 if on_event:
                     is_empty = "no relevant" in result.lower()[:100] or "not found" in result.lower()[:100]
                     await on_event({
@@ -103,7 +107,6 @@ class BaseAgent:
                         "preview": result[:200],
                         "has_results": not is_empty,
                     })
-
                 messages.append({
                     "role": "tool",
                     "tool_call_id": tc.id,
@@ -169,15 +172,16 @@ class BaseAgent:
                 yield ("done", content, calls_made)
                 return
 
-            # Process tool calls (same as run())
+            # Process tool calls in parallel (same as run())
             messages.append(response.model_dump())
-            for tc in response.tool_calls:
+
+            if on_event:
+                for tc in response.tool_calls:
+                    await on_event({"type": "tool_call", "tool": tc.function.name, "args": json.loads(tc.function.arguments)})
+
+            async def _exec_tool_s(tc):
                 fn_name = tc.function.name
                 args = json.loads(tc.function.arguments)
-
-                if on_event:
-                    await on_event({"type": "tool_call", "tool": fn_name, "args": args})
-
                 t0 = time.monotonic()
                 tool_success = True
                 try:
@@ -194,9 +198,12 @@ class BaseAgent:
                         metadata={"agent": self.name, "args_keys": list(args.keys())},
                         success=tool_success,
                     )
+                return tc, fn_name, args, result
 
+            results = await asyncio.gather(*[_exec_tool_s(tc) for tc in response.tool_calls])
+
+            for tc, fn_name, args, result in results:
                 calls_made.append({"tool": fn_name, "args": args, "result_preview": result[:2000]})
-
                 if on_event:
                     is_empty = "no relevant" in result.lower()[:100] or "not found" in result.lower()[:100]
                     await on_event({
@@ -205,7 +212,6 @@ class BaseAgent:
                         "preview": result[:200],
                         "has_results": not is_empty,
                     })
-
                 messages.append({
                     "role": "tool",
                     "tool_call_id": tc.id,

@@ -165,7 +165,6 @@ function GuidesPageInner() {
     );
     try {
       await saveGuide(guideId);
-      await fetchData();
     } catch {
       showToast("Couldn't save, try again");
       setAllGuides((prev) =>
@@ -187,9 +186,9 @@ function GuidesPageInner() {
     );
     try {
       await unsaveGuide(guideId);
-      await fetchData();
     } catch {
       showToast("Couldn't unsave, try again");
+      // Revert optimistic update
       await fetchData();
     }
   };

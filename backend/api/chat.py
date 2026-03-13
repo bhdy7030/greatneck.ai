@@ -326,6 +326,12 @@ async def _handle_chat_stream(request: ChatRequest, user: dict | None = None) ->
     # ── Cache: skip for images and follow-up questions (history means context-dependent) ──
     _is_cacheable = not request.image_base64 and len(request.history) == 0
 
+    # Pre-compute embedding once for reuse across semantic cache + RAG searches
+    _query_embedding = None
+    if _is_cacheable or not request.image_base64:
+        from rag.store import embed_query
+        _query_embedding = await run_sync(embed_query, request.message)
+
     if _is_cacheable:
         # 1) Event response cache (exact match by event ID, Redis-backed)
         from cache.events import get_cached_event_response
@@ -355,6 +361,7 @@ async def _handle_chat_stream(request: ChatRequest, user: dict | None = None) ->
         sem_cached = await run_sync(
             semantic_cache.get, request.message, request.village, request.language,
             fast_mode=request.fast_mode, web_search_mode=request.web_search_mode,
+            query_embedding=_query_embedding,
         )
         if sem_cached:
             record_pipeline_event("cache_hit", "semantic_cache")
@@ -487,8 +494,8 @@ async def _handle_chat_stream(request: ChatRequest, user: dict | None = None) ->
         # Run router and RAG searches concurrently (saves ~1s)
         _t_router = _time.monotonic()
         router_coro = _router_agent.run(request.message, context=context)
-        rag_coro = run_sync(_rag_store.search, request.message, village=request.village or None, n_results=3)
-        shared_rag_coro = run_sync(_rag_store.search, request.message, village=None, n_results=3)
+        rag_coro = run_sync(_rag_store.search, request.message, village=request.village or None, n_results=3, query_embedding=_query_embedding)
+        shared_rag_coro = run_sync(_rag_store.search, request.message, village=None, n_results=3, query_embedding=_query_embedding)
 
         routing, rag_results, shared_results = await asyncio.gather(
             router_coro, rag_coro, shared_rag_coro

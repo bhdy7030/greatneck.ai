@@ -15,6 +15,15 @@ def _get_client() -> chromadb.ClientAPI:
     return _client
 
 
+def embed_query(text: str) -> list[float]:
+    """Embed a query string once. Reuse the vector for multiple searches."""
+    client = _get_client()
+    collection = client.get_or_create_collection(name="shared")
+    # Use ChromaDB's default embedding function
+    ef = collection._embedding_function
+    return ef([text])[0]
+
+
 class KnowledgeStore:
     """Wraps ChromaDB. One collection per village + a 'shared' collection."""
 
@@ -56,12 +65,20 @@ class KnowledgeStore:
         village: str | None = None,
         n_results: int = 5,
         where: dict | None = None,
+        query_embedding: list[float] | None = None,
     ) -> list[dict]:
-        """Search a village's collection. Returns list of {text, metadata, distance}."""
+        """Search a village's collection. Returns list of {text, metadata, distance}.
+
+        If query_embedding is provided, uses it directly instead of re-embedding.
+        """
         collection = self.get_or_create_collection(village)
         if collection.count() == 0:
             return []
-        kwargs: dict = {"query_texts": [query], "n_results": min(n_results, collection.count())}
+        kwargs: dict = {"n_results": min(n_results, collection.count())}
+        if query_embedding:
+            kwargs["query_embeddings"] = [query_embedding]
+        else:
+            kwargs["query_texts"] = [query]
         if where:
             kwargs["where"] = where
         results = collection.query(**kwargs)

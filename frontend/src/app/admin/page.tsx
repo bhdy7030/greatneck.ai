@@ -21,7 +21,8 @@ import {
   type WaitlistEntry,
 } from "@/lib/api";
 import { useAuth } from "@/components/AuthProvider";
-import MetricsDashboard from "@/components/MetricsDashboard";
+import dynamic from "next/dynamic";
+const MetricsDashboard = dynamic(() => import("@/components/MetricsDashboard"), { ssr: false });
 
 const VILLAGES = [
   "Great Neck",
