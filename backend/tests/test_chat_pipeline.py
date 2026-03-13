@@ -285,6 +285,109 @@ async def test_golden_routing(query: str, expected_agent: str):
 
 
 # ═══════════════════════════════════════════════════════════════════
+# E2E smoke test — full pipeline through /api/chat/stream
+# Catches integration bugs (e.g. numpy array truthiness in ChromaDB)
+# that unit tests miss because mocks return plain Python types.
+# ═══════════════════════════════════════════════════════════════════
+
+
+@pytest.mark.slow
+@pytest.mark.asyncio
+async def test_chat_stream_e2e():
+    """Send a real message through the full pipeline and verify SSE tokens come back.
+
+    Exercises: embedding → semantic cache → RAG search → router → planner →
+    agent → tool calls → SSE streaming. Uses a query that hits the registry
+    (cheap, no web search needed).
+    """
+    import httpx
+    from main import app
+    from httpx import ASGITransport
+    from tests.conftest import create_test_user, mint_token
+
+    user = create_test_user(email="e2e-chat@test.pytest", name="E2E Test")
+    token = mint_token(user["id"])
+
+    async with httpx.AsyncClient(
+        transport=ASGITransport(app=app),
+        base_url="http://test",
+        timeout=60.0,
+    ) as client:
+        # Create a conversation
+        conv_resp = await client.post(
+            "/api/conversations",
+            json={"village": ""},
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        assert conv_resp.status_code == 200
+        conv_id = conv_resp.json()["id"]
+
+        # Send chat via SSE stream
+        response = await client.post(
+            "/api/chat/stream",
+            json={
+                "message": "What is the Great Neck Library?",
+                "village": "",
+                "conversation_id": conv_id,
+            },
+            headers={
+                "Authorization": f"Bearer {token}",
+                "Accept": "text/event-stream",
+            },
+        )
+        assert response.status_code == 200
+
+        # Parse SSE events
+        events = _parse_sse(response.text)
+        assert len(events) > 0, "No SSE events received"
+
+        # No error events
+        error_events = [e for e in events if e.get("_event") == "error"]
+        assert not error_events, f"Got error: {error_events}"
+
+        # Must have token or response events (streamed answer)
+        token_events = [e for e in events if e.get("_event") == "token"]
+        response_events = [e for e in events if e.get("_event") == "response"]
+        assert token_events or response_events, (
+            f"No answer events. Event types: {[e.get('_event') for e in events]}"
+        )
+
+        # Reconstruct response text
+        if token_events:
+            full_text = "".join(e.get("text", "") for e in token_events)
+        else:
+            full_text = response_events[0].get("response", "")
+
+        assert len(full_text) > 20, f"Response too short: {full_text[:100]}"
+        assert "library" in full_text.lower(), f"No 'library' in: {full_text[:200]}"
+
+        # Must end with a response event (final answer)
+        assert any(e.get("_event") == "response" for e in events), "Missing response event"
+
+
+def _parse_sse(text: str) -> list[dict]:
+    """Parse SSE text into a list of {event_type, ...data} dicts."""
+    events = []
+    current_event = None
+    for line in text.split("\n"):
+        line = line.strip()
+        if line.startswith("event: "):
+            current_event = line[7:]
+        elif line.startswith("data: "):
+            data_str = line[6:]
+            if data_str == "[DONE]":
+                continue
+            try:
+                data = json.loads(data_str)
+                data["_event"] = current_event
+                events.append(data)
+            except json.JSONDecodeError:
+                pass
+            current_event = None
+    return events
+
+
+# ═══════════════════════════════════════════════════════════════════
 # Helpers
 # ═══════════════════════════════════════════════════════════════════
 
