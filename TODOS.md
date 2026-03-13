@@ -26,3 +26,16 @@ Created `ToastProvider.tsx` (context + fixed-position toast UI, auto-dismiss 3s)
 
 ### ~~7. Add GitHub Actions CI pipeline~~ ✅ DONE (2026-03-13)
 Created `.github/workflows/ci.yml`. On push/PR to main: backend job (Python 3.12, ephemeral Postgres 16 service, pip install, import check, all 37 pytest tests including golden-set LLM routing) + frontend job (Node 20, npm ci, npm run build). **Remaining:** Add `GEMINI_API_KEY` as GitHub repository secret for golden-set tests.
+
+### 8. Set up GCP gamma environment + CI/CD auto-deploy
+Create a staging (gamma) Cloud Run environment that auto-deploys on every push to `main` after CI passes, with a manual approval gate before production deploy.
+
+**Scope:**
+- Gamma backend (`askmura-backend-gamma`) + frontend (`askmura-frontend-gamma`) Cloud Run services
+- Shares prod Cloud SQL database, isolated via `REDIS_PREFIX=gamma:`
+- Frontend Dockerfile: accept `ARG NEXT_PUBLIC_API_URL` for build-time injection
+- CI/CD: add `build-and-push`, `deploy-gamma` (auto), `deploy-prod` (manual approval) jobs to `ci.yml`
+- GitHub environments: `gamma` (no protection) + `production` (required reviewers)
+- GCP service account for CI deploys (`github-deploy@askmura.iam.gserviceaccount.com`)
+
+**Plan:** See `.claude/plans/ancient-humming-owl.md` for full implementation details.

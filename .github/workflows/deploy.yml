@@ -1,0 +1,66 @@
+name: Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: "What to deploy"
+        required: true
+        default: "both"
+        type: choice
+        options:
+          - both
+          - backend
+          - frontend
+
+jobs:
+  test:
+    name: Run tests first
+    uses: ./.github/workflows/ci.yml
+    secrets: inherit
+
+  deploy:
+    name: Deploy to Production
+    needs: test
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker us-east1-docker.pkg.dev --quiet
+
+      - name: Build & push backend
+        if: inputs.target == 'both' || inputs.target == 'backend'
+        run: |
+          docker build -t us-east1-docker.pkg.dev/askmura/askmura/backend:${{ github.sha }} backend/
+          docker push us-east1-docker.pkg.dev/askmura/askmura/backend:${{ github.sha }}
+
+      - name: Deploy backend
+        if: inputs.target == 'both' || inputs.target == 'backend'
+        run: |
+          gcloud run deploy askmura-backend \
+            --image us-east1-docker.pkg.dev/askmura/askmura/backend:${{ github.sha }} \
+            --region us-east1 --quiet \
+            --memory 1Gi \
+            --update-secrets="APPLE_CLIENT_ID=APPLE_CLIENT_ID:latest,APPLE_TEAM_ID=APPLE_TEAM_ID:latest,APPLE_KEY_ID=APPLE_KEY_ID:latest,APPLE_PRIVATE_KEY=APPLE_PRIVATE_KEY:latest,REDIS_URL=REDIS_URL:latest" \
+            --update-env-vars="APPLE_REDIRECT_URI=https://greatneck.ai/api/auth/apple/callback,REDIS_PREFIX=prod:"
+
+      - name: Build & push frontend
+        if: inputs.target == 'both' || inputs.target == 'frontend'
+        run: |
+          docker build -t us-east1-docker.pkg.dev/askmura/askmura/frontend:${{ github.sha }} frontend/
+          docker push us-east1-docker.pkg.dev/askmura/askmura/frontend:${{ github.sha }}
+
+      - name: Deploy frontend
+        if: inputs.target == 'both' || inputs.target == 'frontend'
+        run: |
+          gcloud run deploy askmura-frontend \
+            --image us-east1-docker.pkg.dev/askmura/askmura/frontend:${{ github.sha }} \
+            --region us-east1 --quiet
