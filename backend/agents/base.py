@@ -343,26 +343,20 @@ NOTE: These formatting rules apply to your written response ONLY. Do NOT reduce 
         # (identical across requests to the same agent within the same day).
         # Dynamic = village, RAG, search plan, critic, language (varies per request).
         # Provider-level caching: Anthropic cache_control, Gemini implicit caching.
-        # Skip cache_control for short prompts (Gemini requires ≥1024 tokens).
+        # If Gemini rejects cache_control (prompt too short), llm/provider.py
+        # automatically strips it and retries.
         static_part = _static_system
         dynamic_part = system[len(_static_system):]
-        use_cache = len(static_part.split()) > 300  # ~1200 tokens
 
-        if use_cache:
-            # Multi-part content with cache_control for provider-level caching
-            static_block: dict = {"type": "text", "text": static_part, "cache_control": {"type": "ephemeral"}}
-            if dynamic_part.strip():
-                messages: list[dict] = [{"role": "system", "content": [
-                    static_block,
-                    {"type": "text", "text": dynamic_part},
-                ]}]
-            else:
-                messages: list[dict] = [{"role": "system", "content": [
-                    static_block,
-                ]}]
+        if dynamic_part.strip():
+            messages: list[dict] = [{"role": "system", "content": [
+                {"type": "text", "text": static_part, "cache_control": {"type": "ephemeral"}},
+                {"type": "text", "text": dynamic_part},
+            ]}]
         else:
-            # Plain string — avoids Gemini interpreting list format as cacheable
-            messages: list[dict] = [{"role": "system", "content": system}]
+            messages: list[dict] = [{"role": "system", "content": [
+                {"type": "text", "text": static_part, "cache_control": {"type": "ephemeral"}},
+            ]}]
 
         messages.extend(history)
         messages.append({"role": "user", "content": query})

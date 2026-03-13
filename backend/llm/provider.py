@@ -54,6 +54,23 @@ def _extract_and_record(response, model: str, role: str, start_time: float):
         logger.debug("Failed to record LLM usage metrics", exc_info=True)
 
 
+def _strip_cache_control(messages: list[dict]) -> list[dict]:
+    """Remove cache_control from messages (Gemini rejects small cached content)."""
+    stripped = []
+    for msg in messages:
+        content = msg.get("content")
+        if isinstance(content, list):
+            new_parts = []
+            for part in content:
+                if isinstance(part, dict) and "cache_control" in part:
+                    part = {k: v for k, v in part.items() if k != "cache_control"}
+                new_parts.append(part)
+            stripped.append({**msg, "content": new_parts})
+        else:
+            stripped.append(msg)
+    return stripped
+
+
 async def _retry(coro_fn, retries=MAX_RETRIES):
     """Retry a coroutine on transient errors (overloaded, rate limit)."""
     for attempt in range(retries):
@@ -62,7 +79,11 @@ async def _retry(coro_fn, retries=MAX_RETRIES):
         except Exception as e:
             logger.error(f"LLM call error (attempt {attempt+1}/{retries}): {type(e).__name__}: {e}")
             err_str = str(e).lower()
-            is_transient = ("overloaded" in err_str or "529" in err_str or "rate" in err_str) and "not found" not in err_str and "404" not in err_str
+            is_transient = (
+                ("overloaded" in err_str or "529" in err_str or "rate" in err_str)
+                and "not found" not in err_str and "404" not in err_str
+                and "400" not in err_str and "badrequesterror" not in err_str
+            )
             if is_transient and attempt < retries - 1:
                 wait = RETRY_DELAY * (attempt + 1)
                 logger.warning(f"LLM transient error (attempt {attempt+1}), retrying in {wait}s: {e}")
@@ -80,18 +101,26 @@ async def llm_call(
     """Simple LLM call, returns text response."""
     model = get_model(role)
     start = time.time()
+    _msgs = messages  # may be replaced on cache error retry
 
     async def _call():
         response = await litellm.acompletion(
             model=model,
-            messages=messages,
+            messages=_msgs,
             temperature=temperature,
             max_tokens=max_tokens,
         )
         _extract_and_record(response, model, role, start)
         return response.choices[0].message.content
 
-    return await _retry(_call)
+    try:
+        return await _retry(_call)
+    except Exception as e:
+        if "cached content is too small" in str(e).lower():
+            logger.info("Retrying without cache_control (prompt too short for Gemini caching)")
+            _msgs = _strip_cache_control(messages)
+            return await _call()
+        raise
 
 
 async def llm_call_streaming(
@@ -104,13 +133,26 @@ async def llm_call_streaming(
     model = get_model(role)
     start = time.time()
 
-    response = await litellm.acompletion(
-        model=model,
-        messages=messages,
-        temperature=temperature,
-        max_tokens=max_tokens,
-        stream=True,
-    )
+    try:
+        response = await litellm.acompletion(
+            model=model,
+            messages=messages,
+            temperature=temperature,
+            max_tokens=max_tokens,
+            stream=True,
+        )
+    except Exception as e:
+        if "cached content is too small" in str(e).lower():
+            logger.info("Retrying stream without cache_control (prompt too short for Gemini caching)")
+            response = await litellm.acompletion(
+                model=model,
+                messages=_strip_cache_control(messages),
+                temperature=temperature,
+                max_tokens=max_tokens,
+                stream=True,
+            )
+        else:
+            raise
 
     full_content = ""
     prompt_tokens = 0
@@ -168,11 +210,12 @@ async def llm_call_with_tools(
     """LLM call with tool definitions. Returns the full message object."""
     model = get_model(role)
     start = time.time()
+    _msgs = messages
 
     async def _call():
         response = await litellm.acompletion(
             model=model,
-            messages=messages,
+            messages=_msgs,
             tools=tools or None,
             temperature=temperature,
             max_tokens=max_tokens,
@@ -180,4 +223,11 @@ async def llm_call_with_tools(
         _extract_and_record(response, model, role, start)
         return response.choices[0].message
 
-    return await _retry(_call)
+    try:
+        return await _retry(_call)
+    except Exception as e:
+        if "cached content is too small" in str(e).lower():
+            logger.info("Retrying with_tools without cache_control (prompt too short for Gemini caching)")
+            _msgs = _strip_cache_control(messages)
+            return await _call()
+        raise
