@@ -47,6 +47,9 @@ export default function GuidesTeaser() {
             <div className="flex-1 min-w-0">
               <h4 className="text-xs font-semibold text-text-900 truncate">{guide.title}</h4>
               <p className="text-[10px] text-text-500 truncate">{guide.description}</p>
+              {guide.author_handle && (
+                <p className="text-[9px] text-text-400 truncate">shared by <span className="text-sage">@{guide.author_handle}</span></p>
+              )}
             </div>
             <svg className="w-4 h-4 text-text-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />

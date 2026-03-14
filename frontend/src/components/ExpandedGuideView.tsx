@@ -121,10 +121,18 @@ export default function ExpandedGuideView({
             </svg>
           </button>
 
-          {/* Title */}
+          {/* Title + author */}
           <div className="flex-1 min-w-0 flex items-center gap-2">
             <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: guide.color }} />
-            <h1 className="text-sm font-bold text-text-900 truncate">{guide.title}</h1>
+            <div className="min-w-0">
+              <h1 className="text-sm font-bold text-text-900 truncate">{guide.title}</h1>
+              {guide.author_handle && (
+                <span className="text-[10px] text-text-400">shared by </span>
+                <a href={`/profile/?h=${guide.author_handle}`} className="text-[10px] text-sage hover:underline">
+                  @{guide.author_handle}
+                </a>
+              )}
+            </div>
           </div>
 
           {/* Top-right actions */}

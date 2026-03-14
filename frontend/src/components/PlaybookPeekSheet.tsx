@@ -105,6 +105,14 @@ export default function PlaybookPeekSheet({
                 {guide.title}
               </h2>
               <p className="text-xs text-text-500 mt-1">{guide.description}</p>
+              {guide.author_handle && (
+                <p className="mt-0.5">
+                  <span className="text-[11px] text-text-400">shared by</span>
+                  <a href={`/profile/?h=${guide.author_handle}`} className="text-[11px] text-sage hover:underline">
+                    @{guide.author_handle}
+                  </a>
+                </p>
+              )}
             </div>
           </div>
 

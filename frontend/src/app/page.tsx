@@ -424,32 +424,37 @@ export default function Home() {
                     style={{ backgroundColor: guide.color }}
                   />
                   {/* Icon */}
-                  <div className="flex items-center justify-center pt-3 pb-1.5 shrink-0 transition-transform duration-200 group-hover:scale-110">
-                    <OpenMojiIcon icon={guide.icon} size={40} />
+                  <div className="flex items-center justify-center pt-4 pb-2 shrink-0 transition-transform duration-200 group-hover:scale-110">
+                    <OpenMojiIcon icon={guide.icon} size={44} />
                   </div>
                   {/* Title */}
                   <div className="px-2.5 flex-1">
-                    <p className="text-[10px] font-semibold text-text-700 leading-tight line-clamp-3">
+                    <p className="text-[11px] font-semibold text-text-700 leading-tight line-clamp-3">
                       {guide.title}
                     </p>
                   </div>
-                  {/* Progress — pinned to bottom */}
-                  {guide.total_count > 0 && (
-                    <div className="px-2.5 pb-2 shrink-0 flex items-center gap-1">
-                      <div className="flex-1 h-1 bg-surface-300/50 rounded-full overflow-hidden">
-                        <div
-                          className="h-full rounded-full"
-                          style={{
-                            width: `${((playbookTab === "mine" ? guide.done_count : 0) / guide.total_count) * 100}%`,
-                            backgroundColor: guide.color,
-                          }}
-                        />
+                  {/* Author + Progress — pinned to bottom */}
+                  <div className="px-2.5 pb-2.5 shrink-0 space-y-1">
+                    {guide.author_handle && (
+                      <p className="text-[8px] text-text-400 truncate">from @{guide.author_handle}</p>
+                    )}
+                    {guide.total_count > 0 && (
+                      <div className="flex items-center gap-1">
+                        <div className="flex-1 h-1 bg-surface-300/50 rounded-full overflow-hidden">
+                          <div
+                            className="h-full rounded-full"
+                            style={{
+                              width: `${((playbookTab === "mine" ? guide.done_count : 0) / guide.total_count) * 100}%`,
+                              backgroundColor: guide.color,
+                            }}
+                          />
+                        </div>
+                        <span className="text-[8px] text-text-500 tabular-nums">
+                          {playbookTab === "mine" ? `${guide.done_count}/${guide.total_count}` : `${guide.total_count} steps`}
+                        </span>
                       </div>
-                      <span className="text-[8px] text-text-500 tabular-nums">
-                        {playbookTab === "mine" ? `${guide.done_count}/${guide.total_count}` : `${guide.total_count} steps`}
-                      </span>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </a>
               ))}
               {/* Create card */}

@@ -105,6 +105,14 @@ export default function PeekGuideView({
             <StepMarkdown content={guide.description} className="text-text-500" />
           </div>
         )}
+        {guide.author_handle && (
+          <div className="shrink-0 px-4 pb-1 max-w-2xl mx-auto w-full">
+            <span className="text-[11px] text-text-400">shared by </span>
+            <a href={`/profile/?h=${guide.author_handle}`} className="text-[11px] text-sage hover:underline">
+              @{guide.author_handle}
+            </a>
+          </div>
+        )}
 
         {/* Read-only step reels -- fills remaining space */}
         <div className="flex-1 min-h-0 max-w-2xl mx-auto w-full">
