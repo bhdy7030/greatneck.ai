@@ -3,6 +3,7 @@
 import { useState, useRef, useCallback, type KeyboardEvent } from "react";
 import { useLanguage } from "./LanguageProvider";
 import ImageAnnotator from "./ImageAnnotator";
+import { isNative, takePhoto } from "@/lib/native";
 
 interface ChatInputProps {
   onSend: (message: string, imageBase64?: string, imageMime?: string) => void;
@@ -122,7 +123,18 @@ export default function ChatInput({ onSend, disabled }: ChatInputProps) {
 
       <div className="flex items-end gap-2">
         <button
-          onClick={() => fileInputRef.current?.click()}
+          onClick={async () => {
+            if (isNative()) {
+              const result = await takePhoto();
+              if (result) {
+                setImageBase64(result.base64);
+                setImageMime(result.mime);
+                setImagePreview(`data:${result.mime};base64,${result.base64}`);
+              }
+            } else {
+              fileInputRef.current?.click();
+            }
+          }}
           disabled={disabled}
           className="flex-shrink-0 p-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-text-500 hover:text-sage transition-colors disabled:opacity-50"
           title="Attach image"

@@ -138,6 +138,13 @@ from db.invites import (
     link_invite_to_user,
 )
 
+# ── device tokens (push notifications) ──────────────────────────
+from db.device_tokens import (
+    register_device_token,
+    unregister_device_token,
+    get_device_tokens_for_user,
+)
+
 # ── auth / tokens / waitlist ─────────────────────────────────────
 from db.auth import (
     get_or_create_usage,
@@ -197,6 +204,8 @@ __all__ = [
     "create_invite", "get_invite_by_code", "redeem_invite",
     "count_invites_by_user", "list_invites_by_user", "list_all_invites",
     "link_invite_to_user",
+    # device tokens
+    "register_device_token", "unregister_device_token", "get_device_tokens_for_user",
     # auth
     "get_or_create_usage", "increment_usage", "claim_extended_trial",
     "create_refresh_token", "validate_refresh_token", "revoke_user_refresh_tokens",

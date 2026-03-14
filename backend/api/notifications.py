@@ -4,7 +4,10 @@ from __future__ import annotations
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 
-from db import get_notifications, count_unread_notifications, mark_notifications_read
+from db import (
+    get_notifications, count_unread_notifications, mark_notifications_read,
+    register_device_token, unregister_device_token,
+)
 from api.deps import get_current_user
 from api.aio import run_sync
 
@@ -65,3 +68,31 @@ async def mark_read(body: MarkReadRequest, user: dict = Depends(get_current_user
     """Mark notifications as read. Empty ids = mark all."""
     marked = await run_sync(mark_notifications_read, user["id"], body.ids)
     return {"ok": True, "marked": marked}
+
+
+# ── Push notification device tokens ──
+
+
+class RegisterDeviceRequest(BaseModel):
+    token: str
+    platform: str  # "ios" or "android"
+
+
+class UnregisterDeviceRequest(BaseModel):
+    token: str
+
+
+@router.post("/notifications/register-device")
+async def register_device(body: RegisterDeviceRequest, user: dict = Depends(get_current_user)):
+    """Register a device push token for the current user."""
+    if body.platform not in ("ios", "android"):
+        raise HTTPException(status_code=400, detail="platform must be 'ios' or 'android'")
+    await run_sync(register_device_token, user["id"], body.token, body.platform)
+    return {"ok": True}
+
+
+@router.post("/notifications/unregister-device")
+async def unregister_device(body: UnregisterDeviceRequest, user: dict = Depends(get_current_user)):
+    """Remove a device push token (e.g. on logout)."""
+    await run_sync(unregister_device_token, body.token)
+    return {"ok": True}
