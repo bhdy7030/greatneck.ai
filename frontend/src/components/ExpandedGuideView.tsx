@@ -127,10 +127,12 @@ export default function ExpandedGuideView({
             <div className="min-w-0">
               <h1 className="text-sm font-bold text-text-900 truncate">{guide.title}</h1>
               {guide.author_handle && (
-                <span className="text-[10px] text-text-400">shared by </span>
-                <a href={`/profile/?h=${guide.author_handle}`} className="text-[10px] text-sage hover:underline">
-                  @{guide.author_handle}
-                </a>
+                <p className="text-[10px]">
+                  <span className="text-text-400">shared by </span>
+                  <a href={`/profile/?h=${guide.author_handle}`} className="text-sage hover:underline">
+                    @{guide.author_handle}
+                  </a>
+                </p>
               )}
             </div>
           </div>
