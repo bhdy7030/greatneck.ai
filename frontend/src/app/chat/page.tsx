@@ -523,7 +523,7 @@ function ChatPageInner() {
                     />
                   </svg>
                 </div>
-                <h2 className="text-xl font-serif font-bold text-text-800 mb-2 tracking-tight">
+                <h2 className="text-xl font-bold text-text-800 mb-2 tracking-tight">
                   {t("chat.howCanIHelp")}
                 </h2>
                 <p className="text-sm text-text-500 max-w-sm mx-auto leading-relaxed">

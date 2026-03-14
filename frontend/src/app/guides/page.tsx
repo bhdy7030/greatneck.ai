@@ -373,7 +373,7 @@ function GuidesPageInner() {
         {/* Header */}
         <div className="mb-5 flex items-start justify-between">
           <div>
-            <h1 className="text-xl font-serif font-bold text-text-900 tracking-tight">{t("guides.title")}</h1>
+            <h1 className="text-xl font-bold text-text-900 tracking-tight">{t("guides.title")}</h1>
             <p className="text-xs text-text-500 mt-0.5">{t("guides.subtitle")}</p>
           </div>
           <button

@@ -242,7 +242,7 @@ export default function Home() {
           }`}>
             {/* Slogan */}
             <div className="text-center">
-              <h1 className={`font-serif font-bold text-text-900 transition-all duration-500 tracking-tight ${
+              <h1 className={`font-bold text-text-900 transition-all duration-500 tracking-tight ${
                 titleCollapsed ? "text-lg md:text-xl" : "text-3xl md:text-[2.75rem] md:leading-tight"
               }`}>
                 {titleTyped ? t("welcome.title") : heroTitle}
