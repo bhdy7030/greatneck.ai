@@ -100,7 +100,7 @@ export default function ChatInput({ onSend, disabled }: ChatInputProps) {
   };
 
   return (
-    <div className="border-t border-surface-300 bg-surface-200 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+    <div className="border-t border-surface-200/60 bg-surface-100/80 backdrop-blur-lg p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
       {imagePreview && (
         <div className="mb-2 flex items-center gap-2">
           <div className="relative">
@@ -163,14 +163,14 @@ export default function ChatInput({ onSend, disabled }: ChatInputProps) {
           placeholder=""
           disabled={disabled}
           rows={1}
-          className="flex-1 bg-surface-50 text-text-800 rounded-xl px-4 py-2.5 resize-none focus:outline-none focus:ring-2 focus:ring-sage placeholder-text-500 text-base md:text-sm disabled:opacity-50 border border-surface-300"
+          className="flex-1 bg-surface-50 text-text-800 rounded-xl px-4 py-2.5 resize-none focus:outline-none focus:ring-2 focus:ring-sage/40 placeholder-text-500 text-base md:text-sm disabled:opacity-50 border border-surface-300/60 shadow-sm transition-shadow duration-200 focus:shadow-md focus:shadow-sage/5"
           style={{ minHeight: "42px", maxHeight: "160px", fontSize: "max(16px, 0.875rem)" }}
         />
 
         <button
           onClick={handleSend}
           disabled={disabled || (!text.trim() && !imageBase64)}
-          className="flex-shrink-0 p-2 min-w-[44px] min-h-[44px] flex items-center justify-center bg-sage text-white rounded-xl hover:bg-sage-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="flex-shrink-0 p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center bg-sage text-white rounded-xl hover:bg-sage-dark transition-all duration-200 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 shadow-sm shadow-sage/15"
           title="Send message"
         >
           <svg

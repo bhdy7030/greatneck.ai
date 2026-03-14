@@ -388,12 +388,12 @@ function ChatPageInner() {
       {/* Chat area */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Village badge */}
-        <div className="flex-shrink-0 px-3 md:px-4 py-1.5 md:py-2 bg-surface-50 border-b border-surface-300">
-          <div className="max-w-3xl mx-auto flex items-center gap-2 md:gap-3">
+        <div className="flex-shrink-0 px-3 md:px-4 py-2 md:py-2.5 bg-surface-50/85 backdrop-blur-lg border-b border-surface-300/50">
+          <div className="max-w-3xl mx-auto flex items-center gap-2.5 md:gap-3">
             {/* Mobile sidebar toggle */}
             <button
               onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="md:hidden p-1 -ml-1 text-text-600 hover:text-text-800 transition-colors"
+              className="md:hidden p-1.5 -ml-1 text-text-600 hover:text-text-800 rounded-lg hover:bg-surface-200/60 transition-all duration-200"
               aria-label="Toggle chat history"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -408,34 +408,35 @@ function ChatPageInner() {
                 localStorage.removeItem("gn_village");
                 router.push("/");
               }}
-              className="flex items-center gap-1 text-xs font-medium text-sage bg-sage/10 px-2 py-0.5 rounded-full hover:bg-sage/20 transition-colors flex-shrink-0"
+              className="flex items-center gap-1.5 text-xs font-medium text-sage bg-sage/8 px-2.5 py-1 rounded-lg hover:bg-sage/15 transition-all duration-200 flex-shrink-0"
               title={t("chat.changeVillage")}
             >
-              {village}
-              <svg className="w-3 h-3 text-sage/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              <svg className="w-3 h-3 text-sage/70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
               </svg>
+              {village}
             </button>
 
             {/* Separator */}
-            <div className="w-px h-4 bg-surface-300 hidden md:block" />
+            <div className="w-px h-4 bg-surface-300/50 hidden md:block" />
 
             {/* Web search: on/off toggle */}
-            <div className="flex items-center gap-1 ml-auto md:ml-0">
+            <div className="flex items-center gap-1.5 ml-auto md:ml-0">
               <button
                 onClick={() => {
                   const next = !webSearch;
                   setWebSearch(next);
                   localStorage.setItem("gn_web_search", String(next));
                 }}
-                className="flex items-center gap-1 cursor-pointer"
+                className="flex items-center gap-1.5 cursor-pointer group"
                 title={webSearch ? "Disable web search" : "Enable web search"}
               >
-                <svg className={`w-3.5 h-3.5 flex-shrink-0 transition-colors ${webSearch ? "text-sage" : "text-text-400"}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className={`w-3.5 h-3.5 flex-shrink-0 transition-colors duration-200 ${webSearch ? "text-sage" : "text-text-400"}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9" />
                 </svg>
-                <div className={`w-7 h-4 rounded-full transition-colors relative ${webSearch ? "bg-sage" : "bg-surface-400"}`}>
-                  <div className={`absolute top-0.5 w-3 h-3 rounded-full bg-white shadow transition-transform ${webSearch ? "left-3.5" : "left-0.5"}`} />
+                <div className={`w-7 h-4 rounded-full transition-colors duration-200 relative ${webSearch ? "bg-sage" : "bg-surface-400"}`}>
+                  <div className={`absolute top-0.5 w-3 h-3 rounded-full bg-white shadow-sm transition-transform duration-200 ${webSearch ? "left-3.5" : "left-0.5"}`} />
                 </div>
               </button>
             </div>
@@ -448,12 +449,12 @@ function ChatPageInner() {
                 setFastMode(next);
                 localStorage.setItem("gn_fast_mode", String(next));
               }}
-              className={`flex items-center gap-0.5 text-[11px] px-1.5 py-0.5 min-h-[24px] rounded-full transition-colors ${
+              className={`flex items-center gap-1 text-[11px] px-2 py-1 min-h-[24px] rounded-lg transition-all duration-200 ${
                 features?.fast_mode_forced
                   ? "bg-surface-300 text-text-400 cursor-not-allowed"
                   : fastMode
-                    ? "bg-amber-500 text-white"
-                    : "bg-sage text-white"
+                    ? "bg-amber-500 text-white shadow-sm shadow-amber-500/20"
+                    : "bg-sage text-white shadow-sm shadow-sage/20"
               }`}
               title={
                 features?.fast_mode_forced
@@ -506,27 +507,29 @@ function ChatPageInner() {
               </div>
             )}
             {messages.length === 0 && (
-              <div className="text-center py-16">
-                <svg
-                  className="w-16 h-16 text-surface-400 mx-auto mb-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={1}
-                    d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-                  />
-                </svg>
-                <h2 className="text-lg font-semibold text-text-700 mb-2">
+              <div className="text-center py-20">
+                <div className="w-16 h-16 mx-auto mb-5 rounded-2xl bg-sage/8 flex items-center justify-center">
+                  <svg
+                    className="w-8 h-8 text-sage/60"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={1.5}
+                      d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                    />
+                  </svg>
+                </div>
+                <h2 className="text-xl font-serif font-bold text-text-800 mb-2 tracking-tight">
                   {t("chat.howCanIHelp")}
                 </h2>
-                <p className="text-sm text-text-500 max-w-sm mx-auto">
+                <p className="text-sm text-text-500 max-w-sm mx-auto leading-relaxed">
                   {t("chat.emptySub", { village })}
                 </p>
-                <div className="mt-6 flex flex-wrap justify-center gap-2">
+                <div className="mt-8 flex flex-wrap justify-center gap-2">
                   {[
                     t("chat.q1"),
                     t("chat.q2"),
@@ -536,7 +539,7 @@ function ChatPageInner() {
                     <button
                       key={q}
                       onClick={() => handleSend(q)}
-                      className="text-xs bg-surface-200 text-text-600 px-3 py-2 rounded-lg hover:bg-surface-300 transition-colors"
+                      className="text-xs bg-surface-50 text-text-600 px-3.5 py-2.5 rounded-xl border border-surface-300/60 hover:border-sage/30 hover:text-sage hover:bg-sage/5 transition-all duration-200"
                     >
                       {q}
                     </button>
@@ -570,14 +573,14 @@ function ChatPageInner() {
             {/* Simple loading indicator (before any pipeline events or streaming) */}
             {isLoading && pipelineEvents.length === 0 && !streamingContent && (
               <div className="flex justify-start mb-4">
-                <div className="bg-surface-50 border border-surface-300 rounded-2xl rounded-bl-md px-4 py-3">
-                  <div className="flex items-center gap-2">
+                <div className="bg-surface-50 border border-surface-200/60 rounded-2xl rounded-bl-md px-4 py-3 shadow-sm">
+                  <div className="flex items-center gap-2.5">
                     <div className="flex gap-1">
-                      <span className="w-2 h-2 bg-text-500 rounded-full animate-bounce [animation-delay:0ms]" />
-                      <span className="w-2 h-2 bg-text-500 rounded-full animate-bounce [animation-delay:150ms]" />
-                      <span className="w-2 h-2 bg-text-500 rounded-full animate-bounce [animation-delay:300ms]" />
+                      <span className="w-1.5 h-1.5 bg-sage/50 rounded-full typing-dot" />
+                      <span className="w-1.5 h-1.5 bg-sage/50 rounded-full typing-dot" />
+                      <span className="w-1.5 h-1.5 bg-sage/50 rounded-full typing-dot" />
                     </div>
-                    <span className="text-xs text-text-500">{t("chat.connecting")}</span>
+                    <span className="text-xs text-text-400">{t("chat.connecting")}</span>
                   </div>
                 </div>
               </div>

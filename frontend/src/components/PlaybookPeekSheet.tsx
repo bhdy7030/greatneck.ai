@@ -73,7 +73,7 @@ export default function PlaybookPeekSheet({
     >
       <div
         ref={sheetRef}
-        className={`relative w-full max-w-lg bg-surface-50 rounded-t-2xl shadow-2xl max-h-[70vh] overflow-y-auto ${
+        className={`relative w-full max-w-lg bg-surface-50 rounded-t-2xl shadow-2xl shadow-black/15 max-h-[70vh] overflow-y-auto ${
           closing ? "animate-peekSheetDown" : "animate-peekSheetUp"
         }`}
         style={{
@@ -98,13 +98,13 @@ export default function PlaybookPeekSheet({
           />
 
           {/* Header */}
-          <div className="flex items-start gap-3 mb-4">
-            <OpenMojiIcon icon={guide.icon} size={40} />
+          <div className="flex items-start gap-3.5 mb-4">
+            <OpenMojiIcon icon={guide.icon} size={44} />
             <div className="flex-1 min-w-0">
-              <h2 className="text-base font-bold text-text-900 leading-tight">
+              <h2 className="text-base font-bold text-text-900 leading-tight tracking-tight">
                 {guide.title}
               </h2>
-              <p className="text-xs text-text-500 mt-1">{guide.description}</p>
+              <p className="text-xs text-text-500 mt-1 leading-relaxed">{guide.description}</p>
               {guide.author_handle && (
                 <p className="mt-0.5">
                   <span className="text-[11px] text-text-400">shared by</span>
@@ -148,10 +148,10 @@ export default function PlaybookPeekSheet({
                 if (!guide.saved) onSave(guide.id);
               }}
               disabled={guide.saved}
-              className={`w-full py-3 min-h-[44px] rounded-xl font-semibold text-sm transition-colors ${
+              className={`w-full py-3 min-h-[44px] rounded-xl font-semibold text-sm transition-all duration-200 ${
                 guide.saved
                   ? "bg-surface-200 text-text-500 cursor-default"
-                  : "bg-sage text-white hover:bg-sage-dark"
+                  : "bg-sage text-white hover:bg-sage-dark active:scale-[0.98] shadow-sm shadow-sage/15"
               }`}
             >
               {guide.saved

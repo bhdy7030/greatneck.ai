@@ -178,12 +178,12 @@ export default function ChatMessage({ message }: ChatMessageProps) {
   const contentParts = !isUser ? splitCalendarCards(message.content) : null;
 
   return (
-    <div className={`flex ${isUser ? "justify-end" : "justify-start"} mb-4`}>
+    <div className={`flex ${isUser ? "justify-end" : "justify-start"} mb-5`}>
       <div
         className={`${isUser ? "max-w-[92%] md:max-w-[70%]" : "w-full"} ${
           isUser
-            ? "bg-sage text-white rounded-2xl rounded-br-md"
-            : "bg-surface-50 border border-surface-300 shadow-sm text-text-800 rounded-2xl rounded-bl-md"
+            ? "bg-sage text-white rounded-2xl rounded-br-md shadow-sm shadow-sage/10"
+            : "bg-surface-50 border border-surface-200/60 shadow-sm text-text-800 rounded-2xl rounded-bl-md"
         } px-4 py-3`}
       >
         {/* Pipeline steps (collapsed) */}
@@ -193,8 +193,8 @@ export default function ChatMessage({ message }: ChatMessageProps) {
 
         {/* Agent badge */}
         {!isUser && message.agent && (
-          <div className="mb-1">
-            <span className="text-[10px] font-mono bg-sage/10 text-sage-dark px-1.5 py-0.5 rounded">
+          <div className="mb-1.5">
+            <span className="text-[10px] font-mono bg-sage/8 text-sage-dark px-2 py-0.5 rounded-md">
               {message.agent}
             </span>
           </div>

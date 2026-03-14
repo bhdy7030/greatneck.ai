@@ -369,16 +369,16 @@ function GuidesPageInner() {
 
   return (
     <div className="flex-1 overflow-y-auto">
-      <div className="max-w-2xl mx-auto px-4 py-4">
+      <div className="max-w-2xl mx-auto px-4 py-5">
         {/* Header */}
-        <div className="mb-4 flex items-start justify-between">
+        <div className="mb-5 flex items-start justify-between">
           <div>
-            <h1 className="text-lg font-bold text-text-900">{t("guides.title")}</h1>
-            <p className="text-xs text-text-500">{t("guides.subtitle")}</p>
+            <h1 className="text-xl font-serif font-bold text-text-900 tracking-tight">{t("guides.title")}</h1>
+            <p className="text-xs text-text-500 mt-0.5">{t("guides.subtitle")}</p>
           </div>
           <button
             onClick={() => router.push("/guides/create")}
-            className="flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-white bg-sage rounded-lg hover:bg-sage-dark transition-colors min-h-[44px]"
+            className="flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-white bg-sage rounded-xl hover:bg-sage-dark transition-all duration-200 hover:scale-105 active:scale-95 min-h-[44px] shadow-sm shadow-sage/10"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -388,10 +388,10 @@ function GuidesPageInner() {
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-1 mb-4 bg-surface-200 rounded-lg p-0.5">
+        <div className="flex gap-1 mb-5 bg-surface-200/60 rounded-xl p-1">
           <button
             onClick={() => { setTab("wallet"); window.history.replaceState({}, "", "/guides?tab=wallet"); }}
-            className={`flex-1 text-sm font-medium py-2.5 min-h-[44px] rounded-md transition-colors ${
+            className={`flex-1 text-sm font-medium py-2.5 min-h-[44px] rounded-lg transition-all duration-200 ${
               tab === "wallet"
                 ? "bg-surface-50 text-text-900 shadow-sm"
                 : "text-text-500 hover:text-text-700"
@@ -401,7 +401,7 @@ function GuidesPageInner() {
           </button>
           <button
             onClick={() => { setTab("browse"); window.history.replaceState({}, "", "/guides?tab=browse"); }}
-            className={`flex-1 text-sm font-medium py-2.5 min-h-[44px] rounded-md transition-colors ${
+            className={`flex-1 text-sm font-medium py-2.5 min-h-[44px] rounded-lg transition-all duration-200 ${
               tab === "browse"
                 ? "bg-surface-50 text-text-900 shadow-sm"
                 : "text-text-500 hover:text-text-700"
@@ -412,30 +412,35 @@ function GuidesPageInner() {
         </div>
 
         {loading ? (
-          <div className="flex justify-center py-12">
+          <div className="flex justify-center py-16">
             <div className="w-6 h-6 border-2 border-sage border-t-transparent rounded-full animate-spin" />
           </div>
         ) : tab === "wallet" ? (
           /* Wallet View -- Sectioned Cards */
           walletGuides.length === 0 ? (
-            <div className="text-center py-12">
-              <p className="text-sm text-text-500 mb-2">{t("guides.empty")}</p>
+            <div className="text-center py-16">
+              <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-surface-200/60 flex items-center justify-center">
+                <svg className="w-6 h-6 text-text-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                </svg>
+              </div>
+              <p className="text-sm text-text-500 mb-3">{t("guides.empty")}</p>
               <button
                 onClick={() => { setTab("browse"); window.history.replaceState({}, "", "/guides?tab=browse"); }}
-                className="text-xs text-sage hover:text-sage-dark transition-colors"
+                className="text-xs font-medium text-sage hover:text-sage-dark transition-colors"
               >
                 {t("guides.browseCta")}
               </button>
             </div>
           ) : (
-            <div className="space-y-5">
+            <div className="space-y-6">
               {(["published", "private", "liked"] as const).map((cat) => {
                 const items = walletGuides.filter((g) => g.wallet_category === cat);
                 if (items.length === 0) return null;
                 const labels = { published: "Published", private: "Private", liked: "Liked" };
                 return (
                   <div key={cat}>
-                    <h3 className="text-xs font-semibold text-text-500 uppercase tracking-wider mb-2">
+                    <h3 className="text-[11px] font-bold text-text-500 uppercase tracking-widest mb-2.5">
                       {labels[cat]}
                     </h3>
                     <div className="grid grid-cols-2 gap-3">
@@ -486,10 +491,10 @@ function GuidesPageInner() {
         )}
 
         {/* Back to home link */}
-        <div className="mt-6 text-center">
+        <div className="mt-8 text-center">
           <a
             href="/"
-            className="text-xs text-text-500 hover:text-sage transition-colors"
+            className="text-[11px] font-medium text-text-400 hover:text-sage transition-colors"
           >
             {t("guides.backHome")}
           </a>

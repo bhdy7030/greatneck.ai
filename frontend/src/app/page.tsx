@@ -220,10 +220,10 @@ export default function Home() {
       <div className="fixed inset-0 z-0">
         <GreatNeckMap />
         <div
-          className="absolute inset-x-0 bottom-0 h-2/3 pointer-events-none"
+          className="absolute inset-0 pointer-events-none"
           style={{
             background:
-              "linear-gradient(to top, rgb(var(--color-surface-100)) 0%, rgba(var(--color-surface-100), 0.8) 40%, transparent 100%)",
+              "radial-gradient(ellipse at 50% 30%, rgba(var(--color-sage), 0.04) 0%, transparent 60%), linear-gradient(to top, rgb(var(--color-surface-100)) 0%, rgba(var(--color-surface-100), 0.85) 35%, rgba(var(--color-surface-100), 0.4) 70%, transparent 100%)",
           }}
         />
       </div>
@@ -235,21 +235,23 @@ export default function Home() {
           titleCollapsed ? "min-h-0 pt-2 pb-0" : "min-h-[100dvh] justify-center pb-8 px-3"
         }`}>
           {/* Frosted card — slogan always visible, village grid collapses inside */}
-          <div className={`w-full bg-surface-50/10 backdrop-blur-sm border-y border-surface-300/50 transition-all duration-500 ${
-            titleCollapsed ? "px-4 py-3" : "px-6 py-5 md:px-8 md:py-6"
+          <div className={`w-full backdrop-blur-md border border-surface-300/40 transition-all duration-500 ${
+            titleCollapsed
+              ? "px-4 py-3 rounded-none border-x-0 bg-surface-50/20"
+              : "px-6 py-6 md:px-8 md:py-8 rounded-2xl bg-surface-50/30 shadow-lg shadow-surface-400/10"
           }`}>
             {/* Slogan */}
             <div className="text-center">
-              <h1 className={`font-bold text-text-800 transition-all duration-500 ${
-                titleCollapsed ? "text-lg md:text-xl" : "text-2xl md:text-4xl"
+              <h1 className={`font-serif font-bold text-text-900 transition-all duration-500 tracking-tight ${
+                titleCollapsed ? "text-lg md:text-xl" : "text-3xl md:text-[2.75rem] md:leading-tight"
               }`}>
                 {titleTyped ? t("welcome.title") : heroTitle}
-                {!titleTyped && <span className="animate-pulse">|</span>}
+                {!titleTyped && <span className="animate-pulse text-sage">|</span>}
               </h1>
               <p
-                className={`text-text-500 transition-all duration-500 ${
+                className={`text-text-600 transition-all duration-500 ${
                   showSubtitle ? "opacity-100" : "opacity-0"
-                } ${titleCollapsed ? "text-xs md:text-sm" : "text-sm md:text-base"}`}
+                } ${titleCollapsed ? "text-xs md:text-sm mt-0.5" : "text-sm md:text-base mt-2"}`}
               >
                 {t("welcome.subtitle")}
               </p>
@@ -258,7 +260,7 @@ export default function Home() {
             {/* Village grid — collapses after selection */}
             <div
               className={`overflow-hidden transition-all duration-500 ease-in-out ${
-                villageCollapsed ? "max-h-0 opacity-0 mt-0" : "max-h-[250px] opacity-100 mt-4"
+                villageCollapsed ? "max-h-0 opacity-0 mt-0" : "max-h-[250px] opacity-100 mt-5"
               }`}
             >
               <VillageSelector
@@ -293,12 +295,12 @@ export default function Home() {
           </div>
 
           {/* Chat input — in hero, centered */}
-          <div ref={heroChatRef} className={`w-full px-3 ${showChatBox ? "mt-2" : "mt-6"}`}>
+          <div ref={heroChatRef} className={`w-full px-3 ${showChatBox ? "mt-3" : "mt-6"}`}>
             <div
-              className={`flex items-center gap-2 bg-surface-50/80 backdrop-blur-sm rounded-xl border-2 transition-all duration-300 px-4 py-2.5 ${
+              className={`flex items-center gap-2.5 bg-surface-50/90 backdrop-blur-md rounded-2xl transition-all duration-300 px-4 py-3 ${
                 hasVillage
-                  ? "border-sage/40 shadow-md shadow-sage/5 landing-chat-glow"
-                  : "border-surface-300 opacity-60"
+                  ? "border-2 border-sage/30 shadow-lg shadow-sage/8 landing-chat-glow"
+                  : "border border-surface-300 opacity-60"
               } ${showChatBox ? "animate-fadeSlideUp" : ""}`}
             >
               <svg className="w-5 h-5 text-sage flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -320,7 +322,7 @@ export default function Home() {
               <button
                 onClick={() => navigateToChat()}
                 disabled={!hasVillage}
-                className="flex-shrink-0 p-2 min-w-[44px] min-h-[44px] flex items-center justify-center bg-sage text-white rounded-lg hover:bg-sage-dark transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                className="flex-shrink-0 p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center bg-sage text-white rounded-xl hover:bg-sage-dark transition-all duration-200 hover:scale-105 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100"
                 title="Start chatting"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -331,13 +333,13 @@ export default function Home() {
 
             {/* Quick chips — single scrollable row */}
             {showChips && (
-              <div className="relative mt-2">
-                <div className="flex gap-2 overflow-x-auto scrollbar-hide">
+              <div className="relative mt-3">
+                <div className="flex gap-2 overflow-x-auto scrollbar-hide py-0.5">
                   {chipKeys.map((key, i) => (
                     <button
                       key={key}
                       onClick={() => navigateToChat(t(key))}
-                      className="animate-chipBounceIn flex-shrink-0 text-xs bg-surface-50/80 backdrop-blur-sm text-text-600 px-3 py-1.5 rounded-full border border-surface-300/60 hover:border-sage/40 hover:text-sage transition-colors whitespace-nowrap"
+                      className="animate-chipBounceIn flex-shrink-0 text-xs bg-surface-50/70 backdrop-blur-sm text-text-700 px-3.5 py-2 rounded-xl border border-surface-300/50 hover:border-sage/40 hover:text-sage hover:bg-sage/5 transition-all duration-200 whitespace-nowrap hover:-translate-y-px"
                       style={{ animationDelay: `${i * 100}ms` }}
                     >
                       {t(key)}
@@ -351,7 +353,7 @@ export default function Home() {
 
           {/* Scroll hint arrow */}
           {showEvents && !titleCollapsed && (
-            <div className="mt-3 animate-arrowBounce text-text-400">
+            <div className="mt-4 animate-arrowBounce text-sage/50">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
               </svg>
@@ -361,18 +363,18 @@ export default function Home() {
 
         {/* Playbooks — outside hero, always visible */}
         {(landingGuides.length > 0 || walletGuidesLanding.length > 0) && showChatBox && (
-          <div className="w-full animate-fadeSlideUp bg-surface-50/10 backdrop-blur-sm border-y border-surface-300/50 px-4 py-3">
+          <div className="w-full animate-fadeSlideUp backdrop-blur-md bg-surface-50/20 border-y border-surface-300/40 px-4 py-4">
             {/* Section header */}
-            <div className="flex items-center justify-between mb-1.5">
-              <div className="flex items-center gap-2">
-                <h3 className="text-xs font-semibold text-text-500 uppercase tracking-wider">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2.5">
+                <h3 className="text-[11px] font-bold text-text-700 uppercase tracking-widest">
                   {t("nav.guides")}
                 </h3>
                 {walletGuidesLanding.length > 0 && (
                   <div className="flex items-center gap-0.5 text-[10px]">
                     <button
                       onClick={() => setPlaybookTab("mine")}
-                      className={`px-2 py-0.5 rounded-full transition-colors ${
+                      className={`px-2.5 py-1 rounded-full transition-all duration-200 ${
                         playbookTab === "mine"
                           ? "bg-sage/15 text-sage font-semibold"
                           : "text-text-400 hover:text-text-600"
@@ -382,7 +384,7 @@ export default function Home() {
                     </button>
                     <button
                       onClick={() => setPlaybookTab("explore")}
-                      className={`px-2 py-0.5 rounded-full transition-colors ${
+                      className={`px-2.5 py-1 rounded-full transition-all duration-200 ${
                         playbookTab === "explore"
                           ? "bg-sage/15 text-sage font-semibold"
                           : "text-text-400 hover:text-text-600"
@@ -395,19 +397,19 @@ export default function Home() {
               </div>
               <a
                 href={playbookTab === "mine" ? "/guides/?tab=wallet" : "/guides/"}
-                className="text-[10px] text-sage hover:text-sage-dark transition-colors"
+                className="text-[10px] font-medium text-sage hover:text-sage-dark transition-colors"
               >
                 {t("landing.playbooks.seeAll")} &rarr;
               </a>
             </div>
             {/* Fun subtitle */}
-            <p className="text-[11px] text-text-500 mb-2">
+            <p className="text-[11px] text-text-500 mb-3">
               {playbookTab === "mine"
                 ? t("landing.playbooks.subtitleMine")
                 : t("landing.playbooks.subtitleExplore")}
             </p>
             {/* Cards row */}
-            <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+            <div className="flex gap-2.5 overflow-x-auto pb-1 scrollbar-hide">
               {(playbookTab === "mine" && walletGuidesLanding.length > 0
                 ? walletGuidesLanding
                 : landingGuides
@@ -415,7 +417,7 @@ export default function Home() {
                 <a
                   key={guide.id}
                   href={playbookTab === "mine" ? `/guides/?open=${guide.id}&tab=wallet` : `/guides/?id=${guide.id}&tab=browse`}
-                  className="flex-shrink-0 w-[130px] aspect-[3/4] flex flex-col rounded-lg overflow-hidden cursor-pointer select-none group animate-miniCardIn bg-surface-50/60 border border-surface-300/50 hover:border-surface-400 transition-all duration-200 hover:-translate-y-0.5"
+                  className="flex-shrink-0 w-[132px] aspect-[3/4] flex flex-col rounded-xl overflow-hidden cursor-pointer select-none group animate-miniCardIn bg-surface-50/70 backdrop-blur-sm border border-surface-300/40 hover:border-sage/30 transition-all duration-300 hover:-translate-y-1 hover:shadow-md hover:shadow-sage/5"
                   style={{ animationDelay: `${i * 80}ms` }}
                 >
                   {/* Color accent strip */}
@@ -424,25 +426,25 @@ export default function Home() {
                     style={{ backgroundColor: guide.color }}
                   />
                   {/* Icon */}
-                  <div className="flex items-center justify-center pt-4 pb-2 shrink-0 transition-transform duration-200 group-hover:scale-110">
+                  <div className="flex items-center justify-center pt-4 pb-2 shrink-0 transition-transform duration-300 group-hover:scale-110">
                     <OpenMojiIcon icon={guide.icon} size={44} />
                   </div>
                   {/* Title */}
                   <div className="px-2.5 flex-1">
-                    <p className="text-[11px] font-semibold text-text-700 leading-tight line-clamp-3">
+                    <p className="text-[11px] font-semibold text-text-800 leading-snug line-clamp-3">
                       {guide.title}
                     </p>
                   </div>
                   {/* Author + Progress — pinned to bottom */}
-                  <div className="px-2.5 pb-2.5 shrink-0 space-y-1">
+                  <div className="px-2.5 pb-2.5 shrink-0 space-y-1.5">
                     {guide.author_handle && (
-                      <p className="text-[8px] text-text-400 truncate">from @{guide.author_handle}</p>
+                      <p className="text-[9px] text-text-400 truncate">from @{guide.author_handle}</p>
                     )}
                     {guide.total_count > 0 && (
-                      <div className="flex items-center gap-1">
-                        <div className="flex-1 h-1 bg-surface-300/50 rounded-full overflow-hidden">
+                      <div className="flex items-center gap-1.5">
+                        <div className="flex-1 h-1 bg-surface-300/40 rounded-full overflow-hidden">
                           <div
-                            className="h-full rounded-full"
+                            className="h-full rounded-full transition-all duration-500"
                             style={{
                               width: `${((playbookTab === "mine" ? guide.done_count : 0) / guide.total_count) * 100}%`,
                               backgroundColor: guide.color,
@@ -460,15 +462,15 @@ export default function Home() {
               {/* Create card */}
               <a
                 href="/guides/create"
-                className="flex-shrink-0 w-[130px] aspect-[3/4] relative rounded-lg overflow-hidden cursor-pointer select-none group border border-dashed border-surface-300/60 hover:border-sage/40 transition-all duration-200 hover:-translate-y-0.5 animate-miniCardIn flex flex-col items-center justify-center gap-1.5"
+                className="flex-shrink-0 w-[132px] aspect-[3/4] relative rounded-xl overflow-hidden cursor-pointer select-none group border border-dashed border-surface-300/50 hover:border-sage/30 transition-all duration-300 hover:-translate-y-1 animate-miniCardIn flex flex-col items-center justify-center gap-2 bg-surface-50/30 backdrop-blur-sm"
                 style={{ animationDelay: `${Math.min((landingGuides.length) * 80, 480)}ms` }}
               >
-                <div className="w-7 h-7 rounded-full bg-surface-200/60 group-hover:bg-sage/10 flex items-center justify-center transition-colors duration-200">
-                  <svg className="w-3.5 h-3.5 text-text-500 group-hover:text-sage transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="w-8 h-8 rounded-full bg-surface-200/50 group-hover:bg-sage/10 flex items-center justify-center transition-all duration-200 group-hover:scale-110">
+                  <svg className="w-4 h-4 text-text-400 group-hover:text-sage transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                   </svg>
                 </div>
-                <p className="text-[10px] font-semibold text-text-500 group-hover:text-sage px-2.5 text-center leading-tight transition-colors">
+                <p className="text-[10px] font-semibold text-text-400 group-hover:text-sage px-3 text-center leading-tight transition-colors">
                   {t("landing.playbooks.create")}
                 </p>
               </a>
@@ -478,14 +480,14 @@ export default function Home() {
 
         {/* Pinned chat bar — appears when hero input scrolls away */}
         <div
-          className={`sticky top-0 z-20 w-full bg-surface-100/90 backdrop-blur-md transition-all duration-200 ${
+          className={`sticky top-0 z-20 w-full bg-surface-100/85 backdrop-blur-lg border-b border-surface-300/30 transition-all duration-200 ${
             chatPinned ? "opacity-100 px-4 py-2" : "opacity-0 max-h-0 overflow-hidden pointer-events-none"
           }`}
         >
           <div className="w-full">
             <div
               className={`flex items-center gap-2 bg-surface-50/80 rounded-xl border-2 px-4 py-2.5 ${
-                hasVillage ? "border-sage/40 shadow-md" : "border-surface-300 opacity-60"
+                hasVillage ? "border-sage/30 shadow-md shadow-sage/5" : "border-surface-300 opacity-60"
               }`}
             >
               <svg className="w-5 h-5 text-sage flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -507,7 +509,7 @@ export default function Home() {
               <button
                 onClick={() => navigateToChat()}
                 disabled={!hasVillage}
-                className="flex-shrink-0 p-2 min-w-[44px] min-h-[44px] flex items-center justify-center bg-sage text-white rounded-lg hover:bg-sage-dark transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                className="flex-shrink-0 p-2 min-w-[44px] min-h-[44px] flex items-center justify-center bg-sage text-white rounded-xl hover:bg-sage-dark transition-all duration-200 hover:scale-105 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
                 title="Start chatting"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -526,25 +528,25 @@ export default function Home() {
         {/* Events — frosted card */}
         {showEvents && (
           <div className="w-full pb-12">
-            <div className="w-full bg-surface-50/10 backdrop-blur-sm border-y border-surface-300/50 px-4 py-3">
+            <div className="w-full backdrop-blur-md bg-surface-50/20 border-y border-surface-300/40 px-4 py-4">
               <UpcomingEvents village={selectedVillage} dateRange={dateRange} setDateRange={setDateRange} onCountsChange={setDateRangeCounts} />
             </div>
           </div>
         )}
 
         {/* Footer */}
-        <footer className="w-full py-6 text-center space-y-1">
-          <p className="text-xs text-text-400">Made with <span className="text-red-400">♥</span> in Great Neck</p>
-          <div className="flex items-center justify-center gap-3 text-xs text-text-400">
+        <footer className="w-full py-8 text-center space-y-2">
+          <p className="text-[11px] text-text-500 font-medium tracking-wide">Made with <span className="text-red-400/80">&#9829;</span> in Great Neck</p>
+          <div className="flex items-center justify-center gap-3 text-[11px] text-text-400">
             <a
               href="mailto:contact@askmura.com"
               className="hover:text-sage transition-colors"
             >
               contact@askmura.com
             </a>
-            <span>·</span>
+            <span className="text-surface-300">&#183;</span>
             <a href="/privacy/" className="hover:text-sage transition-colors">Privacy</a>
-            <span>·</span>
+            <span className="text-surface-300">&#183;</span>
             <a href="/terms/" className="hover:text-sage transition-colors">Terms</a>
           </div>
         </footer>

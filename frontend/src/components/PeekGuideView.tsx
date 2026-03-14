@@ -63,13 +63,13 @@ export default function PeekGuideView({
     <div className="fixed inset-0 z-50 bg-surface-50 flex flex-col animate-fullscreenSlideUp">
       {/* Fixed top bar -- translucent */}
       <div
-        className="shrink-0 px-3 pt-[env(safe-area-inset-top)] bg-surface-50/90 backdrop-blur-md z-20"
-        style={{ borderBottom: `1px solid ${guide.color}20` }}
+        className="shrink-0 px-3 pt-[env(safe-area-inset-top)] bg-surface-50/85 backdrop-blur-lg z-20"
+        style={{ borderBottom: `1px solid ${guide.color}15` }}
       >
-        <div className="flex items-center gap-2 max-w-2xl mx-auto py-2">
+        <div className="flex items-center gap-2.5 max-w-2xl mx-auto py-2.5">
           <button
             onClick={() => { onClose(); setPreviewIdx(0); setPreviewChatIdx(null); }}
-            className="shrink-0 w-8 h-8 flex items-center justify-center rounded-full hover:bg-surface-200 transition-colors"
+            className="shrink-0 w-9 h-9 flex items-center justify-center rounded-xl hover:bg-surface-200/60 active:bg-surface-300/60 transition-all duration-200"
             aria-label="Close"
           >
             <svg className="w-5 h-5 text-text-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -82,7 +82,7 @@ export default function PeekGuideView({
           </div>
           <button
             onClick={handleShareGuide}
-            className="shrink-0 w-8 h-8 flex items-center justify-center rounded-full hover:bg-surface-200 transition-colors"
+            className="shrink-0 w-9 h-9 flex items-center justify-center rounded-xl hover:bg-surface-200/60 transition-all duration-200"
             aria-label="Share"
           >
             {shareCopied ? (
@@ -186,8 +186,8 @@ export default function PeekGuideView({
       </div>
 
       {/* Fixed bottom bar -- like, comments, save CTA */}
-      <div className="shrink-0 pb-[env(safe-area-inset-bottom)] bg-surface-50/90 backdrop-blur-md border-t border-surface-200/60 z-20">
-        <div className="flex items-center gap-3 px-4 py-2 max-w-2xl mx-auto">
+      <div className="shrink-0 pb-[env(safe-area-inset-bottom)] bg-surface-50/85 backdrop-blur-lg border-t border-surface-200/40 z-20">
+        <div className="flex items-center gap-3 px-4 py-2.5 max-w-2xl mx-auto">
           {/* Like */}
           <button
             onClick={() => onToggleLike(guide.id)}
@@ -219,7 +219,7 @@ export default function PeekGuideView({
           {/* Save to wallet CTA */}
           <button
             onClick={() => setShowSaveSheet(true)}
-            className="px-4 py-2 min-h-[36px] rounded-full font-semibold text-sm bg-sage text-white hover:bg-sage-dark active:scale-[0.98] transition-all"
+            className="px-5 py-2.5 min-h-[36px] rounded-xl font-semibold text-sm bg-sage text-white hover:bg-sage-dark active:scale-[0.97] transition-all duration-200 shadow-sm shadow-sage/15"
           >
             {t("guides.save.cta")}
           </button>

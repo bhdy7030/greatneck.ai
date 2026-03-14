@@ -96,15 +96,15 @@ export default function ConversationSidebar({
   const groups = groupByDate(convos, t);
 
   const sidebarContent = (
-    <div className="flex flex-col h-full max-h-screen bg-surface-50 border-r border-surface-300">
+    <div className="flex flex-col h-full max-h-screen bg-surface-50 border-r border-surface-200/60">
       {/* New Chat */}
-      <div className="p-3 border-b border-surface-300">
+      <div className="p-3 border-b border-surface-200/60">
         <button
           onClick={() => {
             onNewChat();
             closeMobile();
           }}
-          className="w-full flex items-center gap-2 px-3 py-2 text-sm font-medium text-text-700 bg-surface-200 hover:bg-surface-300 rounded-lg transition-colors"
+          className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-medium text-text-700 bg-surface-200/50 hover:bg-surface-200 rounded-xl transition-all duration-200"
         >
           <svg
             className="w-4 h-4"
@@ -179,10 +179,10 @@ export default function ConversationSidebar({
               {group.items.map((c) => (
                 <div
                   key={c.id}
-                  className={`group flex items-center gap-1 px-2 py-1.5 rounded-md cursor-pointer text-sm transition-colors ${
+                  className={`group flex items-center gap-1 px-2.5 py-2 rounded-lg cursor-pointer text-sm transition-all duration-200 ${
                     c.id === activeId
-                      ? "bg-sage/15 text-sage-dark font-medium"
-                      : "text-text-600 hover:bg-surface-200"
+                      ? "bg-sage/10 text-sage-dark font-medium"
+                      : "text-text-600 hover:bg-surface-200/60"
                   }`}
                   onClick={() => {
                     onSelect(c.id);
@@ -269,7 +269,7 @@ export default function ConversationSidebar({
       </div>
 
       {/* User section + contact */}
-      <div className="flex-shrink-0 border-t border-surface-300">
+      <div className="flex-shrink-0 border-t border-surface-200/60">
         {user && (
           <div className="p-3 flex items-center gap-2">
             {user.avatar_url ? (
@@ -325,7 +325,7 @@ export default function ConversationSidebar({
       {/* Mobile overlay */}
       {mobileOpen && (
         <div
-          className="md:hidden fixed inset-0 bg-black/30 z-40"
+          className="md:hidden fixed inset-0 bg-black/25 backdrop-blur-sm z-40"
           onClick={closeMobile}
         />
       )}

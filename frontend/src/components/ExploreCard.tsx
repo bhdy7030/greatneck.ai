@@ -90,12 +90,12 @@ export default function ExploreCard({
         animationFillMode: "both",
         willChange: "transform",
         transformStyle: "preserve-3d",
-        transition: "transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease",
+        transition: "transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.35s ease",
         touchAction: "manipulation",
         WebkitTapHighlightColor: "transparent",
         boxShadow: hovered
-          ? `0 8px 30px ${color}40, 0 0 0 1px ${color}20`
-          : "0 2px 8px rgba(0,0,0,0.1)",
+          ? `0 12px 36px ${color}35, 0 4px 12px ${color}15, 0 0 0 1px ${color}15`
+          : "0 2px 10px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04)",
         ...tiltStyle,
       }}
       onClick={onTap}
@@ -154,18 +154,18 @@ export default function ExploreCard({
       </div>
 
       {/* Bottom dark overlay for text */}
-      <div className="absolute bottom-0 left-0 right-0 h-2/5 bg-gradient-to-t from-black/60 via-black/30 to-transparent z-[3]" />
+      <div className="absolute bottom-0 left-0 right-0 h-1/2 bg-gradient-to-t from-black/65 via-black/30 to-transparent z-[3]" />
 
       {/* Text content */}
-      <div className="absolute bottom-0 left-0 right-0 p-3 z-[4]">
-        <h3 className="text-sm font-bold text-white drop-shadow-sm leading-tight mb-0.5 line-clamp-2">
+      <div className="absolute bottom-0 left-0 right-0 p-3.5 z-[4]">
+        <h3 className="text-[13px] font-bold text-white drop-shadow-sm leading-snug mb-0.5 line-clamp-2">
           {title}
         </h3>
-        <p className="text-[10px] text-white/80 drop-shadow-sm line-clamp-2 mb-1.5">
+        <p className="text-[10px] text-white/75 drop-shadow-sm line-clamp-2 mb-1.5 leading-relaxed">
           {description}
         </p>
         {authorHandle && (
-          <p className="text-[9px] text-white/60 drop-shadow-sm mb-1">@{authorHandle}</p>
+          <p className="text-[9px] text-white/55 drop-shadow-sm mb-1.5">@{authorHandle}</p>
         )}
         {doneCount != null ? (
           /* Progress bar for "Mine" cards */
