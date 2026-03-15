@@ -22,7 +22,7 @@ class Settings(BaseSettings):
         return self
 
     # CORS
-    cors_origins: str = "http://localhost:3000,http://localhost:8001,https://greatneck.ai,https://askmura-frontend-461310212965.us-east1.run.app"
+    cors_origins: str = "http://localhost:3000,http://localhost:8001,https://greatneck.ai,https://askmura-frontend-461310212965.us-east1.run.app,capacitor://localhost,http://localhost"
 
     # Agent model config — LiteLLM requires provider/ prefix
     # Philosophy: planning uses the best model (hardest cognitive task),
