@@ -6,6 +6,9 @@ const config: CapacitorConfig = {
   webDir: "out",
   server: {
     androidScheme: "https",
+    // Live reload from local dev server — comment out for production builds
+    url: "http://localhost:3000",
+    cleartext: true,
   },
   plugins: {
     SplashScreen: {

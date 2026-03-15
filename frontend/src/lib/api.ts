@@ -8,13 +8,16 @@ import {
 } from "@/lib/auth";
 
 function getBaseUrl(): string {
+  // Env var takes priority (set during dev and CI builds)
+  if (process.env.NEXT_PUBLIC_API_URL) return process.env.NEXT_PUBLIC_API_URL;
+  // Native app with bundled assets (no env var) → prod
   if (typeof window !== "undefined") {
     try {
       const { Capacitor } = require("@capacitor/core");
       if (Capacitor.isNativePlatform()) return "https://greatneck.ai";
     } catch {}
   }
-  return process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8001";
+  return "http://localhost:8001";
 }
 
 const BASE_URL = getBaseUrl();
