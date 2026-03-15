@@ -3,7 +3,7 @@ import { Inter, Source_Serif_4 } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { LanguageProvider } from "@/components/LanguageProvider";
-import ThemeToggle from "@/components/ThemeToggle";
+// ThemeToggle is now inline in HeaderAuth dropdown
 import LanguageToggle from "@/components/LanguageToggle";
 import AuthProvider from "@/components/AuthProvider";
 import InviteGate from "@/components/InviteGate";
@@ -80,7 +80,7 @@ export default function RootLayout({
         />
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){document.documentElement.setAttribute("data-theme","nord")})()`,
+            __html: `(function(){var t=localStorage.getItem("gn_theme")||"nord";document.documentElement.setAttribute("data-theme",t)})()`,
           }}
         />
       </head>
@@ -114,7 +114,6 @@ export default function RootLayout({
                 <nav className="flex items-center gap-3 md:gap-4">
                   <NavLinks />
                   <LanguageToggle />
-                  {/* <ThemeToggle /> */}
                   <HeaderAuth />
                 </nav>
               </div>

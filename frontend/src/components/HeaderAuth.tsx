@@ -3,13 +3,25 @@
 import { useState, useRef, useEffect } from "react";
 import { useAuth } from "@/components/AuthProvider";
 import { useLanguage } from "./LanguageProvider";
+import { useTheme } from "./ThemeProvider";
 import InviteManager from "./InviteManager";
 import NotificationBell from "./NotificationBell";
 import HandleChanger from "./HandleChanger";
 
+const themeSwatches: { key: string; color: string }[] = [
+  { key: "nord",     color: "rgb(94,129,172)" },
+  { key: "light",    color: "rgb(20,184,166)" },
+  { key: "classic",  color: "rgb(130,155,113)" },
+  { key: "sage",     color: "rgb(58,130,110)" },
+  { key: "ocean",    color: "rgb(59,130,246)" },
+  { key: "hamptons", color: "rgb(25,55,125)" },
+  { key: "coral",    color: "rgb(255,90,95)" },
+];
+
 export default function HeaderAuth() {
   const { user, isLoading, login, loginWithApple, logout } = useAuth();
   const { t } = useLanguage();
+  const { theme, setTheme } = useTheme();
   const [showMenu, setShowMenu] = useState(false);
   const [showInviteManager, setShowInviteManager] = useState(false);
   const [showHandleChanger, setShowHandleChanger] = useState(false);
@@ -82,6 +94,23 @@ export default function HeaderAuth() {
               </svg>
               {t("auth.signInApple")}
             </button>
+            <div className="border-t border-surface-100 my-1" />
+            <div className="px-3 py-2">
+              <div className="text-xs text-text-400 mb-1.5">Theme</div>
+              <div className="flex items-center gap-1.5">
+                {themeSwatches.map((s) => (
+                  <button
+                    key={s.key}
+                    onClick={() => setTheme(s.key as typeof theme)}
+                    className={`w-5 h-5 rounded-full border-2 transition-transform ${
+                      s.key === theme ? "border-text-700 scale-110" : "border-surface-300 hover:scale-110"
+                    }`}
+                    style={{ backgroundColor: s.color }}
+                    title={t(`theme.${s.key}`)}
+                  />
+                ))}
+              </div>
+            </div>
           </div>
         )}
       </div>
@@ -191,6 +220,23 @@ export default function HeaderAuth() {
                 Debug
               </a>
             )}
+            <div className="border-t border-surface-100 my-1" />
+            <div className="px-3 py-2">
+              <div className="text-xs text-text-400 mb-1.5">Theme</div>
+              <div className="flex items-center gap-1.5">
+                {themeSwatches.map((s) => (
+                  <button
+                    key={s.key}
+                    onClick={() => setTheme(s.key as typeof theme)}
+                    className={`w-5 h-5 rounded-full border-2 transition-transform ${
+                      s.key === theme ? "border-text-700 scale-110" : "border-surface-300 hover:scale-110"
+                    }`}
+                    style={{ backgroundColor: s.color }}
+                    title={t(`theme.${s.key}`)}
+                  />
+                ))}
+              </div>
+            </div>
             <div className="border-t border-surface-100 my-1" />
             <button
               onClick={() => { setShowMenu(false); logout(); }}

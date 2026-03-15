@@ -2,13 +2,13 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ── Active theme: Nord — Arctic Frost ── */
-:root {
+/* ── Default theme: Nord — Arctic Frost ── */
+:root, [data-theme="nord"] {
   --color-surface-50:  255 255 255;
-  --color-surface-100: 236 239 244;
-  --color-surface-200: 229 233 240;
-  --color-surface-300: 216 222 233;
-  --color-surface-400: 194 201 214;
+  --color-surface-100: 246 248 250;
+  --color-surface-200: 236 239 244;
+  --color-surface-300: 222 226 235;
+  --color-surface-400: 200 207 219;
 
   --color-text-900: 46 52 64;
   --color-text-800: 59 66 82;
@@ -27,7 +27,7 @@
   color-scheme: light;
 }
 
-/* ── Other themes (commented out, kept for reference) ──
+/* ── Other themes ── */
 
 [data-theme="light"] {
   --color-surface-50:  255 255 255;
@@ -149,7 +149,7 @@
   color-scheme: light;
 }
 
-── end commented-out themes ── */
+/* ── end themes ── */
 
 html,
 body {

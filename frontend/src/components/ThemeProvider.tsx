@@ -23,12 +23,12 @@ const STORAGE_KEY = "gn_theme";
 const THEMES: Theme[] = ["light", "classic", "ocean", "hamptons", "coral", "nord", "sage"];
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>("hamptons");
+  const [theme, setThemeState] = useState<Theme>("nord");
 
-  // Sync initial state from DOM (set by inline script to avoid FOUC)
+  // Sync initial state from localStorage (inline script in <head> already set data-theme)
   useEffect(() => {
-    const stored = (localStorage.getItem(STORAGE_KEY) as Theme) || "hamptons";
-    setThemeState(THEMES.includes(stored) ? stored : "hamptons");
+    const stored = (localStorage.getItem(STORAGE_KEY) as Theme) || "nord";
+    setThemeState(THEMES.includes(stored) ? stored : "nord");
   }, []);
 
   const setTheme = useCallback((t: Theme) => {

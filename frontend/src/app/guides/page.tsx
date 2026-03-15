@@ -51,6 +51,7 @@ function GuidesPageInner() {
   const [editingGuide, setEditingGuide] = useState<RawGuideData | null>(null);
   const [editingGuideId, setEditingGuideId] = useState<string | null>(null);
   const [editSaved, setEditSaved] = useState(false);
+  const [openedViaDeepLink, setOpenedViaDeepLink] = useState(false);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [likeStatus, setLikeStatus] = useState<Record<string, { liked: boolean; count: number }>>({});
 
@@ -91,8 +92,9 @@ function GuidesPageInner() {
           }
 
           if (openId) {
-            // Notification -> open in expanded (wallet) mode
+            // Opened via deep link (landing page / notification) -> expanded mode
             setExpandedGuide(guide);
+            setOpenedViaDeepLink(true);
             // Clean up ?open= but keep ?id= style URL
             window.history.replaceState({}, "", `/guides?id=${guide.id}&tab=${urlTab || (walletGuide ? "wallet" : "browse")}`);
           } else if (walletGuide && urlTab === "wallet") {
@@ -330,10 +332,15 @@ function GuidesPageInner() {
         likeStatus={likeStatus}
         returnStepId={returnStepId}
         onClose={() => {
+          if (openedViaDeepLink) {
+            // Go back to the page that linked here (e.g. landing page)
+            window.history.back();
+            return;
+          }
           setExpandedGuide(null);
           setReturnStepId(null);
           fetchData();
-          window.history.pushState({}, "", `/guides?tab=${tab}`);
+          window.history.replaceState({}, "", `/guides?tab=${tab}`);
         }}
         onEditStart={handleEditStart}
         onEditChange={handleEditChange}
@@ -358,7 +365,7 @@ function GuidesPageInner() {
         likeStatus={likeStatus}
         onClose={() => {
           setPeekGuide(null);
-          window.history.pushState({}, "", `/guides?tab=${tab}`);
+          window.history.replaceState({}, "", `/guides?tab=${tab}`);
         }}
         onFork={handleFork}
         onToggleLike={handleToggleLike}
