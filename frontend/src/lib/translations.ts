@@ -3,10 +3,10 @@ type Lang = "en" | "zh";
 const translations: Record<string, Record<Lang, string>> = {
   // ── Landing page ──
   "welcome.location": { en: "Long Island, New York", zh: "纽约长岛" },
-  "welcome.title": { en: "our neighborhood, answered", zh: "家门口的事，问我就对了" },
+  "welcome.title": { en: "the neighborhood knows", zh: "家门口的事，问我就对了" },
   "welcome.subtitle": {
-    en: "codes, permits, events & more.",
-    zh: "法规、许可、活动，一问便知。",
+    en: "great neck's local ai",
+    zh: "Great Neck 自己的 AI",
   },
   "welcome.selectVillage": {
     en: "Select your village to get started",

@@ -279,7 +279,7 @@ export default function UpcomingEvents({ village, dateRange, setDateRange, onCou
         {t("events.upcoming")}
       </h3>
 
-      {/* Date range tabs (inline, always visible here) */}
+      {/* Date range tabs */}
       <div className="mb-2">
         <DateRangeTabs dateRange={dateRange} setDateRange={setDateRange} counts={dateRangeCounts} t={t} />
       </div>

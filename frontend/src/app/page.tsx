@@ -40,8 +40,7 @@ export default function Home() {
   const [query, setQuery] = useState("");
   const [transitioning, setTransitioning] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
-  const stickyInputRef = useRef<HTMLInputElement>(null);
-  const heroChatRef = useRef<HTMLDivElement>(null);
+  const stickysentinelRef = useRef<HTMLDivElement>(null);
   const [chatPinned, setChatPinned] = useState(false);
   const [dateRange, setDateRange] = useState<DateRange>("all");
   const [dateRangeCounts, setDateRangeCounts] = useState<Record<DateRange, number>>({ all: 0, today: 0, tomorrow: 0, weekend: 0 });
@@ -68,7 +67,6 @@ export default function Home() {
 
   // Hero title typing animation
   const [heroTitle, setHeroTitle] = useState("");
-  const [showSubtitle, setShowSubtitle] = useState(false);
   const [titleCollapsed, setTitleCollapsed] = useState(false);
   const [titleTyped, setTitleTyped] = useState(false);
   const [villageCollapsed, setVillageCollapsed] = useState(false);
@@ -115,13 +113,12 @@ export default function Home() {
       if (i < fullTitle.length) {
         timers.push(setTimeout(typeNext, 80));
       } else {
-        // Done typing → show subtitle → hold 1s → collapse
+        // Done typing → hold briefly → collapse
         timers.push(setTimeout(() => {
-          setShowSubtitle(true);
           setTitleTyped(true);
           timers.push(setTimeout(() => {
             setTitleCollapsed(true);
-          }, 1000));
+          }, 800));
         }, 300));
       }
     };
@@ -166,18 +163,6 @@ export default function Home() {
     return () => clearTimeout(timer);
   }, [inputFocused, query, language]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Pin chat bar to top when hero input scrolls out of view
-  useEffect(() => {
-    const el = heroChatRef.current;
-    if (!el) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => setChatPinned(!entry.isIntersecting),
-      { threshold: 0 }
-    );
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, []);
-
   const handleVillageSelect = (village: string) => {
     setHasVillage(true);
     setSelectedVillage(village);
@@ -189,6 +174,18 @@ export default function Home() {
       setTitleCollapsed(true);
     }, 800);
   };
+
+  // Detect when chat bar becomes pinned (sentinel scrolls out of view)
+  useEffect(() => {
+    const el = stickysentinelRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => setChatPinned(!entry.isIntersecting),
+      { threshold: 0 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
 
   const navigateToChat = (text?: string) => {
     setTransitioning(true);
@@ -250,7 +247,7 @@ export default function Home() {
               </h1>
               <p
                 className={`text-text-600 transition-all duration-500 ${
-                  showSubtitle ? "opacity-100" : "opacity-0"
+                  titleTyped ? "opacity-100" : "opacity-0"
                 } ${titleCollapsed ? "text-xs md:text-sm mt-0.5" : "text-sm md:text-base mt-2"}`}
               >
                 {t("welcome.subtitle")}
@@ -294,69 +291,78 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Chat input — in hero, centered */}
-          <div ref={heroChatRef} className={`w-full px-3 ${showChatBox ? "mt-3" : "mt-6"}`}>
-            <div
-              className={`flex items-center gap-2.5 bg-surface-50/90 backdrop-blur-md rounded-2xl transition-all duration-300 px-4 py-3 ${
-                hasVillage
-                  ? "border-2 border-sage/30 shadow-lg shadow-sage/8 landing-chat-glow"
-                  : "border border-surface-300 opacity-60"
-              } ${showChatBox ? "animate-fadeSlideUp" : ""}`}
-            >
-              <svg className="w-5 h-5 text-sage flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-              </svg>
-              <input
-                ref={inputRef}
-                type="text"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                onKeyDown={handleInputKeyDown}
-                onFocus={() => setInputFocused(true)}
-                onBlur={() => setInputFocused(false)}
-                placeholder={inputFocused || query ? "" : animatedPlaceholder}
-                disabled={!hasVillage}
-                className="flex-1 bg-transparent text-text-800 text-base md:text-sm focus:outline-none placeholder-text-500 disabled:cursor-not-allowed"
-                style={{ fontSize: "max(16px, 0.875rem)" }}
-              />
-              <button
-                onClick={() => navigateToChat()}
-                disabled={!hasVillage}
-                className="flex-shrink-0 p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center bg-sage text-white rounded-xl hover:bg-sage-dark transition-all duration-200 hover:scale-105 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100"
-                title="Start chatting"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                </svg>
-              </button>
-            </div>
-
-            {/* Quick chips — single scrollable row */}
-            {showChips && (
-              <div className="relative mt-3">
-                <div className="flex gap-2 overflow-x-auto scrollbar-hide py-0.5">
-                  {chipKeys.map((key, i) => (
-                    <button
-                      key={key}
-                      onClick={() => navigateToChat(t(key))}
-                      className="animate-chipBounceIn flex-shrink-0 text-xs bg-surface-50/70 backdrop-blur-sm text-text-700 px-3.5 py-2 rounded-xl border border-surface-300/50 hover:border-sage/40 hover:text-sage hover:bg-sage/5 transition-all duration-200 whitespace-nowrap hover:-translate-y-px"
-                      style={{ animationDelay: `${i * 100}ms` }}
-                    >
-                      {t(key)}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-          </div>
-
           {/* Scroll hint arrow */}
           {showEvents && !titleCollapsed && (
             <div className="mt-4 animate-arrowBounce text-sage/50">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
               </svg>
+            </div>
+          )}
+        </div>
+
+        {/* Sentinel — when this scrolls out, the chat bar is "pinned" */}
+        <div ref={stickysentinelRef} className="h-0 w-full" />
+
+        {/* Sticky chat bar — single instance, pins to top on scroll */}
+        <div className="sticky top-0 z-20 w-full bg-surface-100/85 backdrop-blur-lg px-3 py-2">
+          <div
+            className={`flex items-center gap-2.5 bg-surface-50/90 backdrop-blur-md rounded-2xl transition-all duration-300 px-4 py-3 ${
+              hasVillage
+                ? "border-2 border-sage/30 shadow-lg shadow-sage/8 landing-chat-glow"
+                : "border border-surface-300 opacity-60"
+            } ${showChatBox ? "animate-fadeSlideUp" : ""}`}
+          >
+            <svg className="w-5 h-5 text-sage flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+            </svg>
+            <input
+              ref={inputRef}
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              onKeyDown={handleInputKeyDown}
+              onFocus={() => setInputFocused(true)}
+              onBlur={() => setInputFocused(false)}
+              placeholder={inputFocused || query ? "" : animatedPlaceholder}
+              disabled={!hasVillage}
+              className="flex-1 bg-transparent text-text-800 text-sm focus:outline-none placeholder-text-500 disabled:cursor-not-allowed"
+              style={{ fontSize: "max(16px, 0.875rem)" }}
+            />
+            <button
+              onClick={() => navigateToChat()}
+              disabled={!hasVillage}
+              className="flex-shrink-0 p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center bg-sage text-white rounded-xl hover:bg-sage-dark transition-all duration-200 hover:scale-105 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100"
+              title="Start chatting"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+              </svg>
+            </button>
+          </div>
+
+          {/* Quick chips — visible when NOT pinned */}
+          {showChips && !chatPinned && (
+            <div className="relative mt-2">
+              <div className="flex gap-2 overflow-x-auto scrollbar-hide py-0.5">
+                {chipKeys.map((key, i) => (
+                  <button
+                    key={key}
+                    onClick={() => navigateToChat(t(key))}
+                    className="animate-chipBounceIn flex-shrink-0 text-xs bg-surface-50/70 backdrop-blur-sm text-text-700 px-3.5 py-2 rounded-xl border border-surface-300/50 hover:border-sage/40 hover:text-sage hover:bg-sage/5 transition-all duration-200 whitespace-nowrap hover:-translate-y-px"
+                    style={{ animationDelay: `${i * 100}ms` }}
+                  >
+                    {t(key)}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Date range tabs — visible when pinned and events exist */}
+          {chatPinned && dateRangeCounts.all > 0 && (
+            <div className="mt-2">
+              <DateRangeTabs dateRange={dateRange} setDateRange={setDateRange} counts={dateRangeCounts} t={t} />
             </div>
           )}
         </div>
@@ -478,54 +484,7 @@ export default function Home() {
           </div>
         )}
 
-        {/* Pinned chat bar — appears when hero input scrolls away */}
-        <div
-          className={`sticky top-0 z-20 w-full bg-surface-100/85 backdrop-blur-lg border-b border-surface-300/30 transition-all duration-200 ${
-            chatPinned ? "opacity-100 px-4 py-2" : "opacity-0 max-h-0 overflow-hidden pointer-events-none"
-          }`}
-        >
-          <div className="w-full">
-            <div
-              className={`flex items-center gap-2 bg-surface-50/80 rounded-xl border-2 px-4 py-2.5 ${
-                hasVillage ? "border-sage/30 shadow-md shadow-sage/5" : "border-surface-300 opacity-60"
-              }`}
-            >
-              <svg className="w-5 h-5 text-sage flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-              </svg>
-              <input
-                ref={stickyInputRef}
-                type="text"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                onKeyDown={handleInputKeyDown}
-                onFocus={() => setInputFocused(true)}
-                onBlur={() => setInputFocused(false)}
-                placeholder={inputFocused || query ? "" : animatedPlaceholder}
-                disabled={!hasVillage}
-                className="flex-1 bg-transparent text-text-800 text-sm focus:outline-none placeholder-text-500 disabled:cursor-not-allowed"
-                style={{ fontSize: "max(16px, 0.875rem)" }}
-              />
-              <button
-                onClick={() => navigateToChat()}
-                disabled={!hasVillage}
-                className="flex-shrink-0 p-2 min-w-[44px] min-h-[44px] flex items-center justify-center bg-sage text-white rounded-xl hover:bg-sage-dark transition-all duration-200 hover:scale-105 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
-                title="Start chatting"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                </svg>
-              </button>
-            </div>
-            {dateRangeCounts.all > 0 && (
-              <div className="mt-2">
-                <DateRangeTabs dateRange={dateRange} setDateRange={setDateRange} counts={dateRangeCounts} t={t} />
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Events — frosted card */}
+        {/* Events */}
         {showEvents && (
           <div className="w-full pb-12">
             <div className="w-full backdrop-blur-md bg-surface-50/20 border-y border-surface-300/40 px-4 py-4">
