@@ -63,12 +63,12 @@ export async function hapticSuccess(): Promise<void> {
 
 // ── Status Bar ──
 
-export async function setStatusBarDark(): Promise<void> {
+export async function setStatusBarLight(): Promise<void> {
   if (!isNative()) return;
   const { StatusBar, Style } = await import("@capacitor/status-bar");
-  await StatusBar.setStyle({ style: Style.Dark });
+  await StatusBar.setStyle({ style: Style.Light });
   if (getPlatform() === "android") {
-    await StatusBar.setBackgroundColor({ color: "#1a1a2e" });
+    await StatusBar.setBackgroundColor({ color: "#F6F8FA" });
   }
 }
 

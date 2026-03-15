@@ -1,4 +1,3 @@
-import { Capacitor } from "@capacitor/core";
 import {
   getToken,
   setToken,
@@ -8,9 +7,17 @@ import {
   type AuthUser,
 } from "@/lib/auth";
 
-const BASE_URL = Capacitor.isNativePlatform()
-  ? "https://api.greatneck.ai"
-  : (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8001");
+function getBaseUrl(): string {
+  if (typeof window !== "undefined") {
+    try {
+      const { Capacitor } = require("@capacitor/core");
+      if (Capacitor.isNativePlatform()) return "https://greatneck.ai";
+    } catch {}
+  }
+  return process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8001";
+}
+
+const BASE_URL = getBaseUrl();
 
 function authHeaders(): Record<string, string> {
   const token = getToken();

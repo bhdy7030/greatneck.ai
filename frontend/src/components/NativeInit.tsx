@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { useAuth } from "@/components/AuthProvider";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
-import { isNative, setStatusBarDark, hideSplash } from "@/lib/native";
+import { isNative, setStatusBarLight, hideSplash } from "@/lib/native";
 
 /**
  * Initializes native platform features (status bar, splash screen, push notifications).
@@ -18,7 +18,7 @@ export default function NativeInit() {
   // Native platform setup
   useEffect(() => {
     if (!isNative()) return;
-    setStatusBarDark();
+    setStatusBarLight();
     hideSplash();
   }, []);
 
