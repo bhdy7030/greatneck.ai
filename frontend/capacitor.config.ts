@@ -6,6 +6,14 @@ const config: CapacitorConfig = {
   webDir: "out",
   server: {
     androidScheme: "https",
+    allowNavigation: [
+      "greatneck.ai",
+      "*.greatneck.ai",
+      "accounts.google.com",
+      "*.google.com",
+      "appleid.apple.com",
+      "*.apple.com",
+    ],
   },
   plugins: {
     SplashScreen: {
