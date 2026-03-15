@@ -12,6 +12,7 @@ import NavLinks from "@/components/NavLinks";
 import PageTracker from "@/components/PageTracker";
 import ToastProvider from "@/components/ToastProvider";
 import ErrorBoundary from "@/components/ErrorBoundary";
+import NativeInit from "@/components/NativeInit";
 
 const inter = Inter({ subsets: ["latin"] });
 const sourceSerif = Source_Serif_4({
@@ -120,6 +121,7 @@ export default function RootLayout({
             </header>
 
             <PageTracker />
+            <NativeInit />
 
             {/* Main content */}
             <main className="flex-1 flex flex-col overflow-hidden">

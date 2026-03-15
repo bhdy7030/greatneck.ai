@@ -7,8 +7,20 @@ import {
   type AuthUser,
 } from "@/lib/auth";
 
-const BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8001";
+function getBaseUrl(): string {
+  // Env var takes priority (set during dev and CI builds)
+  if (process.env.NEXT_PUBLIC_API_URL) return process.env.NEXT_PUBLIC_API_URL;
+  // Native app with bundled assets (no env var) → prod
+  if (typeof window !== "undefined") {
+    try {
+      const { Capacitor } = require("@capacitor/core");
+      if (Capacitor.isNativePlatform()) return "https://greatneck.ai";
+    } catch {}
+  }
+  return "http://localhost:8001";
+}
+
+const BASE_URL = getBaseUrl();
 
 function authHeaders(): Record<string, string> {
   const token = getToken();
@@ -1446,5 +1458,30 @@ export async function markNotificationsRead(ids?: number[]): Promise<{ ok: boole
     body: JSON.stringify({ ids: ids ?? null }),
   });
   if (!res.ok) throw new Error(`Failed to mark notifications read: ${res.status}`);
+  return res.json();
+}
+
+// ── Push notification device token ──
+
+export async function registerDeviceToken(
+  token: string,
+  platform: "ios" | "android",
+): Promise<{ ok: boolean }> {
+  const res = await fetchWithRefresh(`${BASE_URL}/api/notifications/register-device`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...authHeaders() },
+    body: JSON.stringify({ token, platform }),
+  });
+  if (!res.ok) throw new Error(`Failed to register device token: ${res.status}`);
+  return res.json();
+}
+
+export async function unregisterDeviceToken(token: string): Promise<{ ok: boolean }> {
+  const res = await fetchWithRefresh(`${BASE_URL}/api/notifications/unregister-device`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...authHeaders() },
+    body: JSON.stringify({ token }),
+  });
+  if (!res.ok) throw new Error(`Failed to unregister device token: ${res.status}`);
   return res.json();
 }

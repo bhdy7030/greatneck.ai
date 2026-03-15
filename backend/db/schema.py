@@ -193,6 +193,16 @@ CREATE TABLE IF NOT EXISTS waitlist (
     created_at TIMESTAMP DEFAULT NOW()
 );
 CREATE INDEX IF NOT EXISTS idx_waitlist_created ON waitlist(created_at);
+
+CREATE TABLE IF NOT EXISTS device_tokens (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    token TEXT NOT NULL,
+    platform VARCHAR(10) NOT NULL,
+    created_at TIMESTAMP DEFAULT NOW(),
+    UNIQUE(user_id, token)
+);
+CREATE INDEX IF NOT EXISTS idx_device_tokens_user ON device_tokens(user_id);
 """
 
 
@@ -483,6 +493,24 @@ def _migrate_notifications():
             conn.commit()
 
 
+def _migrate_device_tokens():
+    """Create device_tokens table if missing (for existing deployments)."""
+    with _PgConnWrapper() as conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS device_tokens (
+                    id SERIAL PRIMARY KEY,
+                    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                    token TEXT NOT NULL,
+                    platform VARCHAR(10) NOT NULL,
+                    created_at TIMESTAMP DEFAULT NOW(),
+                    UNIQUE(user_id, token)
+                )
+            """)
+            cur.execute("CREATE INDEX IF NOT EXISTS idx_device_tokens_user ON device_tokens(user_id)")
+            conn.commit()
+
+
 def _migrate_reminder_sent():
     """Add reminder_sent column to guide_step_status."""
     with _PgConnWrapper() as conn:
@@ -534,4 +562,5 @@ def init_db():
     _migrate_comments(all_cols.get("user_guides", set()))
     _migrate_likes(all_cols.get("user_guides", set()))
     _migrate_notifications()
+    _migrate_device_tokens()
     _migrate_reminder_sent()
