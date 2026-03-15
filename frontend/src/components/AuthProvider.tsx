@@ -204,7 +204,7 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
       });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const login = useCallback(() => {
+  const login = useCallback(async () => {
     // Google blocks OAuth in in-app browsers (Facebook, Instagram, WeChat, etc.)
     if (isInAppBrowser()) {
       setShowBrowserPrompt(true);
@@ -215,10 +215,25 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
     params.delete("invite");
     const qs = params.toString();
     const returnTo = window.location.pathname + (qs ? `?${qs}` : "");
-    window.location.href = `${BASE_URL}/api/auth/google?return_to=${encodeURIComponent(returnTo)}`;
+
+    // On native, open OAuth in system browser so redirect comes back to the app
+    let isNativePlatform = false;
+    try {
+      const { Capacitor } = require("@capacitor/core");
+      isNativePlatform = Capacitor.isNativePlatform();
+    } catch {}
+
+    if (isNativePlatform) {
+      // Pass native origin so backend redirects back to the app
+      const nativeReturn = `capacitor://localhost${returnTo}`;
+      const authUrl = `${BASE_URL}/api/auth/google?return_to=${encodeURIComponent(nativeReturn)}`;
+      window.location.href = authUrl;
+    } else {
+      window.location.href = `${BASE_URL}/api/auth/google?return_to=${encodeURIComponent(returnTo)}`;
+    }
   }, []);
 
-  const loginWithApple = useCallback(() => {
+  const loginWithApple = useCallback(async () => {
     if (isInAppBrowser()) {
       setShowBrowserPrompt(true);
       return;
@@ -227,7 +242,19 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
     params.delete("invite");
     const qs = params.toString();
     const returnTo = window.location.pathname + (qs ? `?${qs}` : "");
-    window.location.href = `${BASE_URL}/api/auth/apple?return_to=${encodeURIComponent(returnTo)}`;
+
+    let isNativePlatform = false;
+    try {
+      const { Capacitor } = require("@capacitor/core");
+      isNativePlatform = Capacitor.isNativePlatform();
+    } catch {}
+
+    if (isNativePlatform) {
+      const nativeReturn = `capacitor://localhost${returnTo}`;
+      window.location.href = `${BASE_URL}/api/auth/apple?return_to=${encodeURIComponent(nativeReturn)}`;
+    } else {
+      window.location.href = `${BASE_URL}/api/auth/apple?return_to=${encodeURIComponent(returnTo)}`;
+    }
   }, []);
 
   const logout = useCallback(async () => {

@@ -65,6 +65,14 @@ async def _finalize_login(user: dict, return_path: str) -> RedirectResponse:
     # Redirect back to the page the user started login from
     rp = return_path if return_path.startswith("/") else "/chat/"
     sep = "&" if "?" in rp else "?"
+    # Native apps pass a full URL (capacitor://localhost/...) — use it directly
+    if return_path.startswith("capacitor://"):
+        rp = return_path
+        sep = "&" if "?" in rp else "?"
+        return RedirectResponse(
+            f"{rp}{sep}token={access_token}&refresh={refresh_token}",
+            status_code=303,
+        )
     return RedirectResponse(
         f"{settings.frontend_url}{rp}{sep}token={access_token}&refresh={refresh_token}",
         status_code=303,
