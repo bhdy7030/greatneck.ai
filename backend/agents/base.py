@@ -306,12 +306,15 @@ NOTE: These formatting rules apply to your written response ONLY. Do NOT reduce 
             system += (
                 "\n\n## Available Playbooks (Step-by-Step Guides)\n"
                 "When the user's question is well-covered by one or more of these guides, "
-                "include a ```playbook-carousel fenced code block with a JSON array of 1-4 matching guides. "
-                "Each entry: {\"id\": ..., \"title\": ..., \"description\": ..., \"icon\": ..., \"color\": ..., \"step_count\": ...}. "
-                "Only include guides that are directly relevant. Do NOT include the carousel for unrelated questions. "
-                "IMPORTANT: Do NOT repeat a playbook carousel that was already shown earlier in the conversation "
-                "unless the user asks a new, different question that matches it or provides new context. "
-                "Place the code block at the end of your response, after your text answer.\n\n"
+                "include EXACTLY this format at the END of your response (after your text answer):\n\n"
+                "```playbook-carousel\n"
+                "[{\"id\": \"guide-id\", \"title\": \"Guide Title\", \"description\": \"...\", \"icon\": \"...\", \"color\": \"#...\", \"step_count\": N}]\n"
+                "```\n\n"
+                "Rules:\n"
+                "- The opening fence MUST be ```playbook-carousel (not ```json or bare JSON)\n"
+                "- Include 1-4 matching guides from the catalog below\n"
+                "- Only include guides that are directly relevant — skip for unrelated questions\n"
+                "- Do NOT repeat a carousel already shown earlier in the conversation\n\n"
                 f"Catalog:\n{catalog_json}"
             )
 

@@ -346,7 +346,7 @@ async def _handle_chat_stream(request: ChatRequest, user: dict | None = None) ->
                     sources=cached["sources"] if cached["sources"] else None,
                     agent_used=cached["agent_used"],
                 )
-            yield _sse_event("step", {"stage": "router", "status": "done", "label": "Understood"})
+            yield _sse_event("step", {"stage": "router", "status": "done", "label": "Looking into it"})
             yield _sse_event("step", {"stage": "specialist", "status": "done", "label": "Found answer"})
             yield _sse_event("response", {
                 "response": cached["response"],
@@ -372,7 +372,7 @@ async def _handle_chat_stream(request: ChatRequest, user: dict | None = None) ->
                     sources=sem_cached.get("sources") or None,
                     agent_used=sem_cached.get("agent_used", "cached"),
                 )
-            yield _sse_event("step", {"stage": "router", "status": "done", "label": "Understood"})
+            yield _sse_event("step", {"stage": "router", "status": "done", "label": "Looking into it"})
             yield _sse_event("step", {"stage": "specialist", "status": "done", "label": "Found answer"})
             yield _sse_event("response", {
                 **sem_cached,
@@ -414,11 +414,11 @@ async def _handle_chat_stream(request: ChatRequest, user: dict | None = None) ->
 
             # If there's also a text query, route it and combine with vision
             if request.message.strip():
-                yield _sse_event("step", {"stage": "router", "status": "running", "label": "Understanding your question..."})
+                yield _sse_event("step", {"stage": "router", "status": "running", "label": "On it"})
                 routing = await _router_agent.run(request.message, context=context)
                 agent_name = routing.get("agent", "general")
                 refined_query = routing.get("refined_query", request.message)
-                yield _sse_event("step", {"stage": "router", "status": "done", "label": "Understood"})
+                yield _sse_event("step", {"stage": "router", "status": "done", "label": "Looking into it"})
 
                 if agent_name in _agents and agent_name != "vision" and agent_name != "off_topic":
                     # Run specialist with vision analysis injected into history
@@ -486,7 +486,7 @@ async def _handle_chat_stream(request: ChatRequest, user: dict | None = None) ->
                 })
 
         # Step 1: Router + RAG in parallel
-        yield _sse_event("step", {"stage": "router", "status": "running", "label": "Understanding your question..."})
+        yield _sse_event("step", {"stage": "router", "status": "running", "label": "On it"})
 
         from rag.store import KnowledgeStore
         _rag_store = KnowledgeStore()
@@ -510,7 +510,7 @@ async def _handle_chat_stream(request: ChatRequest, user: dict | None = None) ->
 
         yield _sse_event("step", {
             "stage": "router", "status": "done",
-            "label": "Understood",
+            "label": "Looking into it",
             "detail": f"Routed to {agent_name}" if is_debug else None,
         })
         if is_debug:

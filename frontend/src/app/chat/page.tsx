@@ -45,6 +45,8 @@ function ChatPageInner() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [tierModal, setTierModal] = useState<"trial_exhausted" | "must_sign_in" | null>(null);
   const [streamingContent, setStreamingContent] = useState("");
+  const [previewText, setPreviewText] = useState("");
+  const isPreviewPhase = useRef(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const draftSentRef = useRef(false);
@@ -271,6 +273,8 @@ function ChatPageInner() {
       setPipelineEvents([]);
       pipelineEventsRef.current = [];
       setStreamingContent("");
+      setPreviewText("");
+      isPreviewPhase.current = false;
 
       // Build history for context (exclude images to keep payload small)
       const history = messages.map((m) => ({
@@ -301,6 +305,8 @@ function ChatPageInner() {
           text,
           village,
           (event) => {
+            // Skip token/clear_tokens events from pipeline — they're handled by onToken
+            if (event.type === "token" || event.type === "clear_tokens") return;
             pipelineEventsRef.current = [...pipelineEventsRef.current, event];
             setPipelineEvents((prev) => [...prev, event]);
           },
@@ -313,10 +319,19 @@ function ChatPageInner() {
           fastMode,
           imageMime,
           (tokenText) => {
-            if (tokenText === "\0CLEAR") {
-              // Backend signals: clear preview text, real answer coming next
-              setStreamingContent("");
+            if (tokenText.startsWith("\0PREVIEW")) {
+              // Preview token from planner — show as acknowledgment
+              const text = tokenText.slice(8); // strip "\0PREVIEW"
+              isPreviewPhase.current = true;
+              setPreviewText((prev) => prev + text);
+            } else if (tokenText === "\0CLEAR") {
+              // Preview done, real answer coming after searches finish
+              // Keep preview visible until first real token arrives
+              isPreviewPhase.current = false;
             } else {
+              // Real answer token — clear preview on first arrival
+              if (isPreviewPhase.current) isPreviewPhase.current = false;
+              setPreviewText("");
               setStreamingContent((prev) => prev + tokenText);
             }
           },
@@ -332,7 +347,8 @@ function ChatPageInner() {
           );
         }
 
-        setStreamingContent(""); // Clear streaming before adding final message
+        setStreamingContent("");
+        setPreviewText(""); // Clear all streaming state before adding final message
 
         const assistantMessage: ChatMessageType = {
           role: "assistant",
@@ -484,7 +500,7 @@ function ChatPageInner() {
         </div>
 
         {/* Messages container */}
-        <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-6">
+        <div ref={scrollRef} className="flex-1 overflow-y-auto overflow-x-hidden px-4 py-6">
           <div className="max-w-3xl mx-auto">
             {/* Back to playbook banner */}
             {returnGuideId && (
@@ -554,24 +570,50 @@ function ChatPageInner() {
             )}
 
             {messages.map((msg, i) => (
-              <div key={i} data-msg-idx={i}>
+              <div key={i} data-msg-idx={i} className="overflow-hidden">
                 <ChatMessage message={msg} />
               </div>
             ))}
 
-            {/* Pipeline steps (shown while loading) */}
-            {isLoading && pipelineEvents.length > 0 && (
+            {/* Unified response block */}
+            {isLoading && (previewText || streamingContent || pipelineEvents.length > 0) && (
               <div className="flex justify-start mb-4">
-                <div className="max-w-[92%] md:max-w-[70%]">
-                  <PipelineSteps events={pipelineEvents} isComplete={false} />
+                <div className="max-w-[92%] md:max-w-[70%] w-full space-y-2">
+                  {/* Conversational acknowledgment: early steps or preview text */}
+                  {!streamingContent && (() => {
+                    const earlyStages = new Set(["router", "planner"]);
+                    const earlyLabel = !previewText
+                      ? pipelineEvents
+                          .filter((e) => e.type === "step" && earlyStages.has(e.stage || ""))
+                          .map((e) => e.label)
+                          .pop()
+                      : null;
+                    const displayText = previewText || earlyLabel;
+                    if (!displayText) return null;
+                    return (
+                      <div className="bg-surface-50 border border-surface-200/60 rounded-2xl rounded-bl-md px-4 py-3 shadow-sm animate-fadeIn">
+                        <p className="text-sm text-text-600">
+                          {displayText}
+                          <span className="inline-flex gap-1 ml-1.5 align-middle">
+                            <span className="w-1 h-1 bg-sage/60 rounded-full typing-dot" />
+                            <span className="w-1 h-1 bg-sage/60 rounded-full typing-dot" />
+                            <span className="w-1 h-1 bg-sage/60 rounded-full typing-dot" />
+                          </span>
+                        </p>
+                      </div>
+                    );
+                  })()}
+                  {/* Tool operations thinking box — only tool_call/tool_result and specialist+ steps */}
+                  {pipelineEvents.some((e) => e.type === "tool_call" || e.type === "tool_result" || (e.type === "step" && e.stage === "specialist")) && (
+                    <PipelineSteps events={pipelineEvents} isComplete={false} />
+                  )}
+                  {/* Real streaming answer */}
+                  {streamingContent && (
+                    <div data-msg-idx="streaming">
+                      <ChatMessage message={{ role: "assistant", content: streamingContent }} />
+                    </div>
+                  )}
                 </div>
-              </div>
-            )}
-
-            {/* Streaming response (tokens arriving in real-time) */}
-            {isLoading && streamingContent && (
-              <div data-msg-idx="streaming">
-                <ChatMessage message={{ role: "assistant", content: streamingContent }} />
               </div>
             )}
 

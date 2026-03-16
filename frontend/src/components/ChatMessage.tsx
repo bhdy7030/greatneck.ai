@@ -144,9 +144,21 @@ const markdownComponents = {
       </code>
     );
   },
-  pre: ({ children }: { children?: React.ReactNode }) => (
-    <pre className="bg-surface-200 rounded-lg overflow-x-auto my-2">{children}</pre>
-  ),
+  pre: ({ children }: { children?: React.ReactNode }) => {
+    // If the child is a custom component (PermitTimeline, PlaybookCarousel, etc.),
+    // render as a plain div — <pre> adds white-space:pre which prevents text wrapping
+    const child = Array.isArray(children) ? children[0] : children;
+    if (child && typeof child === "object" && "type" in (child as React.ReactElement)) {
+      const el = child as React.ReactElement;
+      if (typeof el.type !== "string") {
+        // Custom React component, not a raw <code> tag — skip <pre> wrapper
+        return <>{children}</>;
+      }
+    }
+    return (
+      <pre className="bg-surface-200 rounded-lg overflow-x-auto my-2">{children}</pre>
+    );
+  },
   blockquote: ({ children }: { children?: React.ReactNode }) => (
     <blockquote className="border-l-2 border-gold pl-3 my-2 text-text-600 italic">
       {children}
@@ -174,13 +186,28 @@ interface ChatMessageProps {
 export default function ChatMessage({ message }: ChatMessageProps) {
   const isUser = message.role === "user";
 
-  // Pre-process assistant messages for calendar card patterns
-  const contentParts = !isUser ? splitCalendarCards(message.content) : null;
+  // Pre-process assistant messages
+  // Fix raw playbook JSON not wrapped in ```playbook-carousel fence
+  let processedContent = message.content;
+  if (!isUser) {
+    // Match any JSON array containing objects with "id" and "step_count" fields
+    processedContent = processedContent.replace(
+      /\[(\s*\{[^[\]]*"id"\s*:[^[\]]*"step_count"\s*:\s*\d+[^[\]]*\}(?:\s*,\s*\{[^[\]]*\})*\s*)\]/g,
+      (match) => {
+        // Skip if already inside a code fence
+        const before = processedContent.slice(0, processedContent.indexOf(match));
+        const fenceCount = (before.match(/```/g) || []).length;
+        if (fenceCount % 2 === 1) return match; // inside a code block
+        return `\n\`\`\`playbook-carousel\n${match.trim()}\n\`\`\`\n`;
+      }
+    );
+  }
+  const contentParts = !isUser ? splitCalendarCards(processedContent) : null;
 
   return (
     <div className={`flex ${isUser ? "justify-end" : "justify-start"} mb-5`}>
       <div
-        className={`${isUser ? "max-w-[92%] md:max-w-[70%]" : "w-full"} ${
+        className={`${isUser ? "max-w-[92%] md:max-w-[70%]" : "w-full min-w-0"} ${
           isUser
             ? "bg-sage text-white rounded-2xl rounded-br-md shadow-sm shadow-sage/10"
             : "bg-surface-50 border border-surface-200/60 shadow-sm text-text-800 rounded-2xl rounded-bl-md"
@@ -217,7 +244,7 @@ export default function ChatMessage({ message }: ChatMessageProps) {
             {message.content}
           </div>
         ) : (
-          <div className="prose prose-sm max-w-none text-sm leading-relaxed [&>*:first-child]:mt-0 [&>*:last-child]:mb-0">
+          <div className="prose prose-sm max-w-none text-sm leading-relaxed overflow-hidden break-words [&>*:first-child]:mt-0 [&>*:last-child]:mb-0">
             {contentParts!.map((part, i) =>
               typeof part === "string" ? (
                 <ReactMarkdown

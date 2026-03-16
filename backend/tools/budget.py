@@ -8,7 +8,8 @@ import contextvars
 from dataclasses import dataclass
 
 # Safety cap — prevents runaway agent loops from burning credits
-_SAFETY_CAP = 15
+# Typical request: 1-2 social + 1-2 web = 2-4 calls. Cap at 6 for safety.
+_SAFETY_CAP = 6
 
 # Per-request budget, set at the start of each chat request
 _budget: contextvars.ContextVar["WebBudget | None"] = contextvars.ContextVar(
