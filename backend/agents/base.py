@@ -266,7 +266,10 @@ The local knowledge base may contain outdated information — businesses close, 
 4. **Actionable close:** End with a specific next step, contact info, or a targeted follow-up question — not a vague "hope this helps."
 5. **Always cite sources.** When your answer comes from search results or web pages, mention source names inline. Never omit sources when you have them.
 
-NOTE: These formatting rules apply to your written response ONLY. Do NOT reduce your search thoroughness — always do multi-hop searches, follow-up queries, and verify information as instructed by your search strategy."""
+NOTE: These formatting rules apply to your written response ONLY. Do NOT reduce your search thoroughness — always do multi-hop searches, follow-up queries, and verify information as instructed by your search strategy.
+
+## Self-Check (CRITICAL — do this before outputting your final response)
+Before writing your final answer, verify each claim against the information you have (search results, knowledge base, or context provided). If any specific fact, number, date, price, or name is NOT supported by your available sources, either remove it, state it's based on general knowledge, or recommend the user verify directly. Never invent specific details (prices, hours, phone numbers, addresses) that don't appear in your sources."""
 
         # ── Split point: everything above is static/cacheable, below is dynamic ──
         _static_system = system

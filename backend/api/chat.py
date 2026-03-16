@@ -696,9 +696,8 @@ async def _handle_chat_stream(request: ChatRequest, user: dict | None = None) ->
             "label": "Search complete" if not is_debug else f"Completed ({tool_count} tool calls)",
         })
 
-        # Step 4: Critic — only for permit/village_code where accuracy is critical
-        # Community, general, report, off_topic don't need a second LLM review
-        skip_critic = agent_name not in ("permit", "village_code") or request.fast_mode
+        # Step 4: Critic — skip only for general/off_topic and fast mode
+        skip_critic = agent_name in ("general", "off_topic") or request.fast_mode
         if not skip_critic:
             yield _sse_event("step", {"stage": "critic", "status": "running", "label": "Reviewing answer..."})
             _t_critic = _time.monotonic()
