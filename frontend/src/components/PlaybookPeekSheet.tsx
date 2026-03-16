@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback, type MouseEvent as ReactMouseEvent } from "react";
 import { useLanguage } from "@/components/LanguageProvider";
 import type { Guide } from "@/lib/api";
 import OpenMojiIcon from "./OpenMojiIcon";
@@ -12,6 +12,35 @@ interface PlaybookPeekSheetProps {
   onClose: () => void;
   onSave: (id: string) => void;
   onFork?: (id: string) => void;
+}
+
+function PeekHeader({ guide }: { guide: Guide }) {
+  const [expanded, setExpanded] = useState(false);
+  return (
+    <div className="flex items-start gap-3.5 mb-4">
+      <OpenMojiIcon icon={guide.icon} size={44} />
+      <div className="flex-1 min-w-0 cursor-pointer" onClick={() => guide.description && setExpanded(!expanded)}>
+        <div className="flex items-center gap-1.5">
+          <h2 className={`text-base font-bold text-text-900 leading-tight tracking-tight ${expanded ? "" : "truncate"}`}>
+            {guide.title}
+          </h2>
+          {guide.description && (
+            <svg className={`w-3 h-3 text-text-400 shrink-0 transition-transform ${expanded ? "rotate-90" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          )}
+        </div>
+        {guide.author_handle && (
+          <a href={`/profile/?h=${guide.author_handle}`} onClick={(e: ReactMouseEvent) => e.stopPropagation()} className="text-[10px] text-text-400 hover:text-sage">
+            by @{guide.author_handle}
+          </a>
+        )}
+        {expanded && guide.description && (
+          <p className="text-xs text-text-500 mt-1.5 leading-relaxed animate-fadeIn">{guide.description}</p>
+        )}
+      </div>
+    </div>
+  );
 }
 
 export default function PlaybookPeekSheet({
@@ -98,23 +127,7 @@ export default function PlaybookPeekSheet({
           />
 
           {/* Header */}
-          <div className="flex items-start gap-3.5 mb-4">
-            <OpenMojiIcon icon={guide.icon} size={44} />
-            <div className="flex-1 min-w-0">
-              <h2 className="text-base font-bold text-text-900 leading-tight tracking-tight">
-                {guide.title}
-              </h2>
-              <p className="text-xs text-text-500 mt-1 leading-relaxed">{guide.description}</p>
-              {guide.author_handle && (
-                <p className="mt-0.5">
-                  <span className="text-[11px] text-text-400">shared by</span>
-                  <a href={`/profile/?h=${guide.author_handle}`} className="text-[11px] text-sage hover:underline">
-                    @{guide.author_handle}
-                  </a>
-                </p>
-              )}
-            </div>
-          </div>
+          <PeekHeader guide={guide} />
 
           {/* Steps preview */}
           <h3 className="text-[10px] font-semibold text-text-500 uppercase tracking-wider mb-3">

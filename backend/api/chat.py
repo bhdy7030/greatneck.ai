@@ -164,6 +164,7 @@ class ChatRequest(BaseModel):
     web_search: bool = True
     fast_mode: bool = False
     language: str = "en"  # "en" or "zh"
+    skip_playbooks: bool = False
 
 
 class ChatResponse(BaseModel):
@@ -389,9 +390,10 @@ async def _handle_chat_stream(request: ChatRequest, user: dict | None = None) ->
     }
 
     # Inject playbook catalog so specialist can suggest relevant guides
-    guide_catalog = await run_sync(_fetch_guide_catalog)
-    if guide_catalog:
-        context["playbook_catalog"] = guide_catalog
+    if not request.skip_playbooks:
+        guide_catalog = await run_sync(_fetch_guide_catalog)
+        if guide_catalog:
+            context["playbook_catalog"] = guide_catalog
 
     # If an image is provided, add it to context for VisionAgent
     if request.image_base64:
@@ -862,9 +864,10 @@ async def _handle_chat(request: ChatRequest) -> ChatResponse:
     }
 
     # Inject playbook catalog so specialist can suggest relevant guides
-    guide_catalog = await run_sync(_fetch_guide_catalog)
-    if guide_catalog:
-        context["playbook_catalog"] = guide_catalog
+    if not request.skip_playbooks:
+        guide_catalog = await run_sync(_fetch_guide_catalog)
+        if guide_catalog:
+            context["playbook_catalog"] = guide_catalog
 
     # Check internal registry for known answers
     reg_ctx = await registry_lookup(request.message, request.village)

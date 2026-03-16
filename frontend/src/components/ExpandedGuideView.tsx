@@ -57,6 +57,7 @@ export default function ExpandedGuideView({
   const [showUpdatePublishedModal, setShowUpdatePublishedModal] = useState(false);
   const [updatePublishedDone, setUpdatePublishedDone] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
+  const [descExpanded, setDescExpanded] = useState(false);
 
   const isOwnGuide = guide.wallet_category === "published" || guide.wallet_category === "private";
   const commentCount = ((guide as unknown as Record<string, unknown>).comment_count as number) || 0;
@@ -122,19 +123,21 @@ export default function ExpandedGuideView({
           </button>
 
           {/* Title + author */}
-          <div className="flex-1 min-w-0 flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: guide.color }} />
-            <div className="min-w-0">
-              <h1 className="text-sm font-bold text-text-900 truncate">{guide.title}</h1>
-              {guide.author_handle && (
-                <p className="text-[10px]">
-                  <span className="text-text-400">shared by </span>
-                  <a href={`/profile/?h=${guide.author_handle}`} className="text-sage hover:underline">
-                    @{guide.author_handle}
-                  </a>
-                </p>
+          <div className="flex-1 min-w-0 cursor-pointer" onClick={() => guide.description && setDescExpanded(!descExpanded)}>
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: guide.color }} />
+              <h1 className={`text-sm font-bold text-text-900 leading-tight ${descExpanded ? "" : "truncate"}`}>{guide.title}</h1>
+              {guide.description && (
+                <svg className={`w-3 h-3 text-text-400 shrink-0 transition-transform ${descExpanded ? "rotate-90" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
               )}
             </div>
+            {guide.author_handle && (
+              <a href={`/profile/?h=${guide.author_handle}`} onClick={(e) => e.stopPropagation()} className="text-[10px] text-text-400 hover:text-sage ml-4">
+                by @{guide.author_handle}
+              </a>
+            )}
           </div>
 
           {/* Top-right actions */}
@@ -208,10 +211,23 @@ export default function ExpandedGuideView({
           </div>
         ) : (
           <>
-            {/* Description -- compact, above the steps */}
+            {/* Description -- collapsible */}
             {guide.description && (
-              <div className="shrink-0 px-4 pt-2 pb-1 max-w-2xl mx-auto w-full">
-                <StepMarkdown content={guide.description} className="text-text-500" />
+              <div className="shrink-0 px-4 pt-1.5 pb-1 max-w-2xl mx-auto w-full">
+                <button
+                  onClick={() => setDescExpanded(!descExpanded)}
+                  className="flex items-center gap-1 text-[11px] text-text-400 hover:text-text-600 transition-colors"
+                >
+                  <svg className={`w-3 h-3 transition-transform ${descExpanded ? "rotate-90" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                  Description
+                </button>
+                {descExpanded && (
+                  <div className="mt-1.5 pl-4 animate-fadeIn">
+                    <StepMarkdown content={guide.description} className="text-text-500 text-[12px]" />
+                  </div>
+                )}
               </div>
             )}
 

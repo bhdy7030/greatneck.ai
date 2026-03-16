@@ -8,9 +8,11 @@ import {
 } from "@/lib/auth";
 
 function getBaseUrl(): string {
-  // Env var takes priority (set during dev and CI builds)
-  if (process.env.NEXT_PUBLIC_API_URL) return process.env.NEXT_PUBLIC_API_URL;
-  // Native app with bundled assets (no env var) → prod
+  // Env var takes priority — empty string means same-origin (prod Docker build)
+  if (process.env.NEXT_PUBLIC_API_URL !== undefined) {
+    return process.env.NEXT_PUBLIC_API_URL;
+  }
+  // Native app with bundled assets (no env var baked in) → prod
   if (typeof window !== "undefined") {
     try {
       const { Capacitor } = require("@capacitor/core");
@@ -274,6 +276,7 @@ export async function sendMessageStream(
   fastMode?: boolean,
   imageMime?: string,
   onToken?: (text: string) => void,
+  skipPlaybooks?: boolean,
 ): Promise<ChatResponse> {
   const res = await fetchWithRefresh(`${BASE_URL}/api/chat/stream`, {
     method: "POST",
@@ -289,6 +292,7 @@ export async function sendMessageStream(
       web_search: webSearch ?? true,
       fast_mode: fastMode || false,
       language: language || "en",
+      skip_playbooks: skipPlaybooks || false,
     }),
   });
 

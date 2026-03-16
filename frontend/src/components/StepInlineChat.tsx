@@ -97,6 +97,7 @@ export default function StepInlineChat({
             full += token;
             setStreamText(full);
           },
+          true, // skipPlaybooks — inline chat shouldn't suggest guides
         );
         setMessages((prev) => [
           ...prev,
