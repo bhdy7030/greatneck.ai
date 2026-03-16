@@ -1,7 +1,6 @@
 "use client";
 
-const BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8001";
+import { BASE_URL } from "@/lib/api";
 
 interface CalendarCardProps {
   url: string;

@@ -118,8 +118,7 @@ export function useAuth() {
   return useContext(AuthContext);
 }
 
-const BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8001";
+import { BASE_URL } from "@/lib/api";
 
 export default function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
@@ -210,26 +209,22 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
       setShowBrowserPrompt(true);
       return;
     }
-    // Strip ?invite= from returnTo — it's already stored in localStorage
     const params = new URLSearchParams(window.location.search);
     params.delete("invite");
     const qs = params.toString();
     const returnTo = window.location.pathname + (qs ? `?${qs}` : "");
+    // Native: use /auth/callback so Universal Link routes back to the app
+    // Web: return to the current page
+    const nativeReturn = "/auth/callback";
+    const isNative = typeof window !== "undefined" && window.location.protocol === "capacitor:";
+    const authUrl = `${BASE_URL || "https://greatneck.ai"}/api/auth/google?return_to=${encodeURIComponent(isNative ? nativeReturn : returnTo)}`;
 
-    // On native, open OAuth in system browser so redirect comes back to the app
-    let isNativePlatform = false;
-    try {
-      const { Capacitor } = require("@capacitor/core");
-      isNativePlatform = Capacitor.isNativePlatform();
-    } catch {}
-
-    if (isNativePlatform) {
-      // Pass native origin so backend redirects back to the app
-      const nativeReturn = `capacitor://localhost${returnTo}`;
-      const authUrl = `${BASE_URL}/api/auth/google?return_to=${encodeURIComponent(nativeReturn)}`;
-      window.location.href = authUrl;
+    if (isNative) {
+      // Open in system browser (SFSafariViewController / Chrome Custom Tab)
+      const { Browser } = await import("@capacitor/browser");
+      await Browser.open({ url: authUrl });
     } else {
-      window.location.href = `${BASE_URL}/api/auth/google?return_to=${encodeURIComponent(returnTo)}`;
+      window.location.href = authUrl;
     }
   }, []);
 
@@ -242,18 +237,15 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
     params.delete("invite");
     const qs = params.toString();
     const returnTo = window.location.pathname + (qs ? `?${qs}` : "");
+    const nativeReturn = "/auth/callback";
+    const isNative = typeof window !== "undefined" && window.location.protocol === "capacitor:";
+    const authUrl = `${BASE_URL || "https://greatneck.ai"}/api/auth/apple?return_to=${encodeURIComponent(isNative ? nativeReturn : returnTo)}`;
 
-    let isNativePlatform = false;
-    try {
-      const { Capacitor } = require("@capacitor/core");
-      isNativePlatform = Capacitor.isNativePlatform();
-    } catch {}
-
-    if (isNativePlatform) {
-      const nativeReturn = `capacitor://localhost${returnTo}`;
-      window.location.href = `${BASE_URL}/api/auth/apple?return_to=${encodeURIComponent(nativeReturn)}`;
+    if (isNative) {
+      const { Browser } = await import("@capacitor/browser");
+      await Browser.open({ url: authUrl });
     } else {
-      window.location.href = `${BASE_URL}/api/auth/apple?return_to=${encodeURIComponent(returnTo)}`;
+      window.location.href = authUrl;
     }
   }, []);
 

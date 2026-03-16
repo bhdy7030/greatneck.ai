@@ -401,12 +401,12 @@ export default function Home() {
                   </div>
                 )}
               </div>
-              <a
-                href={playbookTab === "mine" ? "/guides/?tab=wallet" : "/guides/"}
+              <button
+                onClick={() => router.push(playbookTab === "mine" ? "/guides/?tab=wallet" : "/guides/")}
                 className="text-[10px] font-medium text-sage hover:text-sage-dark transition-colors"
               >
-                {t("landing.playbooks.seeAll")} &rarr;
-              </a>
+                {t("landing.playbooks.seeAll")} →
+              </button>
             </div>
             {/* Fun subtitle */}
             <p className="text-[11px] text-text-500 mb-3">
@@ -420,9 +420,9 @@ export default function Home() {
                 ? walletGuidesLanding
                 : landingGuides
               ).map((guide, i) => (
-                <a
+                <div
                   key={guide.id}
-                  href={playbookTab === "mine" ? `/guides/?open=${guide.id}&tab=wallet` : `/guides/?id=${guide.id}&tab=browse`}
+                  onClick={() => router.push(playbookTab === "mine" ? `/guides/?open=${guide.id}&tab=wallet` : `/guides/?id=${guide.id}&tab=browse`)}
                   className="flex-shrink-0 w-[132px] aspect-[3/4] flex flex-col rounded-xl overflow-hidden cursor-pointer select-none group animate-miniCardIn bg-surface-50/70 backdrop-blur-sm border border-surface-300/40 hover:border-sage/30 transition-all duration-300 hover:-translate-y-1 hover:shadow-md hover:shadow-sage/5"
                   style={{ animationDelay: `${i * 80}ms` }}
                 >
@@ -463,11 +463,11 @@ export default function Home() {
                       </div>
                     )}
                   </div>
-                </a>
+                </div>
               ))}
               {/* Create card */}
-              <a
-                href="/guides/create"
+              <div
+                onClick={() => router.push("/guides/create")}
                 className="flex-shrink-0 w-[132px] aspect-[3/4] relative rounded-xl overflow-hidden cursor-pointer select-none group border border-dashed border-surface-300/50 hover:border-sage/30 transition-all duration-300 hover:-translate-y-1 animate-miniCardIn flex flex-col items-center justify-center gap-2 bg-surface-50/30 backdrop-blur-sm"
                 style={{ animationDelay: `${Math.min((landingGuides.length) * 80, 480)}ms` }}
               >
@@ -479,7 +479,7 @@ export default function Home() {
                 <p className="text-[10px] font-semibold text-text-400 group-hover:text-sage px-3 text-center leading-tight transition-colors">
                   {t("landing.playbooks.create")}
                 </p>
-              </a>
+              </div>
             </div>
           </div>
         )}

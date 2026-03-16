@@ -8,6 +8,7 @@ import LanguageToggle from "@/components/LanguageToggle";
 import AuthProvider from "@/components/AuthProvider";
 import InviteGate from "@/components/InviteGate";
 import HeaderAuth from "@/components/HeaderAuth";
+import Link from "next/link";
 import NavLinks from "@/components/NavLinks";
 import PageTracker from "@/components/PageTracker";
 import ToastProvider from "@/components/ToastProvider";
@@ -94,7 +95,7 @@ export default function RootLayout({
             {/* Navigation Header */}
             <header className="flex-shrink-0 bg-surface-50 border-b border-surface-300 relative z-30">
               <div className="max-w-4xl mx-auto px-4 py-2 md:py-3 flex items-center justify-between min-h-[48px]">
-                <a href="/" className="flex items-center gap-2">
+                <Link href="/" className="flex items-center gap-2">
                   <svg
                     className="w-6 h-6 md:w-7 md:h-7 text-sage"
                     fill="none"
@@ -111,7 +112,7 @@ export default function RootLayout({
                   <span className="text-base md:text-lg font-bold text-text-900">
                     greatneck.ai
                   </span>
-                </a>
+                </Link>
                 <nav className="flex items-center gap-3 md:gap-4">
                   <NavLinks />
                   <LanguageToggle />

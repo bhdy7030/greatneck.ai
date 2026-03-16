@@ -1,0 +1,11 @@
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appID": "TEAMID.ai.greatneck.app",
+        "paths": ["/auth/callback/*", "/auth/callback"]
+      }
+    ]
+  }
+}

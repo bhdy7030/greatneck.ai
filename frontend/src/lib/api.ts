@@ -7,22 +7,8 @@ import {
   type AuthUser,
 } from "@/lib/auth";
 
-function getBaseUrl(): string {
-  // Env var takes priority — empty string means same-origin (prod Docker build)
-  if (process.env.NEXT_PUBLIC_API_URL !== undefined) {
-    return process.env.NEXT_PUBLIC_API_URL;
-  }
-  // Native app with bundled assets (no env var baked in) → prod
-  if (typeof window !== "undefined") {
-    try {
-      const { Capacitor } = require("@capacitor/core");
-      if (Capacitor.isNativePlatform()) return "https://greatneck.ai";
-    } catch {}
-  }
-  return "http://localhost:8001";
-}
-
-const BASE_URL = getBaseUrl();
+// Build-time env var: "" (prod Docker, same-origin), "http://localhost:8001" (dev), "https://greatneck.ai" (native CI)
+export const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8001";
 
 function authHeaders(): Record<string, string> {
   const token = getToken();
