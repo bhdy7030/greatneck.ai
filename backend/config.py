@@ -30,7 +30,7 @@ class Settings(BaseSettings):
     # Temporarily using Gemini while Anthropic API is overloaded (2026-03-04)
     # Original Anthropic models:
     #   router/simple: claude-haiku-4-5, specialist/critic: claude-sonnet-4, reasoning/vision/planner: claude-opus-4
-    model_router: str = "gemini/gemini-3-flash-preview"             # simple classification
+    model_router: str = "gemini/gemini-2.5-flash-lite"               # simple classification (fastest)
     model_reasoning: str = "gemini/gemini-3.1-pro-preview"     # complex specialist tasks
     model_specialist: str = "gemini/gemini-3.1-pro-preview"        # well-defined specialist tasks (with plan)
     model_vision: str = "gemini/gemini-3.1-pro-preview"            # image analysis

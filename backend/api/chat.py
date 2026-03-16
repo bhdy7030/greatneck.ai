@@ -553,9 +553,11 @@ async def _handle_chat_stream(request: ChatRequest, user: dict | None = None) ->
             )
 
         # Step 2: Planner with streaming preview
-        # The planner now outputs a brief user-facing acknowledgment sentence
-        # BEFORE its JSON plan. We stream those preview tokens to the client
-        # in real time — zero extra LLM calls, zero extra cost.
+        # Skip planner for simple community queries (saves ~3.7s avg)
+        # Never skip for permit/village_code — they need structured search plans for quality
+        skip_planner = (
+            agent_name == "community" and (request.fast_mode or len(request.message) < 60)
+        )
         search_plan_text = None
         specialist_model_role = None
         _t_planner = _time.monotonic()
@@ -566,35 +568,40 @@ async def _handle_chat_stream(request: ChatRequest, user: dict | None = None) ->
         async def _on_preview_token(text: str):
             await _preview_queue.put(text)
 
-        async def _run_planner():
-            try:
-                return await _planner_agent.run(
-                    refined_query,
-                    village=request.village,
-                    agent_type=agent_name,
-                    on_preview_token=_on_preview_token,
-                )
-            finally:
-                await _preview_queue.put(None)  # sentinel
+        plan = None
+        if skip_planner:
+            _dur_planner = 0
+            record_pipeline_event("pipeline_stage", "planner", duration_ms=0, metadata={"complexity": "skipped_fast"})
+        else:
+            async def _run_planner():
+                try:
+                    return await _planner_agent.run(
+                        refined_query,
+                        village=request.village,
+                        agent_type=agent_name,
+                        on_preview_token=_on_preview_token,
+                    )
+                finally:
+                    await _preview_queue.put(None)  # sentinel
 
-        planner_task = asyncio.create_task(_run_planner())
+            planner_task = asyncio.create_task(_run_planner())
 
-        # Stream preview tokens to user while planner runs
-        while True:
-            chunk = await _preview_queue.get()
-            if chunk is None:
-                break
-            yield _sse_event("token", {"text": chunk, "preview": True})
+            # Stream preview tokens to user while planner runs
+            while True:
+                chunk = await _preview_queue.get()
+                if chunk is None:
+                    break
+                yield _sse_event("token", {"text": chunk, "preview": True})
 
-        plan = await planner_task
-        _dur_planner = int((_time.monotonic() - _t_planner) * 1000)
-        record_pipeline_event(
-            "pipeline_stage", "planner", duration_ms=_dur_planner,
-            metadata={"complexity": plan.complexity if plan else "skipped"},
-        )
+            plan = await planner_task
+            _dur_planner = int((_time.monotonic() - _t_planner) * 1000)
+            record_pipeline_event(
+                "pipeline_stage", "planner", duration_ms=_dur_planner,
+                metadata={"complexity": plan.complexity if plan else "skipped"},
+            )
 
-        # Signal frontend to clear preview text before specialist streams real answer
-        yield _sse_event("clear_tokens", {})
+            # Signal frontend to clear preview text before specialist streams real answer
+            yield _sse_event("clear_tokens", {})
 
         if plan:
             search_plan_text = plan.raw_text
@@ -612,7 +619,7 @@ async def _handle_chat_stream(request: ChatRequest, user: dict | None = None) ->
                 } if is_debug else None,
             })
         else:
-            yield _sse_event("step", {"stage": "planner", "status": "skipped", "label": "Quick lookup"})
+            yield _sse_event("step", {"stage": "planner", "status": "skipped", "label": "Let me find that"})
 
         if is_debug:
             yield _sse_event("debug", {
@@ -689,8 +696,9 @@ async def _handle_chat_stream(request: ChatRequest, user: dict | None = None) ->
             "label": "Search complete" if not is_debug else f"Completed ({tool_count} tool calls)",
         })
 
-        # Step 4: Critic (skip for simple community queries without a plan)
-        skip_critic = (agent_name == "community" and not plan) or agent_name == "report"
+        # Step 4: Critic — only for permit/village_code where accuracy is critical
+        # Community, general, report, off_topic don't need a second LLM review
+        skip_critic = agent_name not in ("permit", "village_code") or request.fast_mode
         if not skip_critic:
             yield _sse_event("step", {"stage": "critic", "status": "running", "label": "Reviewing answer..."})
             _t_critic = _time.monotonic()
