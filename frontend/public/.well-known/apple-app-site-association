@@ -3,7 +3,7 @@
     "apps": [],
     "details": [
       {
-        "appID": "TEAMID.ai.greatneck.app",
+        "appID": "JB8HFH576L.ai.greatneck.app",
         "paths": ["/auth/callback/*", "/auth/callback"]
       }
     ]
