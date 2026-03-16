@@ -10,6 +10,8 @@ interface StepReelsProps {
   mode: "full" | "fit";
   onNav: (idx: number) => void;
   renderContent: (idx: number) => React.ReactNode;
+  /** If set, this index is an overview page (not counted in step numbers) */
+  overviewIndex?: number;
 }
 
 export default function StepReels({
@@ -19,6 +21,7 @@ export default function StepReels({
   mode,
   onNav,
   renderContent,
+  overviewIndex,
 }: StepReelsProps) {
   const [direction, setDirection] = useState<"up" | "down" | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -29,6 +32,9 @@ export default function StepReels({
   const accentColor = color || "rgb(var(--color-sage))";
   const total = steps.length;
   const step = steps[activeIdx];
+  const isOverview = overviewIndex !== undefined && activeIdx === overviewIndex;
+  const realStepCount = overviewIndex !== undefined ? total - 1 : total;
+  const displayStepNum = overviewIndex !== undefined && activeIdx > overviewIndex ? activeIdx : activeIdx + 1;
 
   const navigate = useCallback(
     (idx: number) => {
@@ -107,23 +113,26 @@ export default function StepReels({
         <div
           className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold shrink-0 transition-colors duration-200"
           style={{
-            backgroundColor:
-              step.status === "done"
+            backgroundColor: isOverview
+              ? accentColor
+              : step.status === "done"
                 ? accentColor
                 : step.status === "in_progress"
                 ? "rgb(245 158 11)"
                 : undefined,
-            color:
-              step.status === "done" || step.status === "in_progress"
-                ? "white"
-                : undefined,
-            border:
-              step.status !== "done" && step.status !== "in_progress"
-                ? "2px solid rgb(var(--color-surface-300))"
-                : undefined,
+            color: isOverview || step.status === "done" || step.status === "in_progress"
+              ? "white"
+              : undefined,
+            border: !isOverview && step.status !== "done" && step.status !== "in_progress"
+              ? "2px solid rgb(var(--color-surface-300))"
+              : undefined,
           }}
         >
-          {step.status === "done" ? (
+          {isOverview ? (
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          ) : step.status === "done" ? (
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
             </svg>
@@ -133,14 +142,14 @@ export default function StepReels({
               <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-white" />
             </span>
           ) : (
-            <span className="text-text-600 text-xs">{activeIdx + 1}</span>
+            <span className="text-text-600 text-xs">{displayStepNum}</span>
           )}
         </div>
 
         <div className="flex-1 min-w-0">
           <span
             className={`text-[15px] font-semibold block leading-tight ${
-              step.status === "done" || step.status === "skipped"
+              !isOverview && (step.status === "done" || step.status === "skipped")
                 ? "text-text-500 line-through"
                 : "text-text-900"
             }`}
@@ -148,7 +157,7 @@ export default function StepReels({
             {step.title}
           </span>
           <span className="text-[11px] text-text-400">
-            Step {activeIdx + 1} of {total}
+            {isOverview ? `${realStepCount} steps` : `Step ${displayStepNum} of ${realStepCount}`}
           </span>
         </div>
 

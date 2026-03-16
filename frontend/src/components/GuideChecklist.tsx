@@ -13,12 +13,14 @@ import StepReels from "./StepReels";
 interface GuideChecklistProps {
   guideId: string;
   guideTitle?: string;
+  guideDescription?: string;
+  guideAuthor?: string;
   steps: GuideStep[];
   color?: string;
   initialStepId?: string | null;
 }
 
-const STATUS_OPTIONS: StepStatus[] = ["todo", "in_progress", "done"];
+const STATUS_OPTIONS: StepStatus[] = ["todo", "done"];
 
 const STATUS_LABEL_KEYS: Record<string, string> = {
   todo: "guides.status.todo",
@@ -26,15 +28,15 @@ const STATUS_LABEL_KEYS: Record<string, string> = {
   done: "guides.status.done",
 };
 
-export default function GuideChecklist({ guideId, guideTitle, steps: initialSteps, color, initialStepId }: GuideChecklistProps) {
+export default function GuideChecklist({ guideId, guideTitle, guideDescription, guideAuthor, steps: initialSteps, color, initialStepId }: GuideChecklistProps) {
   const router = useRouter();
   const { t } = useLanguage();
   const { showToast } = useToast();
   const [steps, setSteps] = useState(initialSteps);
   const [activeIdx, setActiveIdx] = useState<number>(() => {
-    if (!initialStepId) return 0;
+    if (!initialStepId) return guideDescription ? -1 : 0; // start at overview if available
     const idx = initialSteps.findIndex((s) => s.id === initialStepId);
-    return idx >= 0 ? idx : 0;
+    return idx >= 0 ? idx : (guideDescription ? -1 : 0);
   });
   const [editingNote, setEditingNote] = useState<number | null>(null);
   const [noteText, setNoteText] = useState("");
@@ -114,17 +116,53 @@ export default function GuideChecklist({ guideId, guideTitle, steps: initialStep
     router.push("/chat/");
   };
 
+  // Build steps array with overview at index 0
+  const overviewStep: GuideStep = {
+    id: "_overview", title: "Overview", description: guideDescription || "",
+    details: "", links: [], category: "", priority: "medium",
+    status: "todo", remind_at: null, note: "", chat_prompt: "",
+  };
+  const allSteps = guideDescription ? [overviewStep, ...steps] : steps;
+  const hasOverview = !!guideDescription;
+  // Offset activeIdx for the overview
+  const reelIdx = hasOverview ? activeIdx + 1 : activeIdx;
+
   return (
     <div className="h-full flex flex-col">
       {/* Reel view — immersive, fills container */}
       <StepReels
-        steps={steps}
-        activeIdx={activeIdx}
+        steps={allSteps}
+        activeIdx={reelIdx}
         color={color}
         mode="full"
-        onNav={setActiveIdx}
+        onNav={(idx) => setActiveIdx(hasOverview ? idx - 1 : idx)}
+        overviewIndex={hasOverview ? 0 : undefined}
         renderContent={(i) => {
-          const step = steps[i];
+          // Overview page
+          if (hasOverview && i === 0) {
+            return (
+              <div className="space-y-3">
+                <div className="bg-white rounded-xl px-4 py-4 border border-surface-200/60 shadow-sm">
+                  <h2 className="text-lg font-bold text-text-900 mb-2">{guideTitle}</h2>
+                  <StepMarkdown content={guideDescription || ""} className="text-text-600 text-[13px]" />
+                  {guideAuthor && (
+                    <div className="mt-3 pt-3 border-t border-surface-200/40">
+                      <a href={`/profile/?h=${guideAuthor}`} className="text-[11px] text-sage hover:text-sage-dark">
+                        by @{guideAuthor}
+                      </a>
+                    </div>
+                  )}
+                </div>
+                <p className="text-[11px] text-text-400 text-center">
+                  {steps.length} steps — swipe to start
+                </p>
+              </div>
+            );
+          }
+          // Real steps (offset by 1 if overview exists)
+          const realIdx = hasOverview ? i - 1 : i;
+          const step = steps[realIdx];
+          if (!step) return null;
           return (
             <div className="space-y-2.5">
               {/* Section 1: Description + Details */}
@@ -154,9 +192,9 @@ export default function GuideChecklist({ guideId, guideTitle, steps: initialStep
               </div>
 
               {/* Section 2: Note */}
-              {(editingNote === i || step.note) && (
+              {(editingNote === realIdx || step.note) && (
                 <div className="bg-white rounded-xl px-3.5 py-3 border border-surface-200/60 shadow-sm">
-                  {editingNote === i ? (
+                  {editingNote === realIdx ? (
                     <div
                       className="flex items-center gap-1.5 rounded-full bg-surface-50 px-3 py-1"
                       style={{ border: "1px solid rgba(0,0,0,0.05)" }}
@@ -168,10 +206,10 @@ export default function GuideChecklist({ guideId, guideTitle, steps: initialStep
                         placeholder=""
                         className="flex-1 text-[12px] bg-transparent px-1 py-1.5 focus:outline-none text-text-800"
                         autoFocus
-                        onKeyDown={(e) => e.key === "Enter" && saveNote(i)}
+                        onKeyDown={(e) => e.key === "Enter" && saveNote(realIdx)}
                       />
                       <button
-                        onClick={() => saveNote(i)}
+                        onClick={() => saveNote(realIdx)}
                         className="text-[10px] px-3 py-1 bg-sage text-white rounded-full hover:bg-sage-dark transition-colors"
                       >
                         {t("guides.save")}
@@ -180,7 +218,7 @@ export default function GuideChecklist({ guideId, guideTitle, steps: initialStep
                   ) : step.note ? (
                     <div
                       className="text-[11px] text-text-500 italic cursor-pointer hover:text-text-600"
-                      onClick={() => { setEditingNote(i); setNoteText(step.note); }}
+                      onClick={() => { setEditingNote(realIdx); setNoteText(step.note); }}
                     >
                       {step.note}
                     </div>
@@ -189,7 +227,7 @@ export default function GuideChecklist({ guideId, guideTitle, steps: initialStep
               )}
 
               {/* Section 3: Inline chat */}
-              {inlineChatIdx === i && step.chat_prompt && (
+              {inlineChatIdx === realIdx && step.chat_prompt && (
                 <div className="bg-white rounded-xl px-3.5 py-3 border border-surface-200/60 shadow-sm">
                   <StepInlineChat
                     chatPrompt={step.chat_prompt}
@@ -226,7 +264,7 @@ export default function GuideChecklist({ guideId, guideTitle, steps: initialStep
                     return (
                       <button
                         key={status}
-                        onClick={() => cycleStatus(i, status)}
+                        onClick={() => cycleStatus(realIdx, status)}
                         className={`flex-1 min-h-[34px] flex items-center justify-center gap-1 text-[10px] font-medium rounded-md transition-all duration-200 ${
                           isActive ? activeClass : "text-text-400 hover:text-text-600"
                         }`}
@@ -245,7 +283,7 @@ export default function GuideChecklist({ guideId, guideTitle, steps: initialStep
                 {/* Action icons */}
                 {step.remind_at ? (
                   <button
-                    onClick={() => handleClearReminder(i)}
+                    onClick={() => handleClearReminder(realIdx)}
                     className="w-8 h-8 flex items-center justify-center rounded-lg bg-amber-100 text-amber-600 hover:bg-amber-200 transition-colors relative"
                     title={new Date(step.remind_at).toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "America/New_York" })}
                   >
@@ -254,7 +292,7 @@ export default function GuideChecklist({ guideId, guideTitle, steps: initialStep
                   </button>
                 ) : (
                   <button
-                    onClick={() => setReminderPickerIdx(reminderPickerIdx === i ? null : i)}
+                    onClick={() => setReminderPickerIdx(reminderPickerIdx === realIdx ? null : realIdx)}
                     className="w-8 h-8 flex items-center justify-center rounded-lg text-text-400 hover:text-text-600 hover:bg-surface-100 transition-colors"
                     title={t("guides.action.remind")}
                   >
@@ -262,7 +300,7 @@ export default function GuideChecklist({ guideId, guideTitle, steps: initialStep
                   </button>
                 )}
                 <button
-                  onClick={() => { setEditingNote(i); setNoteText(step.note || ""); }}
+                  onClick={() => { setEditingNote(realIdx); setNoteText(step.note || ""); }}
                   className={`w-8 h-8 flex items-center justify-center rounded-lg transition-colors ${
                     step.note ? "text-sage bg-sage/10 hover:bg-sage/20" : "text-text-400 hover:text-text-600 hover:bg-surface-100"
                   }`}
@@ -272,7 +310,7 @@ export default function GuideChecklist({ guideId, guideTitle, steps: initialStep
                 </button>
                 {step.chat_prompt && (
                   <button
-                    onClick={() => setInlineChatIdx(inlineChatIdx === i ? null : i)}
+                    onClick={() => setInlineChatIdx(inlineChatIdx === realIdx ? null : realIdx)}
                     className="w-8 h-8 flex items-center justify-center rounded-lg text-text-400 hover:text-sage hover:bg-sage/10 transition-colors"
                     title={t("guides.action.askAI")}
                   >
@@ -282,7 +320,7 @@ export default function GuideChecklist({ guideId, guideTitle, steps: initialStep
               </div>
 
               {/* Reminder picker — expands below when active */}
-              {reminderPickerIdx === i && (
+              {reminderPickerIdx === realIdx && (
                 <div className="bg-white rounded-xl px-3.5 py-2.5 border border-amber-200/60 shadow-sm space-y-1.5">
                   <div className="flex gap-1.5">
                     {[
@@ -317,7 +355,7 @@ export default function GuideChecklist({ guideId, guideTitle, steps: initialStep
                         return (
                           <button
                             key={label}
-                            onClick={() => { setReminderDays(null); setReminder(i, d.toISOString()); }}
+                            onClick={() => { setReminderDays(null); setReminder(realIdx, d.toISOString()); }}
                             className="flex-1 min-h-[32px] text-[10px] rounded-lg bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200"
                           >
                             {label}

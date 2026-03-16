@@ -36,7 +36,7 @@ export default function PeekGuideView({
   const [showCommentsSheet, setShowCommentsSheet] = useState(false);
   const [showSaveSheet, setShowSaveSheet] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
-  const [descExpanded, setDescExpanded] = useState(false);
+  // Step 0 is the overview/description page, real steps start at 1
 
   const peekCommentCount = ((guide as unknown as Record<string, unknown>).comment_count as number) || 0;
 
@@ -77,18 +77,18 @@ export default function PeekGuideView({
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
           </button>
-          <div className="flex-1 min-w-0" onClick={() => setDescExpanded(!descExpanded)}>
-            <div className="flex items-center gap-2 cursor-pointer">
+          <div className="flex-1 min-w-0 cursor-pointer" onClick={() => setPreviewIdx(0)}>
+            <div className="flex items-center gap-2">
               <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: guide.color }} />
-              <h1 className={`text-sm font-bold text-text-900 leading-tight ${descExpanded ? "" : "truncate"}`}>{guide.title}</h1>
-              <svg className={`w-3 h-3 text-text-400 shrink-0 transition-transform ${descExpanded ? "rotate-90" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
+              <h1 className="text-sm font-bold text-text-900 leading-tight truncate">{guide.title}</h1>
+              {previewIdx > 0 && (
+                <span className="text-[9px] text-text-400 bg-surface-200/60 px-1.5 py-0.5 rounded-full shrink-0">info</span>
+              )}
             </div>
             {guide.author_handle && (
-              <a href={`/profile/?h=${guide.author_handle}`} onClick={(e) => e.stopPropagation()} className="text-[10px] text-text-400 hover:text-sage ml-4">
+              <span className="text-[10px] text-text-400 ml-4">
                 by @{guide.author_handle}
-              </a>
+              </span>
             )}
           </div>
           <button
@@ -111,23 +111,45 @@ export default function PeekGuideView({
 
       {/* Immersive content -- fills viewport */}
       <div className="flex-1 min-h-0 flex flex-col">
-        {/* Collapsible description — toggled from top bar */}
-        {guide.description && descExpanded && (
-          <div className="shrink-0 px-4 pt-1.5 pb-1 max-w-2xl mx-auto w-full animate-fadeIn">
-            <StepMarkdown content={guide.description} className="text-text-500 text-[12px]" />
-          </div>
-        )}
-
-        {/* Read-only step reels -- fills remaining space */}
+        {/* Step reels — step 0 is overview, real steps start at 1 */}
         <div className="flex-1 min-h-0 max-w-2xl mx-auto w-full">
           <StepReels
-            steps={guide.steps}
+            steps={[
+              // Virtual overview step at index 0
+              { id: "_overview", title: "Overview", description: guide.description || "", details: "", links: [], category: "", priority: "medium" as const, status: "todo" as const, remind_at: null, note: "", chat_prompt: "" },
+              ...guide.steps,
+            ]}
             activeIdx={previewIdx}
             color={guide.color}
             mode="fit"
             onNav={setPreviewIdx}
+            overviewIndex={0}
             renderContent={(i) => {
-              const s = guide.steps[i];
+              // Index 0 = overview page
+              if (i === 0) {
+                return (
+                  <div className="space-y-3">
+                    <div className="bg-white rounded-xl px-4 py-4 border border-surface-200/60 shadow-sm">
+                      <h2 className="text-lg font-bold text-text-900 mb-2">{guide.title}</h2>
+                      {guide.description && (
+                        <StepMarkdown content={guide.description} className="text-text-600 text-[13px]" />
+                      )}
+                      {guide.author_handle && (
+                        <div className="mt-3 pt-3 border-t border-surface-200/40">
+                          <a href={`/profile/?h=${guide.author_handle}`} className="text-[11px] text-sage hover:text-sage-dark">
+                            by @{guide.author_handle}
+                          </a>
+                        </div>
+                      )}
+                    </div>
+                    <p className="text-[11px] text-text-400 text-center">
+                      {guide.steps.length} steps — swipe to start
+                    </p>
+                  </div>
+                );
+              }
+              // Real steps (shifted by 1)
+              const s = guide.steps[i - 1];
               return (
                 <div className="space-y-2.5">
                   <div className="bg-white rounded-xl px-3.5 py-3 border border-surface-200/60 shadow-sm">

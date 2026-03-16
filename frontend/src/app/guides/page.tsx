@@ -199,7 +199,7 @@ function GuidesPageInner() {
     setExpandedGuide(guide);
     setEditingGuide(null);
     setEditingGuideId(null);
-    window.history.pushState({}, "", `/guides?id=${guide.id}&tab=${tab}`);
+    window.history.replaceState({}, "", `/guides?id=${guide.id}&tab=${tab}`);
   };
 
   const handleFork = async (guideId: string) => {
@@ -491,7 +491,7 @@ function GuidesPageInner() {
                 authorHandle={guide.author_handle}
                 likeCount={likeStatus[guide.id]?.count}
                 index={i}
-                onTap={() => { setPeekGuide(guide); window.history.pushState({}, "", `/guides?id=${guide.id}&tab=browse`); }}
+                onTap={() => { setPeekGuide(guide); window.history.replaceState({}, "", `/guides?id=${guide.id}&tab=browse`); }}
               />
             ))}
           </div>
