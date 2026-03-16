@@ -527,6 +527,7 @@ export interface PipelineData {
   tool_calls: { event_name: string; count: number; avg_duration_ms: number; success_rate: number }[];
   stage_durations: { event_name: string; count: number; avg_duration_ms: number; p95_duration_ms: number; max_duration_ms: number }[];
   cache_stats: { event_type: string; count: number }[];
+  stage_daily?: { day: string; event_name: string; count: number; avg_ms: number; p50_ms: number; p95_ms: number }[];
 }
 
 export interface RealtimeMetrics {

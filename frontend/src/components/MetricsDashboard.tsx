@@ -273,12 +273,40 @@ export default function MetricsDashboard() {
             )}
           </div>
 
+          {/* Daily Stage Latency Chart */}
+          {pipeline.stage_daily && pipeline.stage_daily.length > 0 && (
+            <div className="bg-surface-200 border border-surface-300 rounded-xl p-4 col-span-1 md:col-span-2">
+              <h3 className="text-xs text-text-500 uppercase tracking-wide mb-3">Pipeline Latency by Day (avg ms)</h3>
+              <ResponsiveContainer width="100%" height={250}>
+                <BarChart data={(() => {
+                  // Group by day, stack stages
+                  const days = new Map<string, Record<string, string | number>>();
+                  for (const d of pipeline.stage_daily!) {
+                    const key = d.day;
+                    if (!days.has(key)) days.set(key, { day: key } as Record<string, string | number>);
+                    days.get(key)![d.event_name] = Math.round(d.avg_ms);
+                  }
+                  return Array.from(days.values());
+                })()}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.06)" />
+                  <XAxis dataKey="day" tick={{ fontSize: 10 }} tickFormatter={(v: string) => v.slice(5)} />
+                  <YAxis tick={{ fontSize: 10 }} tickFormatter={(v: number) => v > 1000 ? `${(v/1000).toFixed(1)}s` : `${v}`} />
+                  <Tooltip formatter={(v) => { const n = Number(v); return n > 1000 ? `${(n/1000).toFixed(1)}s` : `${n}ms`; }} />
+                  <Bar dataKey="router" stackId="a" fill={COLORS.sage} name="Router" />
+                  <Bar dataKey="planner" stackId="a" fill={COLORS.blue} name="Planner" />
+                  <Bar dataKey="specialist" stackId="a" fill={COLORS.gold} name="Specialist" />
+                  <Bar dataKey="critic" stackId="a" fill={COLORS.purple} name="Critic" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          )}
+
           {/* Stage Latency Breakdown */}
           {pipeline.stage_durations && pipeline.stage_durations.length > 0 && (
             <div className="bg-surface-200 border border-surface-300 rounded-xl p-4">
               <h3 className="text-xs text-text-500 uppercase tracking-wide mb-3">Pipeline Stage Latency (avg ms)</h3>
               <div className="space-y-2">
-                {pipeline.stage_durations.map((s: { event_name: string; avg_duration_ms: string | number; count: number }) => {
+                {pipeline.stage_durations.map((s: { event_name: string; avg_duration_ms: string | number; count: number; p95_duration_ms?: string | number; max_duration_ms?: string | number }) => {
                   const avgMs = Math.round(Number(s.avg_duration_ms));
                   const maxMs = Math.max(...pipeline.stage_durations.map((d: { avg_duration_ms: string | number }) => Number(d.avg_duration_ms)));
                   const pct = maxMs > 0 ? (avgMs / maxMs) * 100 : 0;
@@ -297,7 +325,14 @@ export default function MetricsDashboard() {
                           {avgMs > 100 ? `${(avgMs / 1000).toFixed(1)}s` : `${avgMs}ms`}
                         </div>
                       </div>
-                      <span className="text-[10px] text-text-400 w-12 text-right">{s.count}×</span>
+                      {(() => {
+                        const p95 = Math.round(Number(s.p95_duration_ms || 0));
+                        return (
+                          <span className="text-[10px] text-text-400 w-20 text-right">
+                            {s.count}× · p95 {p95 > 1000 ? `${(p95/1000).toFixed(1)}s` : `${p95}ms`}
+                          </span>
+                        );
+                      })()}
                     </div>
                   );
                 })}

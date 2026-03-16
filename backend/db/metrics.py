@@ -500,6 +500,19 @@ def get_pipeline_events_summary(start_date: str, end_date: str) -> dict:
                GROUP BY event_type, event_name ORDER BY count DESC""",
             (start_date, end_date),
         )
+        result["stage_daily"] = _exec(
+            """SELECT created_at::date AS day, event_name,
+                      COUNT(*) AS count,
+                      AVG(duration_ms) AS avg_ms,
+                      PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY duration_ms) AS p50_ms,
+                      PERCENTILE_CONT(0.95) WITHIN GROUP (ORDER BY duration_ms) AS p95_ms
+               FROM pipeline_events
+               WHERE event_type = 'pipeline_stage'
+                 AND created_at::date >= %s AND created_at::date <= %s
+               GROUP BY day, event_name
+               ORDER BY day, event_name""",
+            (start_date, end_date),
+        )
     except Exception:
         pass
     return result
