@@ -319,69 +319,120 @@ export default function GuideChecklist({ guideId, guideTitle, guideDescription, 
                 )}
               </div>
 
-              {/* Reminder picker — expands below when active */}
+              {/* Reminder picker — step 1: when, step 2: time */}
               {reminderPickerIdx === realIdx && (
-                <div className="bg-white rounded-xl px-3.5 py-2.5 border border-amber-200/60 shadow-sm space-y-1.5">
-                  <div className="flex gap-1.5">
-                    {[
-                      { label: "Tomorrow", days: 1 },
-                      { label: "3 days", days: 3 },
-                      { label: "1 week", days: 7 },
-                    ].map(({ label, days }) => (
-                      <button
-                        key={label}
-                        onClick={() => setReminderDays(days)}
-                        className={`flex-1 min-h-[32px] text-[10px] rounded-lg border ${
-                          reminderDays === days
-                            ? "bg-amber-200 text-amber-800 border-amber-300"
-                            : "bg-amber-50 text-amber-700 hover:bg-amber-100 border-amber-200"
-                        }`}
-                      >
-                        {label}
-                      </button>
-                    ))}
-                  </div>
-                  {reminderDays !== null && (
-                    <div className="flex gap-1.5">
-                      {[
-                        { label: "9 AM", hour: 9 },
-                        { label: "12 PM", hour: 12 },
-                        { label: "5 PM", hour: 17 },
-                        { label: "8 PM", hour: 20 },
-                      ].map(({ label, hour }) => {
-                        const d = new Date();
-                        d.setDate(d.getDate() + reminderDays);
-                        d.setHours(hour, 0, 0, 0);
-                        return (
-                          <button
-                            key={label}
-                            onClick={() => { setReminderDays(null); setReminder(realIdx, d.toISOString()); }}
-                            className="flex-1 min-h-[32px] text-[10px] rounded-lg bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200"
-                          >
-                            {label}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  )}
-                  <div className="flex gap-1.5 items-center">
-                    <input
-                      type="datetime-local"
-                      className="flex-1 min-h-[32px] px-2 text-[10px] rounded-lg border border-surface-300 bg-white focus:outline-none focus:border-sage"
-                      onChange={(e) => {
-                        if (e.target.value) {
-                          setReminderDays(null);
-                          setReminder(i, new Date(e.target.value).toISOString());
-                        }
-                      }}
-                    />
+                <div
+                  className="rounded-[20px] bg-white px-3 py-3"
+                  style={{
+                    boxShadow: "0 4px 16px rgba(0,0,0,0.06), 0 1px 4px rgba(0,0,0,0.03)",
+                    border: "1px solid rgba(0,0,0,0.05)",
+                  }}
+                >
+                  <div className="flex items-center justify-between mb-2.5">
+                    <span className="text-[11px] font-semibold text-text-700">
+                      {reminderDays === null ? "When?" : "What time?"}
+                    </span>
                     <button
                       onClick={() => { setReminderPickerIdx(null); setReminderDays(null); }}
-                      className="min-h-[32px] px-2 text-[10px] text-text-400 hover:text-text-600"
+                      className="text-[11px] text-text-400 hover:text-text-600"
                     >
                       Cancel
                     </button>
                   </div>
+
+                  {/* Step 1: Pick day */}
+                  {reminderDays === null ? (
+                    <div className="flex flex-wrap gap-1.5">
+                      {[
+                        { label: "Today", days: 0 },
+                        { label: "Tomorrow", days: 1 },
+                        { label: "In 3 days", days: 3 },
+                        { label: "Next week", days: 7 },
+                        { label: "In 2 weeks", days: 14 },
+                        { label: "In a month", days: 30 },
+                      ].map(({ label, days }) => (
+                        <button
+                          key={label}
+                          onClick={() => setReminderDays(days)}
+                          className="text-[11px] px-3 py-2 rounded-full bg-surface-100 text-text-600 hover:bg-sage/10 hover:text-sage transition-colors"
+                        >
+                          {label}
+                        </button>
+                      ))}
+                      <button
+                        className="text-[11px] px-3 py-2 rounded-full bg-surface-100 text-text-600 hover:bg-sage/10 hover:text-sage transition-colors relative overflow-hidden"
+                        onClick={(e) => {
+                          const input = (e.currentTarget.querySelector("input") as HTMLInputElement);
+                          input?.showPicker?.();
+                          input?.click();
+                        }}
+                      >
+                        Pick date
+                        <input
+                          type="date"
+                          className="absolute inset-0 opacity-0 cursor-pointer"
+                          onChange={(e) => {
+                            if (e.target.value) {
+                              const diff = Math.max(1, Math.round((new Date(e.target.value).getTime() - Date.now()) / 86400000));
+                              setReminderDays(diff);
+                            }
+                          }}
+                        />
+                      </button>
+                    </div>
+                  ) : (
+                    /* Step 2: Pick time */
+                    <div className="space-y-2">
+                      <p className="text-[10px] text-text-400">
+                        {(() => {
+                          const d = new Date();
+                          d.setDate(d.getDate() + reminderDays);
+                          return d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+                        })()}
+                        {" · "}
+                        <button onClick={() => setReminderDays(null)} className="text-sage hover:underline">change</button>
+                      </p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {[
+                          { label: "9 AM", hour: 9 },
+                          { label: "12 PM", hour: 12 },
+                          { label: "3 PM", hour: 15 },
+                          { label: "6 PM", hour: 18 },
+                          { label: "8 PM", hour: 20 },
+                        ].map(({ label, hour }) => {
+                          const d = new Date();
+                          d.setDate(d.getDate() + reminderDays);
+                          d.setHours(hour, 0, 0, 0);
+                          return (
+                            <button
+                              key={label}
+                              onClick={() => { setReminderDays(null); setReminder(realIdx, d.toISOString()); }}
+                              className="text-[11px] px-3 py-2 rounded-full bg-surface-100 text-text-600 hover:bg-sage/10 hover:text-sage transition-colors"
+                            >
+                              {label}
+                            </button>
+                          );
+                        })}
+                        {[
+                          { label: "7 AM", hour: 7 },
+                          { label: "10 AM", hour: 10 },
+                        ].map(({ label, hour }) => {
+                          const d = new Date();
+                          d.setDate(d.getDate() + reminderDays);
+                          d.setHours(hour, 0, 0, 0);
+                          return (
+                            <button
+                              key={label}
+                              onClick={() => { setReminderDays(null); setReminder(realIdx, d.toISOString()); }}
+                              className="text-[11px] px-3 py-2 rounded-full bg-surface-100 text-text-600 hover:bg-sage/10 hover:text-sage transition-colors"
+                            >
+                              {label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
