@@ -189,9 +189,17 @@ export default function PeekGuideView({
         </div>
       </div>
 
-      {/* Fixed bottom bar -- like, comments, save CTA */}
-      <div className="shrink-0 pb-[max(1.5rem,env(safe-area-inset-bottom))] bg-surface-50/85 backdrop-blur-lg border-t border-surface-200/40 z-20">
-        <div className="flex items-center gap-3 px-4 py-2.5 max-w-2xl mx-auto">
+      {/* Fixed bottom bar -- floating pill style */}
+      <div
+        className="shrink-0 px-3 z-20"
+        style={{ paddingBottom: "max(1rem, env(safe-area-inset-bottom, 0px))" }}
+      >
+        <div
+          className="flex items-center gap-3 px-4 py-2.5 max-w-2xl mx-auto rounded-full bg-white"
+          style={{
+            boxShadow: "0 8px 24px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.04)",
+            border: "1px solid rgba(0,0,0,0.05)",
+          }}>
           {/* Like */}
           <button
             onClick={() => onToggleLike(guide.id)}
