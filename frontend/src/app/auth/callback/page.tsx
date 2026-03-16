@@ -12,19 +12,22 @@ function CallbackHandler() {
     const refresh = searchParams.get("refresh");
 
     if (token) {
-      // Store tokens
+      // Store tokens for web (in case this loads in a regular browser)
       localStorage.setItem("gn_token", token);
       if (refresh) localStorage.setItem("gn_refresh", refresh);
 
-      // Close the system browser if opened via @capacitor/browser
-      import("@capacitor/browser")
-        .then(({ Browser }) => Browser.close())
-        .catch(() => {});
+      // Try custom URL scheme to redirect back to native app
+      // SFSafariViewController will hand off to iOS which opens the app
+      const params = new URLSearchParams();
+      params.set("token", token);
+      if (refresh) params.set("refresh", refresh);
+      window.location.href = `greatneck://callback?${params.toString()}`;
 
-      // Redirect to home
-      window.location.href = "/";
+      // Fallback: if custom scheme didn't work (web browser), go home
+      setTimeout(() => {
+        window.location.href = "/";
+      }, 1500);
     } else {
-      // No token — redirect home
       window.location.href = "/";
     }
   }, [searchParams]);

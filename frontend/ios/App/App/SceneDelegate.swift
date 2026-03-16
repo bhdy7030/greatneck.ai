@@ -7,20 +7,20 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
     func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions) {
         guard let windowScene = scene as? UIWindowScene else { return }
-        window = UIWindow(windowScene: windowScene)
 
-        let bridge = CAPBridgeViewController()
-        window?.rootViewController = bridge
+        let storyboard = UIStoryboard(name: "Main", bundle: nil)
+        let vc = storyboard.instantiateInitialViewController()!
+
+        window = UIWindow(windowScene: windowScene)
+        window?.rootViewController = vc
         window?.makeKeyAndVisible()
     }
 
     func scene(_ scene: UIScene, continue userActivity: NSUserActivity) {
-        // Universal Links — forward to Capacitor
         NotificationCenter.default.post(name: NSNotification.Name.capacitorContinueActivity, object: userActivity)
     }
 
     func scene(_ scene: UIScene, openURLContexts URLContexts: Set<UIOpenURLContext>) {
-        // Custom URL schemes — forward to Capacitor
         for context in URLContexts {
             NotificationCenter.default.post(name: NSNotification.Name.capacitorOpenURL, object: [
                 "url": context.url,

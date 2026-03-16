@@ -93,7 +93,7 @@ export default function RootLayout({
           <ThemeProvider>
             <InviteGate>
             {/* Navigation Header */}
-            <header className="flex-shrink-0 bg-surface-50 border-b border-surface-300 relative z-30 pt-[env(safe-area-inset-top)]">
+            <header className="flex-shrink-0 bg-surface-50 border-b border-surface-300 relative z-30">
               <div className="max-w-4xl mx-auto px-4 py-2 md:py-3 flex items-center justify-between min-h-[48px]">
                 <Link href="/" className="flex items-center gap-2">
                   <svg
