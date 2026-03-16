@@ -4,9 +4,9 @@ from __future__ import annotations
 import json
 import logging
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, Awaitable, Callable, Optional
 
-from llm.provider import llm_call, llm_call_streaming
+from llm.provider import llm_call_streaming
 
 logger = logging.getLogger(__name__)
 
@@ -59,7 +59,9 @@ Analyze the user's question and determine:
 3. What specific searches should be performed, in what order
 4. What web search queries would be good fallbacks if local data is insufficient
 
-You MUST respond with ONLY a valid JSON object in this exact format:
+You MUST respond in exactly this format:
+1. First, write ONE short sentence (under 25 words) acknowledging the user's topic. Be specific. Do NOT use generic phrases like "Great question". Example: "Let me check the fence permit requirements and setback rules for your village."
+2. Then on a NEW LINE, output ONLY a valid JSON object in this exact format:
 {
   "project_type": "short description of the project/topic",
   "applicable_domains": ["domain1", "domain2"],
@@ -99,7 +101,7 @@ DATA FRESHNESS — critical:
   - "low": straightforward single-domain lookup (e.g., "what's the noise ordinance?")
   - "medium": multi-domain but well-defined (e.g., "do I need a permit for a fence?")
   - "high": ambiguous, multi-faceted, or requires cross-referencing multiple code areas (e.g., "I want to add a second story with a deck and convert my garage")
-- Do NOT include any text outside the JSON object"""
+- Do NOT include any text outside the acknowledgment line and the JSON object"""
 
 
 class PlannerAgent:
@@ -108,8 +110,22 @@ class PlannerAgent:
     name = "planner"
     model_role = "planner"
 
-    async def run(self, query: str, village: str = "", agent_type: str = "") -> SearchPlan | None:
-        """Generate a search plan for the given query. Returns None if planning is skipped."""
+    # Callback type: receives preview token chunks as they stream
+    PreviewCallback = Optional[Callable[[str], Awaitable[None]]]
+
+    async def run(
+        self,
+        query: str,
+        village: str = "",
+        agent_type: str = "",
+        on_preview_token: PreviewCallback = None,
+    ) -> SearchPlan | None:
+        """Generate a search plan for the given query.
+
+        Streams a brief user-facing acknowledgment sentence via *on_preview_token*
+        before the JSON plan, so the caller can push tokens to the client immediately.
+        Returns None if planning is skipped.
+        """
         if agent_type not in PLANNABLE_AGENTS:
             return None
 
@@ -137,15 +153,41 @@ class PlannerAgent:
         ]
 
         try:
-            response_text = await llm_call(
+            # Stream the response so we can emit preview tokens in real time.
+            # The model outputs: <acknowledgment sentence>\n<JSON>
+            # We stream everything before the first '{' as preview tokens,
+            # then collect the rest as JSON for parsing.
+            full_text = ""
+            json_started = False
+            json_buf = ""
+
+            async for chunk in llm_call_streaming(
                 messages=messages,
                 role=self.model_role,
                 temperature=0.0,
                 max_tokens=1024,
-            )
+            ):
+                full_text += chunk
 
-            # Parse JSON (handle markdown code blocks)
-            cleaned = response_text.strip()
+                if not json_started:
+                    # Check if this chunk contains the start of JSON
+                    brace_pos = chunk.find("{")
+                    if brace_pos != -1:
+                        # Everything before '{' is preview text
+                        preview_part = chunk[:brace_pos]
+                        if preview_part and on_preview_token:
+                            await on_preview_token(preview_part)
+                        json_started = True
+                        json_buf = chunk[brace_pos:]
+                    else:
+                        # Still in preview text — stream to user
+                        if on_preview_token:
+                            await on_preview_token(chunk)
+                else:
+                    json_buf += chunk
+
+            # Parse the JSON portion
+            cleaned = json_buf.strip()
             if cleaned.startswith("```"):
                 cleaned = cleaned.split("\n", 1)[-1]
                 cleaned = cleaned.rsplit("```", 1)[0]

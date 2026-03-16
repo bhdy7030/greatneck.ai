@@ -550,57 +550,39 @@ async def _handle_chat_stream(request: ChatRequest, user: dict | None = None) ->
                 + "\n\n---\n\n".join(rag_context_parts)
             )
 
-        # Step 2: Planner + streaming preview in parallel
-        # While the planner generates a search plan (~1s), we simultaneously
-        # stream a brief user-facing acknowledgment using a fast model (Haiku).
-        # This drops perceived TTFT from ~1.5s to ~0.3s.
+        # Step 2: Planner with streaming preview
+        # The planner now outputs a brief user-facing acknowledgment sentence
+        # BEFORE its JSON plan. We stream those preview tokens to the client
+        # in real time — zero extra LLM calls, zero extra cost.
         search_plan_text = None
         specialist_model_role = None
         _t_planner = _time.monotonic()
 
-        # Build a brief preview prompt for the fast model
-        from llm.provider import llm_call_streaming
-        _preview_messages = [
-            {"role": "system", "content": (
-                "You are a brief assistant. Write ONE short sentence (under 25 words) "
-                "acknowledging the user's question and saying you'll look into it. "
-                "Be specific to their topic. Do NOT answer the question. "
-                "Do NOT use generic phrases like 'Great question'. "
-                "Example: 'Let me check the fence permit requirements and setback rules for your village.'"
-            )},
-            {"role": "user", "content": refined_query},
-        ]
+        # Bridge planner preview tokens → SSE stream via queue
+        _preview_queue: asyncio.Queue[str | None] = asyncio.Queue()
 
-        # Run planner and preview generation concurrently
-        preview_queue: asyncio.Queue[str | None] = asyncio.Queue()
+        async def _on_preview_token(text: str):
+            await _preview_queue.put(text)
 
-        async def _generate_preview():
+        async def _run_planner():
             try:
-                async for chunk in llm_call_streaming(
-                    messages=_preview_messages,
-                    role="simple",  # Haiku — fast TTFT
-                    temperature=0.3,
-                    max_tokens=60,
-                ):
-                    await preview_queue.put(chunk)
-            except Exception:
-                logger.debug("Preview generation failed (non-critical)", exc_info=True)
+                return await _planner_agent.run(
+                    refined_query,
+                    village=request.village,
+                    agent_type=agent_name,
+                    on_preview_token=_on_preview_token,
+                )
             finally:
-                await preview_queue.put(None)
+                await _preview_queue.put(None)  # sentinel
 
-        preview_task = asyncio.create_task(_generate_preview())
-        planner_task = asyncio.create_task(
-            _planner_agent.run(refined_query, village=request.village, agent_type=agent_name)
-        )
+        planner_task = asyncio.create_task(_run_planner())
 
         # Stream preview tokens to user while planner runs
         while True:
-            chunk = await preview_queue.get()
+            chunk = await _preview_queue.get()
             if chunk is None:
                 break
             yield _sse_event("token", {"text": chunk, "preview": True})
-
-        await preview_task  # ensure clean completion
 
         plan = await planner_task
         _dur_planner = int((_time.monotonic() - _t_planner) * 1000)
