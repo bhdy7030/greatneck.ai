@@ -6,7 +6,7 @@ import logging
 from dataclasses import dataclass, field
 from typing import Any
 
-from llm.provider import llm_call
+from llm.provider import llm_call, llm_call_streaming
 
 logger = logging.getLogger(__name__)
 
@@ -117,13 +117,22 @@ class PlannerAgent:
         from zoneinfo import ZoneInfo
         current_year = datetime.now(ZoneInfo("America/New_York")).strftime('%Y')
 
-        system = PLANNER_SYSTEM_PROMPT
-        system += f"\n\nCurrent year: {current_year}. Use this in search queries for time-sensitive topics."
+        # Split system prompt into static (cacheable) and dynamic parts.
+        # The base PLANNER_SYSTEM_PROMPT is identical across all requests —
+        # marking it with cache_control saves ~0.5s on repeated calls
+        # (Anthropic prompt caching / Gemini implicit caching).
+        static_part = PLANNER_SYSTEM_PROMPT
+        dynamic_part = f"\n\nCurrent year: {current_year}. Use this in search queries for time-sensitive topics."
         if village:
-            system += f"\nThe user is asking about: {village}"
+            dynamic_part += f"\nThe user is asking about: {village}"
+
+        system_content = [
+            {"type": "text", "text": static_part, "cache_control": {"type": "ephemeral"}},
+            {"type": "text", "text": dynamic_part},
+        ]
 
         messages = [
-            {"role": "system", "content": system},
+            {"role": "system", "content": system_content},
             {"role": "user", "content": query},
         ]
 

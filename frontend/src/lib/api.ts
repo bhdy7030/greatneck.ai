@@ -317,6 +317,10 @@ export async function sendMessageStream(
           if (currentEventType === "token" && onToken) {
             onToken(data.text || "");
           }
+          if (currentEventType === "clear_tokens" && onToken) {
+            // Signal from backend: clear preview text before real answer streams
+            onToken("\0CLEAR");
+          }
           if (currentEventType === "response") {
             finalResponse = {
               response: data.response || "",

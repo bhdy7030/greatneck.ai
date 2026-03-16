@@ -550,16 +550,68 @@ async def _handle_chat_stream(request: ChatRequest, user: dict | None = None) ->
                 + "\n\n---\n\n".join(rag_context_parts)
             )
 
-        # Step 2: Planner
+        # Step 2: Planner + streaming preview in parallel
+        # While the planner generates a search plan (~1s), we simultaneously
+        # stream a brief user-facing acknowledgment using a fast model (Haiku).
+        # This drops perceived TTFT from ~1.5s to ~0.3s.
         search_plan_text = None
         specialist_model_role = None
         _t_planner = _time.monotonic()
-        plan = await _planner_agent.run(refined_query, village=request.village, agent_type=agent_name)
+
+        # Build a brief preview prompt for the fast model
+        from llm.provider import llm_call_streaming
+        _preview_messages = [
+            {"role": "system", "content": (
+                "You are a brief assistant. Write ONE short sentence (under 25 words) "
+                "acknowledging the user's question and saying you'll look into it. "
+                "Be specific to their topic. Do NOT answer the question. "
+                "Do NOT use generic phrases like 'Great question'. "
+                "Example: 'Let me check the fence permit requirements and setback rules for your village.'"
+            )},
+            {"role": "user", "content": refined_query},
+        ]
+
+        # Run planner and preview generation concurrently
+        preview_queue: asyncio.Queue[str | None] = asyncio.Queue()
+
+        async def _generate_preview():
+            try:
+                async for chunk in llm_call_streaming(
+                    messages=_preview_messages,
+                    role="simple",  # Haiku — fast TTFT
+                    temperature=0.3,
+                    max_tokens=60,
+                ):
+                    await preview_queue.put(chunk)
+            except Exception:
+                logger.debug("Preview generation failed (non-critical)", exc_info=True)
+            finally:
+                await preview_queue.put(None)
+
+        preview_task = asyncio.create_task(_generate_preview())
+        planner_task = asyncio.create_task(
+            _planner_agent.run(refined_query, village=request.village, agent_type=agent_name)
+        )
+
+        # Stream preview tokens to user while planner runs
+        while True:
+            chunk = await preview_queue.get()
+            if chunk is None:
+                break
+            yield _sse_event("token", {"text": chunk, "preview": True})
+
+        await preview_task  # ensure clean completion
+
+        plan = await planner_task
         _dur_planner = int((_time.monotonic() - _t_planner) * 1000)
         record_pipeline_event(
             "pipeline_stage", "planner", duration_ms=_dur_planner,
             metadata={"complexity": plan.complexity if plan else "skipped"},
         )
+
+        # Signal frontend to clear preview text before specialist streams real answer
+        yield _sse_event("clear_tokens", {})
+
         if plan:
             search_plan_text = plan.raw_text
             if plan.complexity != "high":
