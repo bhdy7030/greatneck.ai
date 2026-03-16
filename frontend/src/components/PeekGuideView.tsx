@@ -190,7 +190,7 @@ export default function PeekGuideView({
       </div>
 
       {/* Fixed bottom bar -- like, comments, save CTA */}
-      <div className="shrink-0 pb-[env(safe-area-inset-bottom)] bg-surface-50/85 backdrop-blur-lg border-t border-surface-200/40 z-20">
+      <div className="shrink-0 pb-[max(1.5rem,env(safe-area-inset-bottom))] bg-surface-50/85 backdrop-blur-lg border-t border-surface-200/40 z-20">
         <div className="flex items-center gap-3 px-4 py-2.5 max-w-2xl mx-auto">
           {/* Like */}
           <button
@@ -223,7 +223,7 @@ export default function PeekGuideView({
           {/* Save to wallet CTA */}
           <button
             onClick={() => setShowSaveSheet(true)}
-            className="px-5 py-2.5 min-h-[36px] rounded-xl font-semibold text-sm bg-sage text-white hover:bg-sage-dark active:scale-[0.97] transition-all duration-200 shadow-sm shadow-sage/15"
+            className="px-5 py-2.5 min-h-[36px] rounded-full font-semibold text-sm bg-sage text-white hover:bg-sage-dark active:scale-[0.97] transition-all duration-200 shadow-sm shadow-sage/15"
           >
             {t("guides.save.cta")}
           </button>
@@ -261,7 +261,7 @@ export default function PeekGuideView({
               onFork(guide.id);
               onClose();
             }}
-            className="w-full py-3 min-h-[48px] rounded-xl font-semibold text-sm bg-sage text-white hover:bg-sage-dark active:scale-[0.98] transition-all"
+            className="w-full py-3 min-h-[48px] rounded-full font-semibold text-sm bg-sage text-white hover:bg-sage-dark active:scale-[0.98] transition-all"
           >
             {t("guides.save.cta")}
           </button>

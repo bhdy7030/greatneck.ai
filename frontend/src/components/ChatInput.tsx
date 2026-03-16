@@ -101,104 +101,96 @@ export default function ChatInput({ onSend, disabled }: ChatInputProps) {
   };
 
   return (
-    <div className="border-t border-surface-200/60 bg-surface-100/80 backdrop-blur-lg p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
-      {imagePreview && (
-        <div className="mb-2 flex items-center gap-2">
-          <div className="relative">
-            <img
-              src={imagePreview}
-              alt="Selected"
-              className="w-16 h-16 object-cover rounded-lg border border-surface-300"
-            />
-            <button
-              onClick={clearImage}
-              className="absolute -top-1 -right-1 w-5 h-5 bg-red-600 text-white rounded-full flex items-center justify-center text-xs hover:bg-red-700 transition-colors"
-            >
-              x
-            </button>
+    <div
+      className="px-3"
+      style={{ paddingBottom: "max(1rem, env(safe-area-inset-bottom, 0px))" }}
+    >
+      {/* Floating pill container */}
+      <div
+        className="mx-auto max-w-3xl rounded-[28px] bg-white px-3 py-2"
+        style={{
+          boxShadow: "0 8px 24px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.04)",
+          border: "1px solid rgba(0,0,0,0.05)",
+        }}
+      >
+        {/* Image preview */}
+        {imagePreview && (
+          <div className="mb-2 px-1 pt-1 flex items-center gap-2">
+            <div className="relative">
+              <img
+                src={imagePreview}
+                alt="Selected"
+                className="w-14 h-14 object-cover rounded-xl border border-surface-200"
+              />
+              <button
+                onClick={clearImage}
+                className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center text-xs hover:bg-red-600 transition-colors"
+              >
+                ×
+              </button>
+            </div>
+            <span className="text-[11px] text-text-400">{t("input.imageAttached")}</span>
           </div>
-          <span className="text-xs text-text-500">{t("input.imageAttached")}</span>
-        </div>
-      )}
+        )}
 
-      <div className="flex items-end gap-2">
-        <button
-          onClick={async () => {
-            if (isNative()) {
-              const result = await takePhoto();
-              if (result) {
-                setImageBase64(result.base64);
-                setImageMime(result.mime);
-                setImagePreview(`data:${result.mime};base64,${result.base64}`);
+        {/* Input row */}
+        <div className="flex items-end gap-1.5">
+          {/* Camera button */}
+          <button
+            onClick={async () => {
+              if (isNative()) {
+                const result = await takePhoto();
+                if (result) {
+                  setImageBase64(result.base64);
+                  setImageMime(result.mime);
+                  setImagePreview(`data:${result.mime};base64,${result.base64}`);
+                }
+              } else {
+                fileInputRef.current?.click();
               }
-            } else {
-              fileInputRef.current?.click();
-            }
-          }}
-          disabled={disabled}
-          className="flex-shrink-0 p-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-text-500 hover:text-sage transition-colors disabled:opacity-50"
-          title="Attach image"
-        >
-          <svg
-            className="w-6 h-6"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
+            }}
+            disabled={disabled}
+            className="flex-shrink-0 w-9 h-9 flex items-center justify-center text-text-400 hover:text-sage rounded-full hover:bg-surface-100 transition-colors disabled:opacity-40"
+            title="Attach image"
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
-            />
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
-            />
-          </svg>
-        </button>
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*"
-          className="hidden"
-          onChange={handleImageSelect}
-        />
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+          </button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handleImageSelect}
+          />
 
-        <textarea
-          ref={textareaRef}
-          value={text}
-          onChange={handleTextChange}
-          onKeyDown={handleKeyDown}
-          placeholder=""
-          disabled={disabled}
-          rows={1}
-          className="flex-1 bg-surface-50 text-text-800 rounded-xl px-4 py-2.5 resize-none focus:outline-none focus:ring-2 focus:ring-sage/40 placeholder-text-500 text-base md:text-sm disabled:opacity-50 border border-surface-300/60 shadow-sm transition-shadow duration-200 focus:shadow-md focus:shadow-sage/5"
-          style={{ minHeight: "42px", maxHeight: "160px", fontSize: "max(16px, 0.875rem)" }}
-        />
+          {/* Textarea */}
+          <textarea
+            ref={textareaRef}
+            value={text}
+            onChange={handleTextChange}
+            onKeyDown={handleKeyDown}
+            placeholder=""
+            disabled={disabled}
+            rows={1}
+            className="flex-1 bg-transparent text-text-800 px-1 py-2 resize-none focus:outline-none placeholder-text-400 disabled:opacity-50 leading-snug"
+            style={{ minHeight: "36px", maxHeight: "160px", fontSize: "16px" }}
+          />
 
-        <button
-          onClick={handleSend}
-          disabled={disabled || (!text.trim() && !imageBase64)}
-          className="flex-shrink-0 p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center bg-sage text-white rounded-xl hover:bg-sage-dark transition-all duration-200 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 shadow-sm shadow-sage/15"
-          title="Send message"
-        >
-          <svg
-            className="w-5 h-5"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
+          {/* Send button */}
+          <button
+            onClick={handleSend}
+            disabled={disabled || (!text.trim() && !imageBase64)}
+            className="flex-shrink-0 w-9 h-9 flex items-center justify-center bg-sage text-white rounded-full hover:bg-sage-dark transition-all duration-200 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
+            title="Send"
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
-            />
-          </svg>
-        </button>
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+            </svg>
+          </button>
+        </div>
       </div>
 
       {/* Image annotator modal */}

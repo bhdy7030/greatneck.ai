@@ -164,6 +164,13 @@ body {
   padding-top: env(safe-area-inset-top, 0px);
 }
 
+/* Prevent iOS auto-zoom on input focus — all inputs must be >= 16px */
+@supports (-webkit-touch-callout: none) {
+  input, textarea, select {
+    font-size: max(16px, 1em) !important;
+  }
+}
+
 body::before {
   content: "";
   position: fixed;

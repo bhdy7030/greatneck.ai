@@ -385,7 +385,7 @@ function GuidesPageInner() {
           </div>
           <button
             onClick={() => router.push("/guides/create")}
-            className="flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-white bg-sage rounded-xl hover:bg-sage-dark transition-all duration-200 hover:scale-105 active:scale-95 min-h-[44px] shadow-sm shadow-sage/10"
+            className="flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-white bg-sage rounded-full hover:bg-sage-dark transition-all duration-200 hover:scale-105 active:scale-95 min-h-[44px] shadow-sm shadow-sage/10"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -395,12 +395,12 @@ function GuidesPageInner() {
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-1 mb-5 bg-surface-200/60 rounded-xl p-1">
+        <div className="flex gap-1 mb-5 bg-surface-200/60 rounded-full p-1">
           <button
             onClick={() => { setTab("wallet"); window.history.replaceState({}, "", "/guides?tab=wallet"); }}
-            className={`flex-1 text-sm font-medium py-2.5 min-h-[44px] rounded-lg transition-all duration-200 ${
+            className={`flex-1 text-sm font-medium py-2.5 min-h-[44px] rounded-full transition-all duration-200 ${
               tab === "wallet"
-                ? "bg-surface-50 text-text-900 shadow-sm"
+                ? "bg-white text-text-900 shadow-sm"
                 : "text-text-500 hover:text-text-700"
             }`}
           >
@@ -408,9 +408,9 @@ function GuidesPageInner() {
           </button>
           <button
             onClick={() => { setTab("browse"); window.history.replaceState({}, "", "/guides?tab=browse"); }}
-            className={`flex-1 text-sm font-medium py-2.5 min-h-[44px] rounded-lg transition-all duration-200 ${
+            className={`flex-1 text-sm font-medium py-2.5 min-h-[44px] rounded-full transition-all duration-200 ${
               tab === "browse"
-                ? "bg-surface-50 text-text-900 shadow-sm"
+                ? "bg-white text-text-900 shadow-sm"
                 : "text-text-500 hover:text-text-700"
             }`}
           >

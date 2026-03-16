@@ -86,12 +86,12 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className={`${inter.className} ${sourceSerif.variable} h-full flex flex-col pb-[env(safe-area-inset-bottom)]`}>
+      <body className={`${inter.className} ${sourceSerif.variable} h-full flex flex-col pb-[max(1.5rem,env(safe-area-inset-bottom))]`}>
         <AuthProvider>
           <ToastProvider>
           <LanguageProvider>
           <ThemeProvider>
-            <InviteGate>
+            {/* <InviteGate> */}
             {/* Navigation Header */}
             <header className="flex-shrink-0 bg-surface-50 border-b border-surface-300 relative z-30">
               <div className="max-w-4xl mx-auto px-4 py-2 md:py-3 flex items-center justify-between min-h-[48px]">
@@ -130,7 +130,7 @@ export default function RootLayout({
                 {children}
               </ErrorBoundary>
             </main>
-            </InviteGate>
+            {/* </InviteGate> */}
           </ThemeProvider>
           </LanguageProvider>
           </ToastProvider>

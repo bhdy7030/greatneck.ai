@@ -157,19 +157,22 @@ export default function GuideChecklist({ guideId, guideTitle, steps: initialStep
               {(editingNote === i || step.note) && (
                 <div className="bg-white rounded-xl px-3.5 py-3 border border-surface-200/60 shadow-sm">
                   {editingNote === i ? (
-                    <div className="flex gap-1.5">
+                    <div
+                      className="flex items-center gap-1.5 rounded-full bg-surface-50 px-3 py-1"
+                      style={{ border: "1px solid rgba(0,0,0,0.05)" }}
+                    >
                       <input
                         type="text"
                         value={noteText}
                         onChange={(e) => setNoteText(e.target.value)}
-                        placeholder={t("guides.notePlaceholder")}
-                        className="flex-1 text-[11px] px-2 py-1.5 border border-surface-300 rounded-lg bg-white focus:outline-none focus:border-sage"
+                        placeholder=""
+                        className="flex-1 text-[12px] bg-transparent px-1 py-1.5 focus:outline-none text-text-800"
                         autoFocus
                         onKeyDown={(e) => e.key === "Enter" && saveNote(i)}
                       />
                       <button
                         onClick={() => saveNote(i)}
-                        className="text-[10px] px-3 py-1.5 bg-sage text-white rounded-lg hover:bg-sage-dark"
+                        className="text-[10px] px-3 py-1 bg-sage text-white rounded-full hover:bg-sage-dark transition-colors"
                       >
                         {t("guides.save")}
                       </button>
@@ -201,147 +204,148 @@ export default function GuideChecklist({ guideId, guideTitle, steps: initialStep
                 </div>
               )}
 
-              {/* Section 4: Status + Actions */}
-              <div className="bg-white rounded-xl px-3.5 py-3 border border-surface-200/60 shadow-sm space-y-2">
-                <div className="flex bg-surface-100 rounded-xl p-1 gap-1">
+              {/* Section 4: Status + Actions — single row */}
+              <div className="flex items-center gap-2 bg-white rounded-xl px-2.5 py-2 border border-surface-200/60 shadow-sm">
+                {/* Status segmented control */}
+                <div className="flex bg-surface-100 rounded-lg p-0.5 gap-0.5 flex-1">
                   {STATUS_OPTIONS.map((status) => {
                     const isActive = step.status === status;
-                    let activeClass = "";
+                    const icons: Record<string, React.ReactNode> = {
+                      todo: <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" strokeWidth={2} /></svg>,
+                      in_progress: <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>,
+                      done: <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>,
+                    };
+                    let activeClass = "text-text-500";
                     if (isActive) {
                       switch (status) {
-                        case "todo":
-                          activeClass = "bg-surface-50 text-text-700 shadow-sm border border-surface-300";
-                          break;
-                        case "in_progress":
-                          activeClass = "bg-amber-500 text-white shadow-sm";
-                          break;
-                        case "done":
-                          activeClass = "bg-sage text-white shadow-sm";
-                          break;
+                        case "todo": activeClass = "bg-white text-text-700 shadow-sm"; break;
+                        case "in_progress": activeClass = "bg-amber-500 text-white shadow-sm"; break;
+                        case "done": activeClass = "bg-sage text-white shadow-sm"; break;
                       }
                     }
                     return (
                       <button
                         key={status}
                         onClick={() => cycleStatus(i, status)}
-                        className={`flex-1 min-h-[44px] text-[11px] font-medium rounded-lg transition-all duration-200 ${
-                          isActive
-                            ? activeClass
-                            : "text-text-500 hover:text-text-700 hover:bg-surface-100"
+                        className={`flex-1 min-h-[34px] flex items-center justify-center gap-1 text-[10px] font-medium rounded-md transition-all duration-200 ${
+                          isActive ? activeClass : "text-text-400 hover:text-text-600"
                         }`}
+                        title={t(STATUS_LABEL_KEYS[status])}
                       >
-                        {t(STATUS_LABEL_KEYS[status])}
+                        {icons[status]}
+                        {isActive && <span className="hidden sm:inline">{t(STATUS_LABEL_KEYS[status])}</span>}
                       </button>
                     );
                   })}
                 </div>
 
-                <div className="flex gap-2">
-                  {step.remind_at ? (
-                    <button
-                      onClick={() => handleClearReminder(i)}
-                      className="flex-1 min-h-[44px] text-[11px] rounded-lg bg-amber-100 text-amber-700 hover:bg-amber-200 flex items-center justify-center gap-1.5"
-                    >
-                      <span>🔔</span>
-                      {new Date(step.remind_at).toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "America/New_York" })}{" "}
-                      {new Date(step.remind_at).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZone: "America/New_York" })}
-                      <span className="ml-0.5 text-amber-500 hover:text-red-500">✕</span>
-                    </button>
-                  ) : (
-                    <button
-                      onClick={() => setReminderPickerIdx(reminderPickerIdx === i ? null : i)}
-                      className="flex-1 min-h-[44px] text-[11px] rounded-lg bg-surface-100 text-text-600 hover:bg-surface-200 flex items-center justify-center gap-1.5"
-                    >
-                      <span>🔔</span>
-                      {t("guides.action.remind")}
-                    </button>
-                  )}
-                  <button
-                    onClick={() => { setEditingNote(i); setNoteText(step.note || ""); }}
-                    className="flex-1 min-h-[44px] text-[11px] rounded-lg bg-surface-100 text-text-600 hover:bg-surface-200 flex items-center justify-center gap-1.5"
-                  >
-                    <span>📝</span>
-                    {t("guides.action.note")}
-                  </button>
-                  {step.chat_prompt && (
-                    <button
-                      onClick={() => setInlineChatIdx(inlineChatIdx === i ? null : i)}
-                      className="flex-1 min-h-[44px] text-[11px] rounded-lg bg-surface-100 text-text-600 hover:bg-surface-200 flex items-center justify-center gap-1.5"
-                    >
-                      <span>✨</span>
-                      {t("guides.action.askAI")}
-                    </button>
-                  )}
-                </div>
+                {/* Divider */}
+                <div className="w-px h-5 bg-surface-200" />
 
-                {reminderPickerIdx === i && (
-                  <div className="space-y-1.5 pt-1">
-                    {/* Row 1: Date presets */}
-                    <div className="flex gap-1.5">
-                      {[
-                        { label: "Tomorrow", days: 1 },
-                        { label: "3 days", days: 3 },
-                        { label: "1 week", days: 7 },
-                      ].map(({ label, days }) => (
-                        <button
-                          key={label}
-                          onClick={() => setReminderDays(days)}
-                          className={`flex-1 min-h-[36px] text-[11px] rounded-lg border ${
-                            reminderDays === days
-                              ? "bg-amber-200 text-amber-800 border-amber-300"
-                              : "bg-amber-50 text-amber-700 hover:bg-amber-100 border-amber-200"
-                          }`}
-                        >
-                          {label}
-                        </button>
-                      ))}
-                    </div>
-                    {/* Row 2: Time presets (shown after date pick) */}
-                    {reminderDays !== null && (
-                      <div className="flex gap-1.5">
-                        {[
-                          { label: "9 AM", hour: 9 },
-                          { label: "12 PM", hour: 12 },
-                          { label: "5 PM", hour: 17 },
-                          { label: "8 PM", hour: 20 },
-                        ].map(({ label, hour }) => {
-                          const d = new Date();
-                          d.setDate(d.getDate() + reminderDays);
-                          d.setHours(hour, 0, 0, 0);
-                          return (
-                            <button
-                              key={label}
-                              onClick={() => { setReminderDays(null); setReminder(i, d.toISOString()); }}
-                              className="flex-1 min-h-[36px] text-[11px] rounded-lg bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200"
-                            >
-                              {label}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    )}
-                    {/* Row 3: Custom datetime + cancel */}
-                    <div className="flex gap-1.5 items-center">
-                      <input
-                        type="datetime-local"
-                        className="flex-1 min-h-[36px] px-2 text-[11px] rounded-lg border border-surface-300 bg-white focus:outline-none focus:border-sage"
-                        onChange={(e) => {
-                          if (e.target.value) {
-                            setReminderDays(null);
-                            setReminder(i, new Date(e.target.value).toISOString());
-                          }
-                        }}
-                      />
-                      <button
-                        onClick={() => { setReminderPickerIdx(null); setReminderDays(null); }}
-                        className="min-h-[36px] px-3 text-[11px] text-text-400 hover:text-text-600"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  </div>
+                {/* Action icons */}
+                {step.remind_at ? (
+                  <button
+                    onClick={() => handleClearReminder(i)}
+                    className="w-8 h-8 flex items-center justify-center rounded-lg bg-amber-100 text-amber-600 hover:bg-amber-200 transition-colors relative"
+                    title={new Date(step.remind_at).toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "America/New_York" })}
+                  >
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z" /></svg>
+                    <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-amber-500 rounded-full" />
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => setReminderPickerIdx(reminderPickerIdx === i ? null : i)}
+                    className="w-8 h-8 flex items-center justify-center rounded-lg text-text-400 hover:text-text-600 hover:bg-surface-100 transition-colors"
+                    title={t("guides.action.remind")}
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>
+                  </button>
+                )}
+                <button
+                  onClick={() => { setEditingNote(i); setNoteText(step.note || ""); }}
+                  className={`w-8 h-8 flex items-center justify-center rounded-lg transition-colors ${
+                    step.note ? "text-sage bg-sage/10 hover:bg-sage/20" : "text-text-400 hover:text-text-600 hover:bg-surface-100"
+                  }`}
+                  title={t("guides.action.note")}
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                </button>
+                {step.chat_prompt && (
+                  <button
+                    onClick={() => setInlineChatIdx(inlineChatIdx === i ? null : i)}
+                    className="w-8 h-8 flex items-center justify-center rounded-lg text-text-400 hover:text-sage hover:bg-sage/10 transition-colors"
+                    title={t("guides.action.askAI")}
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
+                  </button>
                 )}
               </div>
+
+              {/* Reminder picker — expands below when active */}
+              {reminderPickerIdx === i && (
+                <div className="bg-white rounded-xl px-3.5 py-2.5 border border-amber-200/60 shadow-sm space-y-1.5">
+                  <div className="flex gap-1.5">
+                    {[
+                      { label: "Tomorrow", days: 1 },
+                      { label: "3 days", days: 3 },
+                      { label: "1 week", days: 7 },
+                    ].map(({ label, days }) => (
+                      <button
+                        key={label}
+                        onClick={() => setReminderDays(days)}
+                        className={`flex-1 min-h-[32px] text-[10px] rounded-lg border ${
+                          reminderDays === days
+                            ? "bg-amber-200 text-amber-800 border-amber-300"
+                            : "bg-amber-50 text-amber-700 hover:bg-amber-100 border-amber-200"
+                        }`}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                  {reminderDays !== null && (
+                    <div className="flex gap-1.5">
+                      {[
+                        { label: "9 AM", hour: 9 },
+                        { label: "12 PM", hour: 12 },
+                        { label: "5 PM", hour: 17 },
+                        { label: "8 PM", hour: 20 },
+                      ].map(({ label, hour }) => {
+                        const d = new Date();
+                        d.setDate(d.getDate() + reminderDays);
+                        d.setHours(hour, 0, 0, 0);
+                        return (
+                          <button
+                            key={label}
+                            onClick={() => { setReminderDays(null); setReminder(i, d.toISOString()); }}
+                            className="flex-1 min-h-[32px] text-[10px] rounded-lg bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200"
+                          >
+                            {label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                  <div className="flex gap-1.5 items-center">
+                    <input
+                      type="datetime-local"
+                      className="flex-1 min-h-[32px] px-2 text-[10px] rounded-lg border border-surface-300 bg-white focus:outline-none focus:border-sage"
+                      onChange={(e) => {
+                        if (e.target.value) {
+                          setReminderDays(null);
+                          setReminder(i, new Date(e.target.value).toISOString());
+                        }
+                      }}
+                    />
+                    <button
+                      onClick={() => { setReminderPickerIdx(null); setReminderDays(null); }}
+                      className="min-h-[32px] px-2 text-[10px] text-text-400 hover:text-text-600"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           );
         }}

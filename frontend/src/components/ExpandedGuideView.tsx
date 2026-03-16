@@ -258,9 +258,9 @@ export default function ExpandedGuideView({
       {/* Bottom bar -- like + comments toggle */}
       {!editingGuide && (
         <div
-          className="shrink-0 pb-[env(safe-area-inset-bottom)] bg-surface-50/85 backdrop-blur-lg border-t border-surface-200/40 z-20"
+          className="shrink-0 pb-[max(1.5rem,env(safe-area-inset-bottom))] bg-surface-50/85 backdrop-blur-lg border-t border-surface-200/40 z-20"
         >
-          <div className="flex items-center gap-3 px-4 py-2 max-w-2xl mx-auto">
+          <div className="flex items-center gap-3 px-4 pt-2.5 max-w-2xl mx-auto">
             {/* Like */}
             {(!isOwnGuide || guide.is_published) && (
               <button
@@ -434,7 +434,7 @@ export default function ExpandedGuideView({
               </button>
               <button
                 onClick={handleConfirmPublishToggle}
-                className="flex-1 py-2.5 min-h-[44px] rounded-xl text-xs font-semibold bg-sage text-white hover:bg-sage-dark transition-colors"
+                className="flex-1 py-2.5 min-h-[44px] rounded-full text-xs font-semibold bg-sage text-white hover:bg-sage-dark transition-colors"
               >
                 {guide.is_published ? t("guides.unpublish.confirm.ok") : t("guides.publish.confirm.ok")}
               </button>

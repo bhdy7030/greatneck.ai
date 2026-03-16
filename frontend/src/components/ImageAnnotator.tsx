@@ -190,13 +190,13 @@ export default function ImageAnnotator({ imageDataUrl, onDone, onSkip }: ImageAn
         <button
           onClick={handleClear}
           disabled={!hasDrawn}
-          className="px-6 py-2.5 rounded-xl text-sm font-medium bg-surface-700 text-white disabled:opacity-40 transition-colors hover:bg-surface-600"
+          className="px-6 py-2.5 rounded-full text-sm font-medium bg-surface-700 text-white disabled:opacity-40 transition-colors hover:bg-surface-600"
         >
           {t("annotate.clear")}
         </button>
         <button
           onClick={handleDone}
-          className="px-6 py-2.5 rounded-xl text-sm font-medium bg-sage text-white transition-colors hover:bg-sage-dark"
+          className="px-6 py-2.5 rounded-full text-sm font-medium bg-sage text-white transition-colors hover:bg-sage-dark"
         >
           {t("annotate.done")}
         </button>

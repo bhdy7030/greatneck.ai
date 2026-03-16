@@ -305,15 +305,17 @@ export default function Home() {
         <div ref={stickysentinelRef} className="h-0 w-full" />
 
         {/* Sticky chat bar — single instance, pins to top on scroll */}
-        <div className="sticky top-0 z-20 w-full bg-surface-100/85 backdrop-blur-lg px-3 py-2">
+        <div className={`sticky top-0 z-20 w-full px-3 py-2 transition-colors duration-200 ${chatPinned ? "bg-surface-100/95 backdrop-blur-lg" : ""}`}>
           <div
-            className={`flex items-center gap-2.5 bg-surface-50/90 backdrop-blur-md rounded-2xl transition-all duration-300 px-4 py-3 ${
-              hasVillage
-                ? "border-2 border-sage/30 shadow-lg shadow-sage/8 landing-chat-glow"
-                : "border border-surface-300 opacity-60"
+            className={`flex items-center gap-1.5 bg-white rounded-[28px] transition-all duration-300 px-3 py-2 ${
+              hasVillage ? "" : "opacity-60"
             } ${showChatBox ? "animate-fadeSlideUp" : ""}`}
+            style={{
+              boxShadow: "0 8px 24px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.04)",
+              border: "1px solid rgba(0,0,0,0.05)",
+            }}
           >
-            <svg className="w-5 h-5 text-sage flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-5 h-5 text-text-400 flex-shrink-0 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
             </svg>
             <input
@@ -326,17 +328,17 @@ export default function Home() {
               onBlur={() => setInputFocused(false)}
               placeholder={inputFocused || query ? "" : animatedPlaceholder}
               disabled={!hasVillage}
-              className="flex-1 bg-transparent text-text-800 text-sm focus:outline-none placeholder-text-500 disabled:cursor-not-allowed"
+              className="flex-1 bg-transparent text-text-800 text-[15px] focus:outline-none placeholder-text-400 disabled:cursor-not-allowed px-1 py-1"
               style={{ fontSize: "max(16px, 0.875rem)" }}
             />
             <button
               onClick={() => navigateToChat()}
               disabled={!hasVillage}
-              className="flex-shrink-0 p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center bg-sage text-white rounded-xl hover:bg-sage-dark transition-all duration-200 hover:scale-105 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100"
+              className="flex-shrink-0 w-9 h-9 flex items-center justify-center bg-sage text-white rounded-full hover:bg-sage-dark transition-all duration-200 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
               title="Start chatting"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M14 5l7 7m0 0l-7 7m7-7H3" />
               </svg>
             </button>
           </div>
