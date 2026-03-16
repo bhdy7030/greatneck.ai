@@ -272,6 +272,44 @@ export default function MetricsDashboard() {
               </div>
             )}
           </div>
+
+          {/* Stage Latency Breakdown */}
+          {pipeline.stage_durations && pipeline.stage_durations.length > 0 && (
+            <div className="bg-surface-200 border border-surface-300 rounded-xl p-4">
+              <h3 className="text-xs text-text-500 uppercase tracking-wide mb-3">Pipeline Stage Latency (avg ms)</h3>
+              <div className="space-y-2">
+                {pipeline.stage_durations.map((s: { event_name: string; avg_duration_ms: string | number; count: number }) => {
+                  const avgMs = Math.round(Number(s.avg_duration_ms));
+                  const maxMs = Math.max(...pipeline.stage_durations.map((d: { avg_duration_ms: string | number }) => Number(d.avg_duration_ms)));
+                  const pct = maxMs > 0 ? (avgMs / maxMs) * 100 : 0;
+                  const color = s.event_name === "specialist" ? COLORS.gold
+                    : s.event_name === "planner" ? COLORS.blue
+                    : s.event_name === "critic" ? COLORS.purple
+                    : COLORS.sage;
+                  return (
+                    <div key={s.event_name} className="flex items-center gap-3">
+                      <span className="text-[11px] text-text-700 font-medium w-20 text-right capitalize">{s.event_name}</span>
+                      <div className="flex-1 bg-surface-300 rounded-full h-5 overflow-hidden">
+                        <div
+                          className="h-full rounded-full flex items-center justify-end pr-2 text-[10px] font-bold text-white transition-all duration-500"
+                          style={{ width: `${Math.max(pct, 8)}%`, backgroundColor: color }}
+                        >
+                          {avgMs > 100 ? `${(avgMs / 1000).toFixed(1)}s` : `${avgMs}ms`}
+                        </div>
+                      </div>
+                      <span className="text-[10px] text-text-400 w-12 text-right">{s.count}×</span>
+                    </div>
+                  );
+                })}
+                <div className="flex items-center gap-3 pt-1 border-t border-surface-300">
+                  <span className="text-[11px] text-text-900 font-bold w-20 text-right">Total</span>
+                  <span className="text-[11px] text-text-700 font-bold">
+                    {(pipeline.stage_durations.reduce((sum: number, s: { avg_duration_ms: string | number }) => sum + Number(s.avg_duration_ms), 0) / 1000).toFixed(1)}s avg per query
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
 

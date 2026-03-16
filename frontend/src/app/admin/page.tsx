@@ -67,7 +67,11 @@ export default function AdminPage() {
   return <AdminContent />;
 }
 
+type AdminTab = "overview" | "metrics" | "users" | "knowledge";
+
 function AdminContent() {
+  const [activeTab, setActiveTab] = useState<AdminTab>("overview");
+
   // Upload form state
   const [uploadVillage, setUploadVillage] = useState(VILLAGES[0]);
   const [uploadCategory, setUploadCategory] = useState(CATEGORIES[0]);
@@ -265,19 +269,33 @@ function AdminContent() {
 
   return (
     <div className="flex-1 overflow-y-auto p-6">
-      <div className="max-w-4xl mx-auto space-y-8">
+      <div className="max-w-4xl mx-auto space-y-6">
         <div>
           <h1 className="text-2xl font-bold text-text-900 mb-1">
             Admin Dashboard
           </h1>
-          <p className="text-sm text-text-600">
-            Usage metrics, model settings, documents, and user management.
-          </p>
+          <div className="flex gap-1 mt-3 bg-surface-200/60 rounded-full p-1">
+            {(["overview", "metrics", "users", "knowledge"] as AdminTab[]).map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`flex-1 text-xs font-medium py-2 rounded-full transition-all duration-200 capitalize ${
+                  activeTab === tab
+                    ? "bg-white text-text-900 shadow-sm"
+                    : "text-text-500 hover:text-text-700"
+                }`}
+              >
+                {tab}
+              </button>
+            ))}
+          </div>
         </div>
 
-        {/* Metrics Dashboard */}
-        <MetricsDashboard />
+        {/* Metrics Dashboard — only loaded when tab is active */}
+        {activeTab === "metrics" && <MetricsDashboard />}
 
+        {/* === Overview Tab === */}
+        {activeTab === "overview" && <>
         {/* Model Settings */}
         <div className="bg-surface-200 border border-surface-300 rounded-xl p-6">
           <h2 className="text-lg font-semibold text-text-900 mb-4">
@@ -365,6 +383,10 @@ function AdminContent() {
           ))}
         </div>
 
+        </>}
+
+        {/* === Knowledge Tab === */}
+        {activeTab === "knowledge" && <>
         {/* Upload Form */}
         <div className="bg-surface-200 border border-surface-300 rounded-xl p-6">
           <h2 className="text-lg font-semibold text-text-900 mb-4">
@@ -478,6 +500,10 @@ function AdminContent() {
           </form>
         </div>
 
+        </>}
+
+        {/* === Users Tab === */}
+        {activeTab === "users" && <>
         {/* User Management */}
         <div className="bg-surface-200 border border-surface-300 rounded-xl p-6">
           <div className="flex items-center justify-between mb-4">
@@ -702,6 +728,7 @@ function AdminContent() {
             ))}
           </div>
         </div>
+        </>}
       </div>
     </div>
   );
