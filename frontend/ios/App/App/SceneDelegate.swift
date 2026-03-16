@@ -10,10 +10,19 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
         let storyboard = UIStoryboard(name: "Main", bundle: nil)
         let vc = storyboard.instantiateInitialViewController()!
+        vc.edgesForExtendedLayout = []
 
         window = UIWindow(windowScene: windowScene)
         window?.rootViewController = vc
         window?.makeKeyAndVisible()
+    }
+
+    func sceneDidBecomeActive(_ scene: UIScene) {
+        // Re-enforce safe area when app becomes active (after browser dismiss)
+        if let vc = window?.rootViewController {
+            vc.edgesForExtendedLayout = []
+            vc.setNeedsStatusBarAppearanceUpdate()
+        }
     }
 
     func scene(_ scene: UIScene, continue userActivity: NSUserActivity) {

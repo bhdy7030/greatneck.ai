@@ -161,6 +161,18 @@ body {
 body {
   background-color: rgb(var(--color-surface-100));
   color: rgb(var(--color-text-800));
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: env(safe-area-inset-top, 0px);
+  background-color: rgb(var(--color-surface-50));
+  z-index: 9999;
 }
 
 /* Custom scrollbar — themed */

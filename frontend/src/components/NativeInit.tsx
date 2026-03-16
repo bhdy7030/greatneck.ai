@@ -21,7 +21,26 @@ export default function NativeInit() {
     setStatusBarLight();
     hideSplash();
 
-    // Handle Universal Links (OAuth callback, shared links)
+    // After in-app browser closes, force viewport recalculation (iOS resets safe area insets)
+    let browserCleanup: (() => void) | undefined;
+    import("@capacitor/browser").then(({ Browser }) => {
+      Browser.addListener("browserFinished", () => {
+        setStatusBarLight();
+        // Force WebView to recalculate safe area by toggling viewport-fit
+        const meta = document.querySelector('meta[name="viewport"]');
+        if (meta) {
+          const original = meta.getAttribute("content") || "";
+          meta.setAttribute("content", original.replace("viewport-fit=cover", ""));
+          requestAnimationFrame(() => {
+            meta.setAttribute("content", original);
+          });
+        }
+        // Also trigger a resize event
+        window.dispatchEvent(new Event("resize"));
+      }).then((l) => { browserCleanup = () => l.remove(); });
+    }).catch(() => {});
+
+    // Handle Universal Links / custom URL scheme (OAuth callback, shared links)
     const cleanup = onAppUrlOpen((url) => {
       try {
         const parsed = new URL(url);
@@ -44,7 +63,10 @@ export default function NativeInit() {
         }
       } catch {}
     });
-    return cleanup;
+    return () => {
+      cleanup?.();
+      browserCleanup?.();
+    };
   }, []);
 
   return null;
