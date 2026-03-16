@@ -313,7 +313,12 @@ function ChatPageInner() {
           fastMode,
           imageMime,
           (tokenText) => {
-            setStreamingContent((prev) => prev + tokenText);
+            if (tokenText === "\0CLEAR") {
+              // Backend signals: clear preview text, real answer coming next
+              setStreamingContent("");
+            } else {
+              setStreamingContent((prev) => prev + tokenText);
+            }
           },
         );
 

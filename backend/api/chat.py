@@ -550,16 +550,50 @@ async def _handle_chat_stream(request: ChatRequest, user: dict | None = None) ->
                 + "\n\n---\n\n".join(rag_context_parts)
             )
 
-        # Step 2: Planner
+        # Step 2: Planner with streaming preview
+        # The planner now outputs a brief user-facing acknowledgment sentence
+        # BEFORE its JSON plan. We stream those preview tokens to the client
+        # in real time — zero extra LLM calls, zero extra cost.
         search_plan_text = None
         specialist_model_role = None
         _t_planner = _time.monotonic()
-        plan = await _planner_agent.run(refined_query, village=request.village, agent_type=agent_name)
+
+        # Bridge planner preview tokens → SSE stream via queue
+        _preview_queue: asyncio.Queue[str | None] = asyncio.Queue()
+
+        async def _on_preview_token(text: str):
+            await _preview_queue.put(text)
+
+        async def _run_planner():
+            try:
+                return await _planner_agent.run(
+                    refined_query,
+                    village=request.village,
+                    agent_type=agent_name,
+                    on_preview_token=_on_preview_token,
+                )
+            finally:
+                await _preview_queue.put(None)  # sentinel
+
+        planner_task = asyncio.create_task(_run_planner())
+
+        # Stream preview tokens to user while planner runs
+        while True:
+            chunk = await _preview_queue.get()
+            if chunk is None:
+                break
+            yield _sse_event("token", {"text": chunk, "preview": True})
+
+        plan = await planner_task
         _dur_planner = int((_time.monotonic() - _t_planner) * 1000)
         record_pipeline_event(
             "pipeline_stage", "planner", duration_ms=_dur_planner,
             metadata={"complexity": plan.complexity if plan else "skipped"},
         )
+
+        # Signal frontend to clear preview text before specialist streams real answer
+        yield _sse_event("clear_tokens", {})
+
         if plan:
             search_plan_text = plan.raw_text
             if plan.complexity != "high":
