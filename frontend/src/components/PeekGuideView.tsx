@@ -176,10 +176,12 @@ export default function PeekGuideView({
                   {s.chat_prompt && (
                     <button
                       onClick={() => setPreviewChatIdx(previewChatIdx === i ? null : i)}
-                      className="w-full min-h-[44px] text-[12px] font-medium rounded-xl bg-surface-100/60 border border-surface-200 text-text-600 hover:bg-surface-200 flex items-center justify-center gap-2 transition-colors"
+                      className="w-full min-h-[40px] text-[12px] font-medium rounded-full text-sage hover:text-sage-dark flex items-center justify-center gap-1.5 transition-colors hover:bg-sage/5"
                     >
-                      <span>✨</span>
-                      Chat with AI about this
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                      </svg>
+                      Ask about this step
                     </button>
                   )}
                 </div>
