@@ -10,7 +10,6 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
         let storyboard = UIStoryboard(name: "Main", bundle: nil)
         let vc = storyboard.instantiateInitialViewController()!
-        vc.edgesForExtendedLayout = []
 
         window = UIWindow(windowScene: windowScene)
         window?.rootViewController = vc
@@ -18,10 +17,9 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     }
 
     func sceneDidBecomeActive(_ scene: UIScene) {
-        // Re-enforce safe area when app becomes active (after browser dismiss)
-        if let vc = window?.rootViewController {
-            vc.edgesForExtendedLayout = []
-            vc.setNeedsStatusBarAppearanceUpdate()
+        // Force StatusBar plugin to re-apply frame after any interruption (browser dismiss, etc.)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            NotificationCenter.default.post(Notification(name: .capacitorViewDidAppear))
         }
     }
 
@@ -35,6 +33,15 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
                 "url": context.url,
                 "options": context.options.sourceApplication ?? ""
             ])
+        }
+
+        // After URL callback (OAuth), force StatusBar plugin to re-layout the WebView frame
+        // The resizeWebView() in StatusBar plugin doesn't re-run after browser dismiss + page reload
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+            NotificationCenter.default.post(Notification(name: .capacitorViewDidAppear))
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+            NotificationCenter.default.post(Notification(name: .capacitorViewDidAppear))
         }
     }
 }
