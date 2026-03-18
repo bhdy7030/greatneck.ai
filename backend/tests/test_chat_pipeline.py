@@ -256,31 +256,12 @@ async def test_golden_routing(query: str, expected_agent: str):
     only ~987 tokens, below Gemini's 1024 minimum for cached content.
     """
     from agents.router import RouterAgent
-    from llm.provider import llm_call
 
     router = RouterAgent()
-    # Build messages but strip cache_control to avoid Gemini caching error
-    messages = [
-        {"role": "system", "content": router.system_prompt},
-        {"role": "user", "content": query},
-    ]
-    response_text = await llm_call(
-        messages=messages, role="router", temperature=0.0, max_tokens=256,
-    )
-
-    # Apply same parsing logic as RouterAgent.run()
-    cleaned = response_text.strip()
-    if cleaned.startswith("```"):
-        cleaned = cleaned.split("\n", 1)[-1]
-        cleaned = cleaned.rsplit("```", 1)[0].strip()
-    try:
-        decision = json.loads(cleaned)
-    except (json.JSONDecodeError, ValueError):
-        decision = {"agent": "general", "refined_query": query}
+    decision = await router.run(query)
 
     assert decision["agent"] == expected_agent, (
-        f"Query '{query}' routed to '{decision['agent']}', expected '{expected_agent}'. "
-        f"Raw LLM response: {response_text[:200]}"
+        f"Query '{query}' routed to '{decision['agent']}', expected '{expected_agent}'."
     )
 
 
