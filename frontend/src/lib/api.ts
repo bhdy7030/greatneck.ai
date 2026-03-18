@@ -1483,3 +1483,36 @@ export async function unregisterDeviceToken(token: string): Promise<{ ok: boolea
   if (!res.ok) throw new Error(`Failed to unregister device token: ${res.status}`);
   return res.json();
 }
+
+// ── Cron Jobs ──
+
+export interface CronStatus {
+  status: "never_run" | "running" | "success" | "error";
+  started_at: string | null;
+  finished_at: string | null;
+  duration_ms: number | null;
+  scraped: number | null;
+  upserted: number | null;
+  translated: number | null;
+  prompt_tokens: number | null;
+  completion_tokens: number | null;
+  cost_usd: number | null;
+  error: string | null;
+}
+
+export async function getCronStatus(): Promise<CronStatus> {
+  const res = await fetchWithRefresh(`${BASE_URL}/api/admin/events/cron-status`, {
+    headers: authHeaders(),
+  });
+  if (!res.ok) throw new Error(`Failed to fetch cron status: ${res.status}`);
+  return res.json();
+}
+
+export async function triggerEventsCron(): Promise<{ status: string }> {
+  const res = await fetchWithRefresh(`${BASE_URL}/api/admin/events/trigger`, {
+    method: "POST",
+    headers: authHeaders(),
+  });
+  if (!res.ok) throw new Error(`Failed to trigger cron: ${res.status}`);
+  return res.json();
+}

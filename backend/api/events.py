@@ -3,16 +3,21 @@ from __future__ import annotations
 
 import logging
 import re
+import time
 from dataclasses import asdict
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from urllib.parse import quote
 
-from fastapi import APIRouter, BackgroundTasks, Header, HTTPException, Query
+from fastapi import APIRouter, BackgroundTasks, Depends, Header, HTTPException, Query
 from fastapi.responses import Response
 
 from config import settings
 from db import get_upcoming_events, get_event_by_id, upsert_event, cleanup_past_events, _exec_one
 from api.aio import run_sync
+from api.deps import require_admin
+from cache.redis_client import redis_set, redis_get
+
+_CRON_KEY = "events:cron:last_run"
 
 logger = logging.getLogger(__name__)
 
@@ -131,8 +136,25 @@ async def event_calendar(event_id: str):
 
 
 async def _do_refresh():
-    """Background: scrape, upsert, cleanup, translate."""
+    """Background: scrape, upsert, cleanup, translate. Records run status in Redis."""
     from scrapers.events import scrape_all_events
+
+    started_at = datetime.now(timezone.utc)
+    start_mono = time.monotonic()
+
+    redis_set(_CRON_KEY, {
+        "status": "running",
+        "started_at": started_at.isoformat(),
+        "finished_at": None,
+        "duration_ms": None,
+        "scraped": None,
+        "upserted": None,
+        "translated": None,
+        "prompt_tokens": None,
+        "completion_tokens": None,
+        "cost_usd": None,
+        "error": None,
+    }, ttl=86400 * 7)
 
     try:
         events = await scrape_all_events()
@@ -148,6 +170,7 @@ async def _do_refresh():
         await run_sync(cleanup_past_events)
 
         # Translate new/changed events to Chinese
+        translate_started = datetime.now(timezone.utc)
         translated = 0
         try:
             from llm.translate import translate_untranslated_events
@@ -155,8 +178,45 @@ async def _do_refresh():
         except Exception as e:
             logger.warning(f"[events:refresh] Translation failed (non-blocking): {e}")
 
+        # Sum token usage recorded to llm_usage during the translation window
+        ts_str = translate_started.strftime("%Y-%m-%d %H:%M:%S")
+        usage = await run_sync(
+            _exec_one,
+            "SELECT SUM(prompt_tokens) as pt, SUM(completion_tokens) as ct, SUM(cost_usd) as cost FROM llm_usage WHERE role='translation' AND created_at >= ?",
+            "SELECT SUM(prompt_tokens) as pt, SUM(completion_tokens) as ct, SUM(cost_usd) as cost FROM llm_usage WHERE role='translation' AND created_at >= %s",
+            (ts_str,),
+        ) or {}
+
+        finished_at = datetime.now(timezone.utc)
+        duration_ms = int((time.monotonic() - start_mono) * 1000)
+
+        redis_set(_CRON_KEY, {
+            "status": "success",
+            "started_at": started_at.isoformat(),
+            "finished_at": finished_at.isoformat(),
+            "duration_ms": duration_ms,
+            "scraped": len(events),
+            "upserted": upserted,
+            "translated": translated,
+            "prompt_tokens": int(usage.get("pt") or 0),
+            "completion_tokens": int(usage.get("ct") or 0),
+            "cost_usd": float(usage.get("cost") or 0.0),
+            "error": None,
+        }, ttl=86400 * 7)
+
         logger.info(f"[events:refresh] Done — scraped={len(events)} upserted={upserted} translated={translated}")
     except Exception as e:
+        finished_at = datetime.now(timezone.utc)
+        duration_ms = int((time.monotonic() - start_mono) * 1000)
+        redis_set(_CRON_KEY, {
+            "status": "error",
+            "started_at": started_at.isoformat(),
+            "finished_at": finished_at.isoformat(),
+            "duration_ms": duration_ms,
+            "scraped": None, "upserted": None, "translated": None,
+            "prompt_tokens": None, "completion_tokens": None, "cost_usd": None,
+            "error": str(e),
+        }, ttl=86400 * 7)
         logger.error(f"[events:refresh] Background refresh failed: {e}")
 
 
@@ -173,3 +233,23 @@ async def refresh_events(
 
     background_tasks.add_task(_do_refresh)
     return {"status": "accepted", "message": "Refresh started in background"}
+
+
+@router.get("/admin/events/cron-status")
+async def get_cron_status(user: dict = Depends(require_admin)):
+    """Return last run metadata for the events cron job."""
+    data = redis_get(_CRON_KEY)
+    return data or {"status": "never_run"}
+
+
+@router.post("/admin/events/trigger")
+async def trigger_events_refresh(
+    background_tasks: BackgroundTasks,
+    user: dict = Depends(require_admin),
+):
+    """Trigger event refresh from admin UI (JWT auth, not cron secret)."""
+    current = redis_get(_CRON_KEY)
+    if current and current.get("status") == "running":
+        return {"status": "already_running"}
+    background_tasks.add_task(_do_refresh)
+    return {"status": "accepted"}

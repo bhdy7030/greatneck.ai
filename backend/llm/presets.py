@@ -23,7 +23,7 @@ ROLE_PRESETS: dict[str, dict[str, str]] = {
     "simple":     {"claude": "claude-haiku-4-5-20251001",   "gemini": "gemini/gemini-3-flash-preview"},
     "planner":    {"claude": "claude-sonnet-4-20250514",    "gemini": "gemini/gemini-3.1-pro-preview"},
     "critic":     {"claude": "claude-haiku-4-5-20251001",   "gemini": "gemini/gemini-3-flash-preview"},
-    "translation": {"claude": "claude-haiku-4-5-20251001", "gemini": "gemini/gemini-2.5-flash"},
+    "translation": {"claude": "claude-haiku-4-5-20251001", "gemini": "gemini/gemini-3-flash-preview"},
 }
 
 FAST_MODELS: dict[str, str] = {

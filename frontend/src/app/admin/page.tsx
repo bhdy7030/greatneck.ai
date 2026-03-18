@@ -14,11 +14,14 @@ import {
   updateModelConfig,
   getWaitlist,
   deleteWaitlistEntry,
+  getCronStatus,
+  triggerEventsCron,
   type SourceDoc,
   type KnowledgeStats,
   type UserInfo,
   type ModelConfig,
   type WaitlistEntry,
+  type CronStatus,
 } from "@/lib/api";
 import { useAuth } from "@/components/AuthProvider";
 import dynamic from "next/dynamic";
@@ -67,7 +70,189 @@ export default function AdminPage() {
   return <AdminContent />;
 }
 
-type AdminTab = "overview" | "metrics" | "users" | "knowledge";
+type AdminTab = "overview" | "metrics" | "users" | "knowledge" | "crons";
+
+function CronJobsPanel() {
+  const [status, setStatus] = useState<CronStatus | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isTriggering, setIsTriggering] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const pollRef = useState<ReturnType<typeof setInterval> | null>(null);
+
+  const fetchStatus = useCallback(async () => {
+    try {
+      const data = await getCronStatus();
+      setStatus(data);
+      return data;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to fetch status");
+      return null;
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchStatus();
+  }, [fetchStatus]);
+
+  // Poll every 4s while running
+  useEffect(() => {
+    if (status?.status !== "running") return;
+    const id = setInterval(async () => {
+      const data = await fetchStatus();
+      if (data?.status !== "running") clearInterval(id);
+    }, 4000);
+    return () => clearInterval(id);
+  }, [status?.status, fetchStatus]);
+
+  const handleTrigger = async () => {
+    setIsTriggering(true);
+    setError(null);
+    try {
+      await triggerEventsCron();
+      await fetchStatus();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to trigger");
+    } finally {
+      setIsTriggering(false);
+    }
+  };
+
+  const fmt = (n: number | null, decimals = 0) =>
+    n == null ? "—" : n.toLocaleString(undefined, { maximumFractionDigits: decimals });
+
+  const fmtDuration = (ms: number | null) => {
+    if (ms == null) return "—";
+    if (ms < 1000) return `${ms}ms`;
+    return `${(ms / 1000).toFixed(1)}s`;
+  };
+
+  const fmtTime = (iso: string | null) => {
+    if (!iso) return "—";
+    const d = new Date(iso);
+    return d.toLocaleString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit" });
+  };
+
+  const fmtAgo = (iso: string | null) => {
+    if (!iso) return "";
+    const secs = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
+    if (secs < 60) return `${secs}s ago`;
+    if (secs < 3600) return `${Math.floor(secs / 60)}m ago`;
+    return `${Math.floor(secs / 3600)}h ago`;
+  };
+
+  const statusColor = {
+    never_run: "text-text-500 bg-surface-300",
+    running: "text-amber-600 bg-amber-100",
+    success: "text-green-600 bg-green-100",
+    error: "text-red-500 bg-red-100",
+  }[status?.status ?? "never_run"];
+
+  const statusLabel = {
+    never_run: "Never run",
+    running: "Running...",
+    success: "Success",
+    error: "Error",
+  }[status?.status ?? "never_run"];
+
+  return (
+    <div className="space-y-4">
+      {/* Events Refresh */}
+      <div className="bg-surface-200 border border-surface-300 rounded-xl p-6">
+        <div className="flex items-center justify-between mb-5">
+          <div>
+            <h2 className="text-lg font-semibold text-text-900">Events Refresh</h2>
+            <p className="text-xs text-text-500 mt-0.5">Scrape + upsert + translate to Chinese</p>
+          </div>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={fetchStatus}
+              disabled={isLoading}
+              className="text-xs text-text-500 hover:text-text-700 transition-colors disabled:opacity-50"
+            >
+              Refresh
+            </button>
+            <button
+              onClick={handleTrigger}
+              disabled={isTriggering || status?.status === "running"}
+              className="px-4 py-2 rounded-lg text-sm font-medium bg-sage text-white hover:bg-sage-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {status?.status === "running" ? "Running..." : isTriggering ? "Starting..." : "Run Now"}
+            </button>
+          </div>
+        </div>
+
+        {error && (
+          <div className="text-sm text-red-400 bg-red-900/20 rounded-lg px-4 py-2 mb-4">{error}</div>
+        )}
+
+        {/* Status + timing */}
+        <div className="flex items-center gap-3 mb-5">
+          <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${statusColor}`}>
+            {statusLabel}
+          </span>
+          {status?.finished_at && (
+            <span className="text-xs text-text-500">
+              Finished {fmtAgo(status.finished_at)} · {fmtTime(status.finished_at)}
+            </span>
+          )}
+          {status?.duration_ms != null && (
+            <span className="text-xs text-text-400">took {fmtDuration(status.duration_ms)}</span>
+          )}
+        </div>
+
+        {/* Event counts */}
+        <div className="grid grid-cols-3 gap-3 mb-4">
+          {[
+            { label: "Scraped", value: fmt(status?.scraped ?? null) },
+            { label: "Upserted", value: fmt(status?.upserted ?? null) },
+            { label: "Translated", value: fmt(status?.translated ?? null) },
+          ].map(({ label, value }) => (
+            <div key={label} className="bg-surface-100 border border-surface-300 rounded-lg p-3 text-center">
+              <p className="text-[11px] text-text-500 uppercase tracking-wide mb-1">{label}</p>
+              <p className="text-xl font-bold text-text-900">{value}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* Token + cost breakdown */}
+        <div className="bg-surface-100 border border-surface-300 rounded-lg p-4">
+          <p className="text-[11px] text-text-500 uppercase tracking-wide mb-3">Translation LLM Usage</p>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div>
+              <p className="text-xs text-text-500">Prompt tokens</p>
+              <p className="text-sm font-semibold text-text-800 mt-0.5">{fmt(status?.prompt_tokens ?? null)}</p>
+            </div>
+            <div>
+              <p className="text-xs text-text-500">Completion tokens</p>
+              <p className="text-sm font-semibold text-text-800 mt-0.5">{fmt(status?.completion_tokens ?? null)}</p>
+            </div>
+            <div>
+              <p className="text-xs text-text-500">Total tokens</p>
+              <p className="text-sm font-semibold text-text-800 mt-0.5">
+                {status?.prompt_tokens != null && status?.completion_tokens != null
+                  ? fmt(status.prompt_tokens + status.completion_tokens)
+                  : "—"}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs text-text-500">Est. cost</p>
+              <p className="text-sm font-semibold text-text-800 mt-0.5">
+                {status?.cost_usd != null ? `$${status.cost_usd.toFixed(4)}` : "—"}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Error detail */}
+        {status?.status === "error" && status.error && (
+          <div className="mt-4 text-xs text-red-400 bg-red-900/20 rounded-lg px-4 py-3 font-mono break-all">
+            {status.error}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
 
 function AdminContent() {
   const [activeTab, setActiveTab] = useState<AdminTab>("overview");
@@ -275,7 +460,7 @@ function AdminContent() {
             Admin Dashboard
           </h1>
           <div className="flex gap-1 mt-3 bg-surface-200/60 rounded-full p-1">
-            {(["overview", "metrics", "users", "knowledge"] as AdminTab[]).map((tab) => (
+            {(["overview", "metrics", "users", "knowledge", "crons"] as AdminTab[]).map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
@@ -384,6 +569,9 @@ function AdminContent() {
         </div>
 
         </>}
+
+        {/* === Crons Tab === */}
+        {activeTab === "crons" && <CronJobsPanel />}
 
         {/* === Knowledge Tab === */}
         {activeTab === "knowledge" && <>
