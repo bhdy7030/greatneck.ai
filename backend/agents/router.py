@@ -43,17 +43,17 @@ Do NOT include any other text, explanation, or markdown. Only the JSON object.""
             max_tokens=256,
         )
 
-        # Parse the routing decision
+        # Parse the routing decision — extract first {...} object to handle
+        # leading/trailing markdown fences or stray text from the LLM
+        import re as _re
         try:
-            # Handle cases where LLM wraps JSON in markdown code blocks
-            cleaned = response_text.strip()
-            if cleaned.startswith("```"):
-                cleaned = cleaned.split("\n", 1)[-1]
-                cleaned = cleaned.rsplit("```", 1)[0]
-                cleaned = cleaned.strip()
-            decision = json.loads(cleaned)
-        except (json.JSONDecodeError, ValueError):
-            # Default to general if parsing fails
+            m = _re.search(r"\{[^{}]+\}", response_text, _re.DOTALL)
+            decision = json.loads(m.group()) if m else {}
+            if not isinstance(decision, dict):
+                decision = {}
+        except (json.JSONDecodeError, ValueError, AttributeError):
+            decision = {}
+        if not decision:
             decision = {"agent": "general", "refined_query": query}
 
         # Validate the agent name
