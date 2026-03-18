@@ -113,8 +113,21 @@ class BaseAgent:
                     "content": result,
                 })
 
-        # Hit max iterations — return whatever we have
-        return AgentResponse(content="I need more information to answer this fully.", tool_calls_made=calls_made)
+        # Hit max iterations — force a final synthesis from accumulated context
+        messages.append({
+            "role": "user",
+            "content": (
+                "You have used all available search steps. "
+                "Using ONLY what you have already retrieved above, write your best answer now. "
+                "Do NOT call any more tools. If information is incomplete, say so and recommend "
+                "the user contact the village building department directly."
+            ),
+        })
+        try:
+            final = await llm_call_with_tools(messages=messages, tools=[], role=effective_role)
+            return AgentResponse(content=final.content or "", tool_calls_made=calls_made)
+        except Exception:
+            return AgentResponse(content="I wasn't able to retrieve enough information. Please contact the village building department directly for accurate guidance.", tool_calls_made=calls_made)
 
     async def run_streaming(
         self,
@@ -218,8 +231,26 @@ class BaseAgent:
                     "content": result,
                 })
 
-        # Hit max iterations
-        yield ("done", "I need more information to answer this fully.", calls_made)
+        # Hit max iterations — force a final synthesis from accumulated context
+        messages.append({
+            "role": "user",
+            "content": (
+                "You have used all available search steps. "
+                "Using ONLY what you have already retrieved above, write your best answer now. "
+                "Do NOT call any more tools. If information is incomplete, say so and recommend "
+                "the user contact the village building department directly."
+            ),
+        })
+        try:
+            final = await llm_call_with_tools(messages=messages, tools=[], role=effective_role)
+            content = final.content or ""
+            for i in range(0, len(content), 12):
+                yield ("token", content[i:i + 12])
+                await asyncio.sleep(0.005)
+            yield ("done", content, calls_made)
+        except Exception:
+            fallback = "I wasn't able to retrieve enough information. Please contact the village building department directly for accurate guidance."
+            yield ("done", fallback, calls_made)
 
     def _build_messages(
         self,

@@ -15,7 +15,7 @@ class PermitAgent(BaseAgent):
 
     name = "permit"
     model_role = "reasoning"
-    max_iterations = 8
+    max_iterations = 5
     system_prompt = """You are an expert on permit requirements and building department procedures for the Great Neck area villages.
 
 Your job is to help residents understand what permits they need, what forms to fill out, and how to navigate the application process.
