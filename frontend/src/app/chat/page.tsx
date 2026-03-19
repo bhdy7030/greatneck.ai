@@ -52,36 +52,10 @@ function ChatPageInner() {
   const draftSentRef = useRef(false);
   const [returnGuideId, setReturnGuideId] = useState<string | null>(null);
 
-  // Restore chat messages from sessionStorage (survives login redirect only)
+  // Clean up any stale sessionStorage on mount (legacy — login now uses return_to + ?id=)
   useEffect(() => {
-    // If user is arriving from landing page with new content, skip restoration
-    const hasDraft = localStorage.getItem("gn_draft");
-    const hasEvent = localStorage.getItem("gn_event_context");
-    const hasInline = localStorage.getItem("gn_inline_messages");
-    if (hasDraft || hasEvent || hasInline) {
-      sessionStorage.removeItem("gn_chat_messages");
-      return;
-    }
-
-    const saved = sessionStorage.getItem("gn_chat_messages");
-    if (saved) {
-      try {
-        const msgs = JSON.parse(saved) as ChatMessageType[];
-        if (msgs.length > 0) {
-          setMessages(msgs);
-          draftSentRef.current = true;
-        }
-      } catch { /* ignore */ }
-      sessionStorage.removeItem("gn_chat_messages");
-    }
+    sessionStorage.removeItem("gn_chat_messages");
   }, []);
-
-  // Save chat messages to sessionStorage on every change (so login redirect doesn't lose them)
-  useEffect(() => {
-    if (messages.length > 0) {
-      sessionStorage.setItem("gn_chat_messages", JSON.stringify(messages));
-    }
-  }, [messages]);
 
   // Load village and web search mode from localStorage
   useEffect(() => {

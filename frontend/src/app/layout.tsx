@@ -93,27 +93,17 @@ export default function RootLayout({
           <ThemeProvider>
             {/* <InviteGate> */}
             {/* Navigation Header */}
-            <header className="flex-shrink-0 bg-surface-50 border-b border-surface-300 relative z-30">
-              <div className="max-w-4xl mx-auto px-4 py-2 md:py-3 flex items-center justify-between min-h-[48px]">
-                <Link href="/" className="flex items-center gap-2">
-                  <svg
-                    className="w-6 h-6 md:w-7 md:h-7 text-sage"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={1.5}
-                      d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6M9 9h.01M15 9h.01M9 13h.01M15 13h.01"
-                    />
-                  </svg>
-                  <span className="text-base md:text-lg font-bold text-text-900">
-                    greatneck.ai
-                  </span>
+            <header className="flex-shrink-0 bg-surface-100/80 backdrop-blur-xl border-b border-surface-200/60 relative z-30">
+              <div className="max-w-5xl mx-auto px-4 md:px-6 py-2.5 flex items-center justify-between">
+                <Link href="/" className="flex items-center gap-2 group">
+                  <div className="w-7 h-7 rounded-lg bg-sage/10 flex items-center justify-center transition-colors group-hover:bg-sage/16">
+                    <svg className="w-4 h-4 text-sage" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6M9 9h.01M15 9h.01M9 13h.01M15 13h.01" />
+                    </svg>
+                  </div>
+                  <span className="text-[15px] font-semibold text-text-800 tracking-tight">greatneck.ai</span>
                 </Link>
-                <nav className="flex items-center gap-3 md:gap-4">
+                <nav className="flex items-center gap-1">
                   <NavLinks />
                   <LanguageToggle />
                   <HeaderAuth />

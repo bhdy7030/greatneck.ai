@@ -219,10 +219,10 @@ export default function PeekGuideView({
         style={{ paddingBottom: "max(1rem, env(safe-area-inset-bottom, 0px))" }}
       >
         <div
-          className="flex items-center gap-3 px-4 py-2.5 max-w-2xl mx-auto rounded-full bg-white"
+          className="flex items-center gap-3 px-4 py-2.5 max-w-2xl mx-auto rounded-2xl bg-surface-50/90 backdrop-blur-lg"
           style={{
-            boxShadow: "0 8px 24px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.04)",
-            border: "1px solid rgba(0,0,0,0.05)",
+            boxShadow: "0 4px 20px rgba(0,0,0,0.06), 0 1px 6px rgba(0,0,0,0.03)",
+            border: "1px solid rgba(0,0,0,0.06)",
           }}>
           {/* Like */}
           <button

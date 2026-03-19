@@ -375,32 +375,38 @@ function GuidesPageInner() {
   }
 
   return (
-    <div className="flex-1 overflow-y-auto">
-      <div className="max-w-2xl mx-auto px-4 py-5">
+    <div className="flex-1 overflow-y-auto relative">
+      {/* Ambient background blobs */}
+      <div className="pointer-events-none fixed inset-0 overflow-hidden -z-10">
+        <div className="absolute top-0 right-1/4 w-[500px] h-[400px] rounded-full bg-sage/5 blur-[80px]" />
+        <div className="absolute bottom-1/3 left-1/4 w-[400px] h-[350px] rounded-full bg-amber-400/4 blur-[80px]" />
+      </div>
+
+      <div className="max-w-2xl mx-auto px-4 py-6">
         {/* Header */}
-        <div className="mb-5 flex items-start justify-between">
+        <div className="mb-6 flex items-center justify-between">
           <div>
-            <h1 className="text-xl font-bold text-text-900 tracking-tight">{t("guides.title")}</h1>
-            <p className="text-xs text-text-500 mt-0.5">{t("guides.subtitle")}</p>
+            <h1 className="text-[22px] font-semibold text-text-900 tracking-tight">{t("guides.title")}</h1>
+            <p className="text-[13px] text-text-400 mt-0.5">{t("guides.subtitle")}</p>
           </div>
           <button
             onClick={() => router.push("/guides/create")}
-            className="flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-white bg-sage rounded-full hover:bg-sage-dark transition-all duration-200 hover:scale-105 active:scale-95 min-h-[44px] shadow-sm shadow-sage/10"
+            className="flex items-center gap-1.5 px-3.5 py-2 text-[13px] font-medium text-sage hover:text-sage-dark hover:bg-sage/8 rounded-xl transition-all duration-150 min-h-[40px]"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M12 4v16m8-8H4" />
             </svg>
             {t("guides.create")}
           </button>
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-1 mb-5 bg-surface-200/60 rounded-full p-1">
+        <div className="flex gap-0.5 mb-6 bg-surface-200/50 rounded-xl p-1 border border-surface-200/40">
           <button
             onClick={() => { setTab("wallet"); window.history.replaceState({}, "", "/guides?tab=wallet"); }}
-            className={`flex-1 text-sm font-medium py-2.5 min-h-[44px] rounded-full transition-all duration-200 ${
+            className={`flex-1 text-[13px] font-medium py-2 min-h-[38px] rounded-lg transition-all duration-200 ${
               tab === "wallet"
-                ? "bg-white text-text-900 shadow-sm"
+                ? "bg-surface-50 text-text-900 shadow-sm border border-surface-200/60"
                 : "text-text-500 hover:text-text-700"
             }`}
           >
@@ -408,9 +414,9 @@ function GuidesPageInner() {
           </button>
           <button
             onClick={() => { setTab("browse"); window.history.replaceState({}, "", "/guides?tab=browse"); }}
-            className={`flex-1 text-sm font-medium py-2.5 min-h-[44px] rounded-full transition-all duration-200 ${
+            className={`flex-1 text-[13px] font-medium py-2 min-h-[38px] rounded-lg transition-all duration-200 ${
               tab === "browse"
-                ? "bg-white text-text-900 shadow-sm"
+                ? "bg-surface-50 text-text-900 shadow-sm border border-surface-200/60"
                 : "text-text-500 hover:text-text-700"
             }`}
           >
@@ -426,7 +432,7 @@ function GuidesPageInner() {
           /* Wallet View -- Sectioned Cards */
           walletGuides.length === 0 ? (
             <div className="text-center py-16">
-              <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-surface-200/60 flex items-center justify-center">
+              <div className="w-11 h-11 mx-auto mb-3 rounded-xl bg-surface-200/50 flex items-center justify-center border border-surface-200/60">
                 <svg className="w-6 h-6 text-text-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                 </svg>
@@ -447,7 +453,7 @@ function GuidesPageInner() {
                 const labels = { published: "Published", private: "Private", liked: "Liked" };
                 return (
                   <div key={cat}>
-                    <h3 className="text-[11px] font-bold text-text-500 uppercase tracking-widest mb-2.5">
+                    <h3 className="text-[11px] font-semibold text-text-400 uppercase tracking-widest mb-2.5">
                       {labels[cat]}
                     </h3>
                     <div className="grid grid-cols-2 gap-3">
