@@ -8,6 +8,7 @@ import UpcomingEvents, { DateRangeTabs, type DateRange } from "@/components/Upco
 import { useLanguage } from "@/components/LanguageProvider";
 import { getGuides, getWalletGuides, type Guide } from "@/lib/api";
 import OpenMojiIcon from "@/components/OpenMojiIcon";
+import ImageAnnotator from "@/components/ImageAnnotator";
 
 const ANIMATED_QUESTION_KEYS = [
   "landing.q.fence",
@@ -41,6 +42,7 @@ export default function Home() {
   const [transitioning, setTransitioning] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const stickysentinelRef = useRef<HTMLDivElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
   const [chatPinned, setChatPinned] = useState(false);
   const [dateRange, setDateRange] = useState<DateRange>("all");
   const [dateRangeCounts, setDateRangeCounts] = useState<Record<DateRange, number>>({ all: 0, today: 0, tomorrow: 0, weekend: 0 });
@@ -66,6 +68,9 @@ export default function Home() {
   const [titleCollapsed, setTitleCollapsed] = useState(false);
   const [titleTyped, setTitleTyped] = useState(false);
   const [villageCollapsed, setVillageCollapsed] = useState(false);
+
+  const [showAnnotator, setShowAnnotator] = useState(false);
+  const [annotatorRawDataUrl, setAnnotatorRawDataUrl] = useState<string | null>(null);
 
   useEffect(() => {
     const stored = localStorage.getItem("gn_village") || "";
@@ -185,6 +190,7 @@ export default function Home() {
   };
 
   return (
+    <>
     <div
       className={`flex-1 relative overflow-y-auto ${
         transitioning ? "opacity-0 -translate-y-2 scale-[1.01]" : "opacity-100 translate-y-0 scale-100"
@@ -272,18 +278,36 @@ export default function Home() {
             {/* Toolbar row — village context + send */}
             <div className="flex items-center justify-between px-3 pb-2.5 pt-1">
               <div className="flex items-center gap-1">
-              {/* Camera — multimodal conversation */}
+              {/* Camera — pick image first, then navigate to chat with it */}
               {hasVillage && (
-                <button
-                  onClick={() => { localStorage.setItem("gn_multimodal", "1"); navigateToChat(); }}
-                  className="flex items-center justify-center w-8 h-8 rounded-lg hover:bg-surface-200/60 transition-colors text-text-400 hover:text-text-700"
-                  title="Start with an image"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-                  </svg>
-                </button>
+                <>
+                  <button
+                    onClick={() => cameraInputRef.current?.click()}
+                    className="flex items-center justify-center w-8 h-8 rounded-lg hover:bg-surface-200/60 transition-colors text-text-400 hover:text-text-700"
+                    title="Start with an image"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                  </button>
+                  <input
+                    ref={cameraInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      const reader = new FileReader();
+                      reader.onload = () => {
+                        setAnnotatorRawDataUrl(reader.result as string);
+                        setShowAnnotator(true);
+                      };
+                      reader.readAsDataURL(file);
+                    }}
+                  />
+                </>
               )}
               {hasVillage ? (
                 <button
@@ -300,7 +324,16 @@ export default function Home() {
                   </svg>
                 </button>
               ) : (
-                <span className="text-xs text-text-400 px-2.5 italic">Select your village above to get started</span>
+                <button
+                  onClick={() => { setTitleCollapsed(false); setVillageCollapsed(false); }}
+                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg hover:bg-surface-200/60 transition-colors text-xs text-sage font-medium"
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                  Select your village
+                </button>
               )}
               </div>
               <button
@@ -459,5 +492,29 @@ export default function Home() {
         </footer>
       </div>
     </div>
+
+    {/* Image annotator — shown after camera pick, before navigating to chat */}
+    {showAnnotator && annotatorRawDataUrl && (
+      <ImageAnnotator
+        imageDataUrl={annotatorRawDataUrl}
+        onDone={(mergedBase64, mime) => {
+          setShowAnnotator(false);
+          setAnnotatorRawDataUrl(null);
+          sessionStorage.setItem("gn_pending_image", JSON.stringify({ base64: mergedBase64, mime }));
+          navigateToChat();
+        }}
+        onSkip={() => {
+          setShowAnnotator(false);
+          const dataUrl = annotatorRawDataUrl!;
+          setAnnotatorRawDataUrl(null);
+          const match = dataUrl.match(/^data:([^;]+);/);
+          const mime = match ? match[1] : "image/jpeg";
+          const base64 = dataUrl.split(",")[1];
+          sessionStorage.setItem("gn_pending_image", JSON.stringify({ base64, mime }));
+          navigateToChat();
+        }}
+      />
+    )}
+    </>
   );
 }

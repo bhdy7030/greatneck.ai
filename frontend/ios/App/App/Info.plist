@@ -78,5 +78,13 @@
 		<key>NSAllowsLocalNetworking</key>
 		<true/>
 	</dict>
+	<key>NSCameraUsageDescription</key>
+	<string>Allow GreatNeck.ai to access your camera to attach photos to your messages.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Allow GreatNeck.ai to access your photo library to attach images to your messages.</string>
+	<key>NSPhotoLibraryAddOnlyUsageDescription</key>
+	<string>Allow GreatNeck.ai to save images to your photo library.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Allow GreatNeck.ai to access your microphone for video capture.</string>
 </dict>
 </plist>

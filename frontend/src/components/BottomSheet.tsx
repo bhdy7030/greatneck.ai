@@ -27,7 +27,7 @@ export default function BottomSheet({ open, onClose, maxHeight = "75vh", childre
           <div className="w-10 h-1 rounded-full bg-surface-300" />
         </div>
         {/* Sheet content */}
-        <div className="flex-1 overflow-y-auto pb-[env(safe-area-inset-bottom)]">
+        <div className="flex-1 overflow-y-auto pb-[max(1rem,env(safe-area-inset-bottom))]">
           {children}
         </div>
       </div>

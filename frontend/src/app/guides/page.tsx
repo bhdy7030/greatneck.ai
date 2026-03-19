@@ -334,7 +334,7 @@ function GuidesPageInner() {
         onClose={() => {
           if (openedViaDeepLink) {
             // Go back to the page that linked here (e.g. landing page)
-            window.history.back();
+            router.back();
             return;
           }
           setExpandedGuide(null);

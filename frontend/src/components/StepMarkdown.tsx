@@ -2,6 +2,7 @@
 
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { openExternalLink } from "@/lib/native";
 
 const components = {
   p: ({ children }: { children?: React.ReactNode }) => (
@@ -11,14 +12,12 @@ const components = {
     <strong className="font-semibold text-text-800">{children}</strong>
   ),
   a: ({ href, children }: { href?: string; children?: React.ReactNode }) => (
-    <a
-      href={href}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="text-sage underline underline-offset-2 hover:text-sage-dark"
+    <button
+      onClick={() => href && openExternalLink(href)}
+      className="text-sage underline underline-offset-2 hover:text-sage-dark text-left"
     >
       {children}
-    </a>
+    </button>
   ),
   ul: ({ children }: { children?: React.ReactNode }) => (
     <ul className="list-disc pl-4 mb-2 space-y-0.5">{children}</ul>

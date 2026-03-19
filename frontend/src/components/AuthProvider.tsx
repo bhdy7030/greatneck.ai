@@ -29,6 +29,7 @@ import {
   type TierFeatures,
 } from "@/lib/api";
 import HandlePicker from "@/components/HandlePicker";
+import { isNative as isNativePlatform } from "@/lib/native";
 
 /** Detect in-app browsers (Facebook, Instagram, WeChat, LINE, etc.) where Google blocks OAuth. */
 function isInAppBrowser(): boolean {
@@ -216,7 +217,7 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
     // Native: use /auth/callback so Universal Link routes back to the app
     // Web: return to the current page
     const nativeReturn = "/auth/callback";
-    const isNative = typeof window !== "undefined" && window.location.protocol === "capacitor:";
+    const isNative = isNativePlatform();
     const authUrl = `${BASE_URL || "https://greatneck.ai"}/api/auth/google?return_to=${encodeURIComponent(isNative ? nativeReturn : returnTo)}`;
 
     if (isNative) {
@@ -238,7 +239,7 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
     const qs = params.toString();
     const returnTo = window.location.pathname + (qs ? `?${qs}` : "");
     const nativeReturn = "/auth/callback";
-    const isNative = typeof window !== "undefined" && window.location.protocol === "capacitor:";
+    const isNative = isNativePlatform();
     const authUrl = `${BASE_URL || "https://greatneck.ai"}/api/auth/apple?return_to=${encodeURIComponent(isNative ? nativeReturn : returnTo)}`;
 
     if (isNative) {

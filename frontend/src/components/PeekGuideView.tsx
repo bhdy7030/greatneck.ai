@@ -9,6 +9,7 @@ import StepMarkdown from "@/components/StepMarkdown";
 import PlaybookComments from "@/components/PlaybookComments";
 import BottomSheet from "@/components/BottomSheet";
 import { type Guide } from "@/lib/api";
+import { isNative, shareContent } from "@/lib/native";
 
 interface PeekGuideViewProps {
   guide: Guide;
@@ -42,17 +43,17 @@ export default function PeekGuideView({
 
   const handleShareGuide = async () => {
     const url = `${window.location.origin}/guides?id=${encodeURIComponent(guide.id)}`;
-    const shareData = {
-      title: guide.title,
-      text: `Check out this playbook: ${guide.title}`,
-      url,
-    };
-    if (navigator.share) {
-      try {
+    const shareData = { title: guide.title, text: `Check out this playbook: ${guide.title}`, url };
+    try {
+      if (isNative()) {
+        await shareContent(shareData);
+        return;
+      }
+      if (navigator.share) {
         await navigator.share(shareData);
         return;
-      } catch {}
-    }
+      }
+    } catch {}
     try {
       await navigator.clipboard.writeText(url);
       setShareCopied(true);
@@ -160,18 +161,16 @@ export default function PeekGuideView({
                     {s.links.length > 0 && (
                       <div className="flex flex-wrap gap-1.5 mt-2.5 pt-2.5 border-t border-surface-200">
                         {s.links.map((link, j) => (
-                          <a
+                          <button
                             key={j}
-                            href={link.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
+                            onClick={() => { import("@/lib/native").then(({ openExternalLink }) => openExternalLink(link.url)); }}
                             className="inline-flex items-center gap-1 text-[10px] text-sage hover:text-sage-dark bg-sage/10 px-2 py-1 rounded-full"
                           >
                             <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                             </svg>
                             {link.label}
-                          </a>
+                          </button>
                         ))}
                       </div>
                     )}

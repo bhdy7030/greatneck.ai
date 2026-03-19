@@ -9,30 +9,54 @@ export const getPlatform = () => Capacitor.getPlatform() as "ios" | "android" | 
 
 // ── Camera ──
 
-export async function takePhoto(): Promise<{
-  base64: string;
-  mime: string;
-} | null> {
-  if (!isNative()) return null;
-  const { Camera, CameraResultType, CameraSource } = await import(
-    "@capacitor/camera"
-  );
+export type TakePhotoResult =
+  | { ok: true; base64: string; mime: string }
+  | { ok: false; reason: "cancelled" | "denied" };
+
+export async function takePhoto(): Promise<TakePhotoResult> {
+  if (!isNative()) return { ok: false, reason: "cancelled" };
+
+  const { Camera, CameraResultType, CameraSource } = await import("@capacitor/camera");
+
+  // Explicitly check & request permissions before calling getPhoto.
+  // Without this, getPhoto may silently throw on iOS instead of prompting.
+  try {
+    let perms = await Camera.checkPermissions();
+    if (perms.camera === "denied") {
+      return { ok: false, reason: "denied" };
+    }
+    if (perms.camera !== "granted") {
+      perms = await Camera.requestPermissions({ permissions: ["camera", "photos"] });
+      if (perms.camera !== "granted") {
+        return { ok: false, reason: "denied" };
+      }
+    }
+  } catch {
+    // checkPermissions/requestPermissions failed — try getPhoto anyway
+  }
+
   try {
     const photo = await Camera.getPhoto({
       quality: 80,
       allowEditing: false,
       resultType: CameraResultType.Base64,
-      source: CameraSource.Prompt, // Let user choose camera or gallery
+      source: CameraSource.Prompt,
       width: 1920,
       height: 1920,
     });
-    if (!photo.base64String) return null;
+    if (!photo.base64String) return { ok: false, reason: "cancelled" };
     const mime = photo.format === "png" ? "image/png" : "image/jpeg";
-    return { base64: photo.base64String, mime };
+    return { ok: true, base64: photo.base64String, mime };
   } catch {
-    // User cancelled
-    return null;
+    return { ok: false, reason: "cancelled" };
   }
+}
+
+// ── Settings ──
+
+export async function openSettings(): Promise<void> {
+  if (!isNative()) return;
+  window.open("app-settings:", "_system");
 }
 
 // ── Share ──
@@ -78,6 +102,21 @@ export async function hideSplash(): Promise<void> {
   if (!isNative()) return;
   const { SplashScreen } = await import("@capacitor/splash-screen");
   await SplashScreen.hide();
+}
+
+// ── Browser (external links) ──
+
+/**
+ * Open an external URL. On native, uses SFSafariViewController (in-app browser).
+ * On web, opens in a new tab. Use this instead of target="_blank" or window.open().
+ */
+export async function openExternalLink(url: string): Promise<void> {
+  if (isNative()) {
+    const { Browser } = await import("@capacitor/browser");
+    await Browser.open({ url });
+  } else {
+    window.open(url, "_blank", "noopener,noreferrer");
+  }
 }
 
 // ── Deep Linking ──

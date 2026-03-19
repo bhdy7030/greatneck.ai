@@ -51,10 +51,18 @@ function ChatPageInner() {
 
   const draftSentRef = useRef(false);
   const [returnGuideId, setReturnGuideId] = useState<string | null>(null);
+  const [pendingImage, setPendingImage] = useState<{ base64: string; mime: string } | null>(null);
 
-  // Clean up any stale sessionStorage on mount (legacy — login now uses return_to + ?id=)
+  // Clean up stale session data; pick up pending image from landing page camera
   useEffect(() => {
     sessionStorage.removeItem("gn_chat_messages");
+    const pending = sessionStorage.getItem("gn_pending_image");
+    if (pending) {
+      sessionStorage.removeItem("gn_pending_image");
+      try {
+        setPendingImage(JSON.parse(pending));
+      } catch { /* ignore */ }
+    }
   }, []);
 
   // Load village and web search mode from localStorage
@@ -549,11 +557,11 @@ function ChatPageInner() {
               </div>
             ))}
 
-            {/* Unified response block */}
-            {isLoading && (previewText || streamingContent || pipelineEvents.length > 0) && (
+            {/* Loading / streaming block — always shown while isLoading */}
+            {isLoading && (
               <div className="flex justify-start mb-4">
                 <div className="max-w-[92%] md:max-w-[70%] w-full space-y-2">
-                  {/* Conversational acknowledgment: early steps or preview text */}
+                  {/* Phase 1 & 2: spinner / previewText / early pipeline label */}
                   {!streamingContent && (() => {
                     const earlyStages = new Set(["router", "planner"]);
                     const earlyLabel = !previewText
@@ -563,21 +571,33 @@ function ChatPageInner() {
                           .pop()
                       : null;
                     const displayText = previewText || earlyLabel;
-                    if (!displayText) return null;
+                    const hasImage = messages.length > 0 && !!messages[messages.length - 1].image;
+                    const fallbackText = hasImage ? "Analyzing image…" : t("chat.connecting");
                     return (
-                      <div className="bg-surface-50 border border-surface-200/60 rounded-2xl rounded-bl-md px-4 py-3 shadow-sm animate-fadeIn">
-                        <p className="text-sm text-text-600">
-                          {displayText}
-                          <span className="inline-flex gap-1 ml-1.5 align-middle">
-                            <span className="w-1 h-1 bg-sage/60 rounded-full typing-dot" />
-                            <span className="w-1 h-1 bg-sage/60 rounded-full typing-dot" />
-                            <span className="w-1 h-1 bg-sage/60 rounded-full typing-dot" />
-                          </span>
-                        </p>
+                      <div className="bg-surface-50 border border-surface-200/60 rounded-2xl rounded-bl-md px-4 py-3 shadow-sm">
+                        {displayText ? (
+                          <p className="text-sm text-text-600">
+                            {displayText}
+                            <span className="inline-flex gap-1 ml-1.5 align-middle">
+                              <span className="w-1 h-1 bg-sage/60 rounded-full typing-dot" />
+                              <span className="w-1 h-1 bg-sage/60 rounded-full typing-dot" />
+                              <span className="w-1 h-1 bg-sage/60 rounded-full typing-dot" />
+                            </span>
+                          </p>
+                        ) : (
+                          <div className="flex items-center gap-2.5">
+                            <div className="flex gap-1">
+                              <span className="w-1.5 h-1.5 bg-sage/50 rounded-full typing-dot" />
+                              <span className="w-1.5 h-1.5 bg-sage/50 rounded-full typing-dot" />
+                              <span className="w-1.5 h-1.5 bg-sage/50 rounded-full typing-dot" />
+                            </div>
+                            <span className="text-xs text-text-400">{fallbackText}</span>
+                          </div>
+                        )}
                       </div>
                     );
                   })()}
-                  {/* Tool operations thinking box — only tool_call/tool_result and specialist+ steps */}
+                  {/* Tool operations thinking box */}
                   {pipelineEvents.some((e) => e.type === "tool_call" || e.type === "tool_result" || (e.type === "step" && e.stage === "specialist")) && (
                     <PipelineSteps events={pipelineEvents} isComplete={false} />
                   )}
@@ -587,22 +607,6 @@ function ChatPageInner() {
                       <ChatMessage message={{ role: "assistant", content: streamingContent }} />
                     </div>
                   )}
-                </div>
-              </div>
-            )}
-
-            {/* Simple loading indicator (before any pipeline events or streaming) */}
-            {isLoading && pipelineEvents.length === 0 && !streamingContent && (
-              <div className="flex justify-start mb-4">
-                <div className="bg-surface-50 border border-surface-200/60 rounded-2xl rounded-bl-md px-4 py-3 shadow-sm">
-                  <div className="flex items-center gap-2.5">
-                    <div className="flex gap-1">
-                      <span className="w-1.5 h-1.5 bg-sage/50 rounded-full typing-dot" />
-                      <span className="w-1.5 h-1.5 bg-sage/50 rounded-full typing-dot" />
-                      <span className="w-1.5 h-1.5 bg-sage/50 rounded-full typing-dot" />
-                    </div>
-                    <span className="text-xs text-text-400">{t("chat.connecting")}</span>
-                  </div>
                 </div>
               </div>
             )}
@@ -620,7 +624,7 @@ function ChatPageInner() {
 
         {/* Input bar */}
         <div className="flex-shrink-0 max-w-3xl mx-auto w-full">
-          <ChatInput onSend={handleSend} disabled={isLoading} />
+          <ChatInput onSend={handleSend} disabled={isLoading} pendingImage={pendingImage} />
         </div>
       </div>
 

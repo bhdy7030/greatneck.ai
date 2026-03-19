@@ -49,9 +49,23 @@ export function usePushNotifications(userId: number | undefined) {
         },
       );
 
+      // Handle notification tap (app in background or cold start)
+      const actionListener = await PushNotifications.addListener(
+        "pushNotificationActionPerformed",
+        (action) => {
+          const data = action.notification.data as Record<string, string> | undefined;
+          if (data?.guideId) {
+            window.location.href = `/guides/?open=${data.guideId}&tab=wallet`;
+          } else if (data?.url) {
+            window.location.href = data.url;
+          }
+        },
+      );
+
       cleanup = () => {
         regListener.remove();
         errListener.remove();
+        actionListener.remove();
       };
 
       // Trigger registration

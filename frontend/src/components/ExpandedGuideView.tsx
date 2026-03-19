@@ -8,6 +8,7 @@ import StepMarkdown from "@/components/StepMarkdown";
 import PlaybookComments from "@/components/PlaybookComments";
 import BottomSheet from "@/components/BottomSheet";
 import { type Guide, type RawGuideData } from "@/lib/api";
+import { isNative, shareContent } from "@/lib/native";
 
 interface ExpandedGuideViewProps {
   guide: Guide;
@@ -64,17 +65,17 @@ export default function ExpandedGuideView({
 
   const handleShareGuide = async () => {
     const url = `${window.location.origin}/guides?id=${encodeURIComponent(guide.id)}`;
-    const shareData = {
-      title: guide.title,
-      text: `Check out this playbook: ${guide.title}`,
-      url,
-    };
-    if (navigator.share) {
-      try {
+    const shareData = { title: guide.title, text: `Check out this playbook: ${guide.title}`, url };
+    try {
+      if (isNative()) {
+        await shareContent(shareData);
+        return;
+      }
+      if (navigator.share) {
         await navigator.share(shareData);
         return;
-      } catch {}
-    }
+      }
+    } catch {}
     try {
       await navigator.clipboard.writeText(url);
       setShareCopied(true);

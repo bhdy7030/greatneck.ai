@@ -3,19 +3,21 @@
 import { useState, useRef, useCallback, type KeyboardEvent } from "react";
 import { useLanguage } from "./LanguageProvider";
 import ImageAnnotator from "./ImageAnnotator";
-import { isNative, takePhoto } from "@/lib/native";
 
 interface ChatInputProps {
   onSend: (message: string, imageBase64?: string, imageMime?: string) => void;
   disabled?: boolean;
+  pendingImage?: { base64: string; mime: string } | null;
 }
 
-export default function ChatInput({ onSend, disabled }: ChatInputProps) {
+export default function ChatInput({ onSend, disabled, pendingImage }: ChatInputProps) {
   const { t } = useLanguage();
   const [text, setText] = useState("");
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [imageBase64, setImageBase64] = useState<string | null>(null);
-  const [imageMime, setImageMime] = useState<string>("image/jpeg");
+  const [imagePreview, setImagePreview] = useState<string | null>(
+    pendingImage ? `data:${pendingImage.mime};base64,${pendingImage.base64}` : null
+  );
+  const [imageBase64, setImageBase64] = useState<string | null>(pendingImage?.base64 ?? null);
+  const [imageMime, setImageMime] = useState<string>(pendingImage?.mime ?? "image/jpeg");
   const [showAnnotator, setShowAnnotator] = useState(false);
   const [rawDataUrl, setRawDataUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -137,17 +139,8 @@ export default function ChatInput({ onSend, disabled }: ChatInputProps) {
         <div className="flex items-end gap-1.5">
           {/* Camera button */}
           <button
-            onClick={async () => {
-              if (isNative()) {
-                const result = await takePhoto();
-                if (result) {
-                  setImageBase64(result.base64);
-                  setImageMime(result.mime);
-                  setImagePreview(`data:${result.mime};base64,${result.base64}`);
-                }
-              } else {
-                fileInputRef.current?.click();
-              }
+            onClick={() => {
+              fileInputRef.current?.click();
             }}
             disabled={disabled}
             className="flex-shrink-0 w-9 h-9 flex items-center justify-center text-text-400 hover:text-sage rounded-full hover:bg-surface-100 transition-colors disabled:opacity-40"

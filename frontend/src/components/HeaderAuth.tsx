@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/AuthProvider";
 import { useLanguage } from "./LanguageProvider";
 import { useTheme } from "./ThemeProvider";
@@ -19,6 +21,7 @@ const themeSwatches: { key: string; color: string }[] = [
 ];
 
 export default function HeaderAuth() {
+  const router = useRouter();
   const { user, isLoading, login, loginWithApple, logout } = useAuth();
   const { t } = useLanguage();
   const { theme, setTheme } = useTheme();
@@ -196,9 +199,8 @@ export default function HeaderAuth() {
               )}
             </button>
             {user.is_admin && (
-              <a
-                href="/admin/"
-                onClick={() => setShowMenu(false)}
+              <button
+                onClick={() => { setShowMenu(false); router.push("/admin"); }}
                 className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-text-700 hover:bg-surface-100 transition-colors"
               >
                 <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -206,19 +208,18 @@ export default function HeaderAuth() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
                 Admin
-              </a>
+              </button>
             )}
             {(user.is_admin || user.can_debug) && (
-              <a
-                href="/debug/"
-                onClick={() => setShowMenu(false)}
+              <button
+                onClick={() => { setShowMenu(false); router.push("/debug"); }}
                 className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-text-700 hover:bg-surface-100 transition-colors"
               >
                 <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 Debug
-              </a>
+              </button>
             )}
             <div className="border-t border-surface-100 my-1" />
             <div className="px-3 py-2">
@@ -250,15 +251,15 @@ export default function HeaderAuth() {
           </div>
         )}
       </div>
-      {showInviteManager && (
-        <InviteManager onClose={() => setShowInviteManager(false)} />
+      {showInviteManager && createPortal(
+        <InviteManager onClose={() => setShowInviteManager(false)} />,
+        document.body
       )}
-      {showHandleChanger && user.handle && (
+      {showHandleChanger && user.handle && createPortal(
         <HandleChanger
           currentHandle={user.handle}
           onComplete={(handle) => {
             setShowHandleChanger(false);
-            // Update user context with new handle
             if (typeof window !== "undefined") {
               const stored = localStorage.getItem("gn_user");
               if (stored) {
@@ -270,7 +271,8 @@ export default function HeaderAuth() {
             window.location.reload();
           }}
           onClose={() => setShowHandleChanger(false)}
-        />
+        />,
+        document.body
       )}
     </>
   );
